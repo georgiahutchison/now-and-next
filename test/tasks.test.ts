@@ -91,3 +91,13 @@ test("dates", () => {
   assert.equal(weekday("2026-11-16"), 0);
   assert.equal(daysBetween("2026-11-16", "2026-11-19"), 3);
 });
+
+test("plain bullets under a task are details, not sub-tasks", () => {
+  const c = ["- [ ] travel", "\t- [ ] prescriptions", "\t\t- Phenergan 25 mg", "\t- [ ] order sodii", "- [ ] glow up", "\t- keratin", "\t- halo", "", "POTS", "  - [ ] armpit"].join("\n");
+  const ts = parseFile(c);
+  assert.equal(ts.length, 5);
+  assert.deepEqual(ts[1].details, ["Phenergan 25 mg"]);
+  assert.equal(ts[2].parentLine, 0);
+  assert.deepEqual(ts[3].details, ["keratin", "halo"]);
+  assert.equal(ts[4].parentLine, null);
+});

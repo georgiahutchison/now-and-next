@@ -56,12 +56,23 @@ export function renderTask(plugin: NowAndNextPlugin, parent: HTMLElement, t: VTa
   more.addEventListener("click", (e) => { e.stopPropagation(); a.menu(t, e); });
   row.addEventListener("contextmenu", (e) => { e.preventDefault(); a.menu(t, e); });
 
-  if (t.children.length) {
-    const kids = row.createDiv({ cls: "nn-subtasks" });
-    for (const c of t.children) {
-      if (planDate(c) && planDate(c) !== planDate(t)) continue; // shown on its own day
-      renderTask(plugin, kids, c, { nested: true });
+  if (t.details.length && !calm) {
+    const ul = row.createEl("ul", { cls: "nn-details" });
+    for (const d of t.details) ul.createEl("li", { text: d });
+  }
+
+  const kidsShown = t.children.filter((c) => !(planDate(c) && planDate(c) !== planDate(t))); // others show on their own day
+  if (kidsShown.length) {
+    // Long sub-task lists fold away so one task can't flood a column.
+    let host: HTMLElement = row;
+    if (kidsShown.length > 4) {
+      const det = row.createEl("details", { cls: "nn-subtasks-fold" });
+      const done = kidsShown.filter((c) => isDone(c)).length;
+      det.createEl("summary", { text: `${kidsShown.length} sub-tasks${done ? ` · ${done} done` : ""}` });
+      host = det;
     }
+    const kids = host.createDiv({ cls: "nn-subtasks" });
+    for (const c of kidsShown) renderTask(plugin, kids, c, { nested: true });
   }
   return row;
 }

@@ -210,6 +210,8 @@ export interface FileTask extends ParsedTask {
   line: number;
   raw: string;
   parentLine: number | null;
+  /** Plain (non-checkbox) bullets nested under this task: details, not sub-tasks. */
+  details: string[];
 }
 
 function indentWidth(s: string): number {
@@ -221,7 +223,8 @@ function indentWidth(s: string): number {
 export function parseFile(content: string): FileTask[] {
   const lines = content.split("\n");
   const out: FileTask[] = [];
-  const stack: { width: number; line: number }[] = [];
+  const stack: { width: number; line: number; task: FileTask | null }[] = [];
+  const BULLET_RE = /^(\s*)([-*+]|\d+[.)]) (.*)$/;
   let inFence = false;
   for (let i = 0; i < lines.length; i++) {
     const raw = lines[i].replace(/\r$/, "");
@@ -229,15 +232,27 @@ export function parseFile(content: string): FileTask[] {
     if (inFence) continue;
     const t = parseTaskLine(raw);
     if (!t) {
-      // A non-list, non-blank line ends the list block.
-      if (raw.trim() !== "" && !/^\s*([-*+]|\d+[.)]) /.test(raw)) stack.length = 0;
+      const b = BULLET_RE.exec(raw);
+      if (b) {
+        // A plain bullet nested under a task is a detail of the nearest task above it.
+        const w = indentWidth(b[1]);
+        while (stack.length && stack[stack.length - 1].width >= w) stack.pop();
+        const owner = [...stack].reverse().find((s) => s.task)?.task;
+        if (owner && b[3].trim()) owner.details.push(b[3].trim());
+        stack.push({ width: w, line: i, task: null });
+      } else if (raw.trim() !== "") {
+        // A non-list, non-blank line ends the list block.
+        stack.length = 0;
+      }
       continue;
     }
     const w = indentWidth(t.indent);
     while (stack.length && stack[stack.length - 1].width >= w) stack.pop();
-    const parentLine = stack.length ? stack[stack.length - 1].line : null;
-    out.push({ ...t, line: i, raw, parentLine });
-    stack.push({ width: w, line: i });
+    const parentEntry = [...stack].reverse().find((s) => s.task);
+    const parentLine = parentEntry ? parentEntry.line : null;
+    const ft: FileTask = { ...t, line: i, raw, parentLine, details: [] };
+    out.push(ft);
+    stack.push({ width: w, line: i, task: ft });
   }
   return out;
 }

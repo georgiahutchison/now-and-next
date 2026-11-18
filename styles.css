@@ -147,3 +147,7 @@
   .nn-week { grid-template-columns: repeat(var(--nn-cols, 5), minmax(240px, 85vw)); }
 }
 .nn-tabs-label { font-size: var(--font-ui-smaller); color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; align-self: center; margin-right: var(--size-4-1); }
+.nn-details { margin: 0 0 2px calc(var(--checkbox-size, 15px) + var(--size-4-2) + var(--size-4-1)); padding-left: var(--size-4-3); font-size: var(--font-ui-smaller); color: var(--text-muted); }
+.nn-details li { margin: 0; line-height: 1.4; }
+.nn-subtasks-fold { margin-left: calc(var(--size-4-4) + 4px); }
+.nn-subtasks-fold > summary { font-size: var(--font-ui-smaller); color: var(--text-muted); cursor: var(--cursor); }
