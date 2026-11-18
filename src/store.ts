@@ -96,7 +96,7 @@ export class TaskStore extends Events {
     this.tasks = [];
     for (const list of this.byPath.values()) {
       for (const t of list) {
-        t.project = projectOf(t, projects, folder);
+        t.project = projectOf(t, projects, folder, this.dailyArea());
         this.tasks.push(t);
       }
     }
@@ -119,19 +119,34 @@ export class TaskStore extends Events {
     return this.plugin.dailyNoteOptions().folder;
   }
 
+  /** The area whose folder holds the daily notes (e.g. "diary" in "2 Areas/diary"), if any. */
+  dailyArea(): string | null {
+    const folder = this.plugin.settings.projectsFolder.replace(/\/$/, "");
+    const d = this.dailyFolder();
+    if (!d.startsWith(folder + "/")) return null;
+    const name = d.slice(folder.length + 1).split("/")[0];
+    return this.projects().includes(name) ? name : null;
+  }
+
   isInDailyFolder(t: VTask): boolean {
     const d = this.dailyFolder();
     return d === "" ? !t.path.includes("/") : t.path.startsWith(d + "/");
   }
 }
 
-function projectOf(t: VTask, projects: string[], folder: string): string | null {
-  for (const p of projects) if (t.path.startsWith(`${folder}/${p}/`)) return p;
+function projectOf(t: VTask, projects: string[], folder: string, dailyArea: string | null): string | null {
+  let byFolder: string | null = null;
+  for (const p of projects) if (t.path.startsWith(`${folder}/${p}/`)) { byFolder = p; break; }
+  let byTag: string | null = null;
   const tags = t.tags.map((x) => x.toLowerCase());
   for (const p of projects) {
     const lp = p.toLowerCase();
-    if (tags.some((x) => x === lp || x.startsWith(lp + "/"))) return p;
+    if (tags.some((x) => x === lp || x.startsWith(lp + "/"))) { byTag = p; break; }
   }
+  // Daily notes are where things get captured: an area tag there says where the task belongs.
+  if (byFolder && byFolder === dailyArea && byTag) return byTag;
+  if (byFolder) return byFolder;
+  if (byTag) return byTag;
   if (t.parent) return t.parent.project;
   return null;
 }

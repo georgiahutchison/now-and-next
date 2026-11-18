@@ -247,6 +247,8 @@ export class PlannerView extends ItemView {
   // ---------- bottom tabs: priorities, inbox, projects ----------
 
   private projectTag(): string | undefined {
+    // No tag needed when the area is the daily notes folder itself: new tasks land there anyway.
+    if (this.tab === this.plugin.store.dailyArea()) return undefined;
     return this.plugin.store.projects().includes(this.tab) ? this.tab : undefined;
   }
 
@@ -263,7 +265,10 @@ export class PlannerView extends ItemView {
       diary: inbox(tasks, (t) => store.isInDailyFolder(t), this.filter),
     };
     for (const p of projects) lists[p] = inProject(tasks, p, this.filter);
-    const names: [string, string][] = [["priorities", "Priorities"], ["diary", "Diary"], ...projects.map((p) => [p, cap(p)] as [string, string])];
+    // When the daily notes folder is itself an area, its area tab replaces the separate Diary tab.
+    const dailyIsArea = store.dailyArea() !== null;
+    if (dailyIsArea && this.tab === "diary") this.tab = store.dailyArea()!;
+    const names: [string, string][] = [["priorities", "Priorities"], ...(dailyIsArea ? [] : [["diary", "Diary"] as [string, string]]), ...projects.map((p) => [p, cap(p)] as [string, string])];
     bar.createSpan({ cls: "nn-tabs-label", text: "Areas" });
     for (const [key, label] of names) {
       const b = bar.createEl("button", { cls: "nn-tab" });
