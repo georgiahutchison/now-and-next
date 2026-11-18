@@ -117,12 +117,12 @@
 .nn-focus-empty { font-size: 1.4em; text-align: center; margin-top: var(--size-4-8); color: var(--text-muted); }
 
 /* sidebar */
-.nn-side { padding: var(--size-4-2) var(--size-4-3); gap: var(--size-4-2); }
-.nn-side-head { display: flex; flex-direction: column; gap: var(--size-4-2); }
+.nn-side { padding: var(--size-4-4); gap: var(--size-4-4); }
+.nn-side-head { display: flex; flex-direction: column; gap: var(--size-4-3); }
 .nn-side-title { font-weight: var(--font-semibold); }
-.nn-side-btns { display: flex; flex-wrap: wrap; gap: var(--size-4-1); }
-.nn-side-btns .nn-text-btn { font-size: var(--font-ui-smaller); height: auto; padding: 2px var(--size-4-2); }
-.nn-side-h { font-size: var(--font-ui-small); font-weight: var(--font-semibold); color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: var(--size-4-1); }
+.nn-side-btns { display: flex; flex-wrap: wrap; gap: var(--size-4-2); }
+.nn-side-btns .nn-text-btn { font-size: var(--font-ui-smaller); height: auto; padding: var(--size-4-1) var(--size-4-3); }
+.nn-side-h { font-size: var(--font-ui-small); font-weight: var(--font-semibold); color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: var(--size-4-2); }
 .nn-side-note { font-size: var(--font-ui-smaller); color: var(--text-accent); cursor: var(--cursor); }
 .nn-side-section { border-radius: var(--radius-s); }
 
@@ -151,3 +151,10 @@
 .nn-details li { margin: 0; line-height: 1.4; }
 .nn-subtasks-fold { margin-left: calc(var(--size-4-4) + 4px); }
 .nn-subtasks-fold > summary { font-size: var(--font-ui-smaller); color: var(--text-muted); cursor: var(--cursor); }
+.nn-side .nn-task-line { padding: var(--size-4-1) var(--size-4-1); }
+.nn-side .nn-day-list { gap: var(--size-4-1); }
+.nn-side .nn-timebar { gap: var(--size-4-1); }
+.nn-inline-edit { flex: 1 1 0; min-width: 5em; font-size: inherit; height: auto; padding: 0 var(--size-4-1); }
+.nn-key { border-collapse: collapse; width: 100%; font-size: var(--font-ui-small); }
+.nn-key td { padding: var(--size-4-1) var(--size-4-2); border-bottom: 1px solid var(--background-modifier-border); vertical-align: top; }
+.nn-key-sym { white-space: nowrap; font-family: var(--font-monospace); color: var(--text-normal); }

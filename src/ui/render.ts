@@ -30,7 +30,38 @@ export function renderTask(plugin: NowAndNextPlugin, parent: HTMLElement, t: VTa
   cb.addEventListener("click", (e) => { e.stopPropagation(); void a.toggleDone(t); });
 
   const text = line.createSpan({ cls: "nn-task-text", text: t.text || "(empty task)" });
-  text.addEventListener("click", () => void a.open(t));
+  text.setAttr("aria-label", "Click to open in note · double-click to edit");
+  // A single click opens the note; a double-click edits the wording here instead.
+  let clickTimer: number | null = null;
+  text.addEventListener("click", () => {
+    if (clickTimer !== null) return;
+    clickTimer = window.setTimeout(() => { clickTimer = null; void a.open(t); }, 250);
+  });
+  text.addEventListener("dblclick", (e) => {
+    e.preventDefault();
+    if (clickTimer !== null) { window.clearTimeout(clickTimer); clickTimer = null; }
+    const wasDraggable = row.draggable;
+    row.draggable = false;
+    const input = createEl("input", { type: "text", cls: "nn-inline-edit" });
+    input.value = t.text;
+    text.replaceWith(input);
+    input.focus();
+    input.select();
+    let finished = false;
+    const finish = (save: boolean) => {
+      if (finished) return;
+      finished = true;
+      const v = input.value;
+      input.replaceWith(text);
+      row.draggable = wasDraggable;
+      if (save) void a.rename(t, v);
+    };
+    input.addEventListener("keydown", (ev) => {
+      if (ev.key === "Enter") { ev.preventDefault(); finish(true); }
+      else if (ev.key === "Escape") { ev.preventDefault(); finish(false); }
+    });
+    input.addEventListener("blur", () => finish(false));
+  });
 
   if (!calm) {
     const chips = line.createSpan({ cls: "nn-chips" });

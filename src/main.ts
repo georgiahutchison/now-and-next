@@ -7,6 +7,7 @@ import { PlannerView, PLANNER_VIEW } from "./ui/planner";
 import { TodayView, TODAY_VIEW } from "./ui/today";
 import { openWeeklyReview } from "./ui/review";
 import { TextPromptModal } from "./ui/modals";
+import { KeyModal } from "./ui/key";
 import { Timer } from "./timer";
 
 const CLAUDIAN_ID = "realclaudian";
@@ -36,6 +37,7 @@ export default class NowAndNextPlugin extends Plugin {
     this.addCommand({ id: "weekly-review", name: "Weekly review", callback: () => { if (this.on("weeklyReview")) this.openReview(); } });
     this.addCommand({ id: "talk-it-through", name: "Talk it through (open Claudian)", callback: () => { if (this.on("talk")) this.talkItThrough(); } });
     this.addCommand({ id: "stop-timer", name: "Stop timer", callback: () => this.timer.stop() });
+    this.addCommand({ id: "show-key", name: "Show the emoji key", callback: () => this.openKey() });
     this.addCommand({
       id: "toggle-calm", name: "Toggle calm view",
       callback: async () => { this.settings.calm = !this.settings.calm; await this.saveSettings(); },
@@ -103,6 +105,14 @@ export default class NowAndNextPlugin extends Plugin {
   }
 
   openReview() { openWeeklyReview(this); }
+
+  openKey() { new KeyModal(this.app).open(); }
+
+  /** Reload Obsidian (same as the "Reload app without saving" command). */
+  reloadApp() {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (this.app as any).commands.executeCommandById("app:reload");
+  }
 
   // ---------- daily note + capture ----------
 

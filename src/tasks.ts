@@ -190,6 +190,20 @@ function insertBefore(line: string, emojis: string[], token: string): string {
   return `${prefix}${before} ${token} ${body.slice(idx)}`;
 }
 
+// Everything in a task line that is not its wording: kept in order when the wording changes.
+const KEEP_RE = /\[est::[^\]]*\]|[🔺⏫🔼🔽⏬]\uFE0F?|(?:📅|⏳|🛫|➕|✅|❌)\uFE0F? *\d{4}-\d{2}-\d{2}|🔁\uFE0F? *[^📅⏳🛫➕✅❌🔺⏫🔼🔽⏬🆔⛔🏁#^]+|(?:🆔|⛔|🏁)\uFE0F? *\S+|(?:^|\s)#[\p{L}\p{N}_/-]+/gu;
+
+/** Replace a task's wording, keeping its status, fields, tags and block id. */
+export function setText(line: string, text: string): string {
+  const m = TASK_RE.exec(line);
+  if (!m) return line;
+  const bm = BLOCK_ID_RE.exec(m[4]);
+  const main = bm ? m[4].slice(0, bm.index) : m[4];
+  const block = bm ? bm[0].replace(/\s+$/, "") : "";
+  const kept = [...main.matchAll(KEEP_RE)].map((x) => x[0].trim());
+  return tidy(`${m[1]}${m[2]} [${m[3]}] ${[text.trim(), ...kept].join(" ")}${block}`);
+}
+
 export function addTag(line: string, tag: string): string {
   const clean = tag.replace(/^#/, "");
   const t = parseTaskLine(line);

@@ -14,7 +14,7 @@ const ZOOMS: Zoom[] = ["day", "week", "month"];
 export class PlannerView extends ItemView {
   zoom: Zoom;
   anchor = localToday();
-  tab = "priorities";
+  tab = "";
   focus = false;
   private skipped: string[] = [];
 
@@ -115,6 +115,8 @@ export class PlannerView extends ItemView {
     if (this.plugin.on("focus")) textBtn(tools, "target", "Focus", () => this.setFocus(true));
     if (this.plugin.on("talk")) textBtn(tools, "mic", "Talk it through", () => this.plugin.talkItThrough());
     if (this.plugin.on("weeklyReview")) textBtn(tools, "list-checks", "Weekly review", () => this.plugin.openReview());
+    textBtn(tools, "info", "Key", () => this.plugin.openKey());
+    textBtn(tools, "refresh-cw", "Reload", () => this.plugin.reloadApp());
     if (this.plugin.on("calm")) {
       const calm = textBtn(tools, s.calm ? "eye" : "eye-off", s.calm ? "Show details" : "Calm view", async () => {
         s.calm = !s.calm; await this.plugin.saveSettings();
@@ -256,7 +258,7 @@ export class PlannerView extends ItemView {
     const store = this.plugin.store;
     const tasks = store.tasks;
     const projects = store.projects();
-    if (this.tab !== "priorities" && this.tab !== "diary" && !projects.includes(this.tab)) this.tab = "priorities";
+
 
     const panel = root.createDiv({ cls: "nn-panel" });
     const bar = panel.createDiv({ cls: "nn-tabs" });
@@ -268,7 +270,11 @@ export class PlannerView extends ItemView {
     // When the daily notes folder is itself an area, its area tab replaces the separate Diary tab.
     const dailyIsArea = store.dailyArea() !== null;
     if (dailyIsArea && this.tab === "diary") this.tab = store.dailyArea()!;
-    const names: [string, string][] = [["priorities", "Priorities"], ...(dailyIsArea ? [] : [["diary", "Diary"] as [string, string]]), ...projects.map((p) => [p, cap(p)] as [string, string])];
+    // Diary comes first, then Priorities, then the other areas.
+    const dailyTab: [string, string] = dailyIsArea ? [store.dailyArea()!, cap(store.dailyArea()!)] : ["diary", "Diary"];
+    const others = projects.filter((p) => p !== store.dailyArea()).map((p) => [p, cap(p)] as [string, string]);
+    const names: [string, string][] = [dailyTab, ["priorities", "Priorities"], ...others];
+    if (!names.some(([k]) => k === this.tab)) this.tab = dailyTab[0];
     bar.createSpan({ cls: "nn-tabs-label", text: "Areas" });
     for (const [key, label] of names) {
       const b = bar.createEl("button", { cls: "nn-tab" });
@@ -279,7 +285,7 @@ export class PlannerView extends ItemView {
       // Dropping on a tab takes the task off its day and back to that list.
       dropZone(b, this.plugin, async (t) => {
         await this.plugin.actions.schedule(t, null);
-        if (projects.includes(key) && t.project !== key) {
+        if (projects.includes(key) && key !== store.dailyArea() && t.project !== key) {
           const fresh = this.plugin.store.get(t.key);
           if (fresh) await this.plugin.actions.tag(fresh, key);
         }

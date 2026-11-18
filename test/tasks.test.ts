@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   parseTaskLine, parseFile, setDate, setPriority, setEnergy, setEstimate, setStatus,
-  addTag, newTaskLine, parseDuration, formatMinutes, addDays, mondayOf, weekday, daysBetween,
+  addTag, setText, newTaskLine, parseDuration, formatMinutes, addDays, mondayOf, weekday, daysBetween,
 } from "../src/tasks.ts";
 
 test("parses fields, tags, energy, estimate", () => {
@@ -100,4 +100,12 @@ test("plain bullets under a task are details, not sub-tasks", () => {
   assert.equal(ts[2].parentLine, 0);
   assert.deepEqual(ts[3].details, ["keratin", "halo"]);
   assert.equal(ts[4].parentLine, null);
+});
+
+test("setText changes the wording and keeps fields, tags and block id", () => {
+  assert.equal(
+    setText("- [ ] Call dentist [est:: 30m] ⏫ 🔁 every week ⏳ 2026-11-20 #health ^abc", "Ring the dentist"),
+    "- [ ] Ring the dentist [est:: 30m] ⏫ 🔁 every week ⏳ 2026-11-20 #health ^abc",
+  );
+  assert.equal(setText("\t- [x] buy #money milk ✅ 2026-11-19", "buy oat milk"), "\t- [x] buy oat milk #money ✅ 2026-11-19");
 });

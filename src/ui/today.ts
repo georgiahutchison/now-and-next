@@ -43,6 +43,8 @@ export class TodayView extends ItemView {
     if (this.plugin.on("focus")) b("target", "Focus", () => this.plugin.openPlanner({ focus: true }));
     if (this.plugin.on("talk")) b("mic", "Talk it through", () => this.plugin.talkItThrough());
     b("calendar-range", "Week", () => this.plugin.openPlanner({}));
+    b("info", "Key", () => this.plugin.openKey());
+    b("refresh-cw", "Reload", () => this.plugin.reloadApp());
 
     if (this.plugin.on("visibleTime")) timeLeftBar(this.plugin, root);
     if (this.plugin.on("capture")) captureBox(this.plugin, root);

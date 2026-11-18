@@ -1,6 +1,6 @@
 import { App, Menu, Notice, TFile } from "obsidian";
 import {
-  setDate, setPriority, setEnergy, setEstimate, setStatus, newTaskLine, addDays, localToday, addTag,
+  setDate, setPriority, setEnergy, setEstimate, setStatus, newTaskLine, addDays, localToday, addTag, setText,
   Priority, Energy, parseDuration, PRIORITY_EMOJI,
 } from "./tasks";
 import { VTask, editTask, insertAfter, isWaiting, planDate } from "./store";
@@ -9,6 +9,7 @@ import { DatePromptModal, TextPromptModal } from "./ui/modals";
 
 interface TasksApi {
   executeToggleTaskDoneCommand(line: string, path: string): string;
+  editTaskLineModal?(line: string): Promise<string>;
 }
 
 function tasksApi(app: App): TasksApi | null {
@@ -31,6 +32,21 @@ export class Actions {
       out = setDate(out, "done", done ? null : localToday());
       return out;
     });
+  }
+
+  /** Change the wording only; dates, priority and tags stay. */
+  async rename(t: VTask, text: string) {
+    if (!text.trim() || text.trim() === t.text) return;
+    await editTask(this.app, t, (l) => setText(l, text));
+  }
+
+  /** Open the Tasks plugin's own edit window for this task. */
+  async editWithTasks(t: VTask) {
+    const api = tasksApi(this.app);
+    if (!api?.editTaskLineModal) { new Notice("The Tasks plugin's edit window isn't available. Is Tasks switched on?"); return; }
+    const out = await api.editTaskLineModal(t.raw);
+    if (!out || out === t.raw) return;
+    await editTask(this.app, t, () => out.split("\n"));
   }
 
   async schedule(t: VTask, date: string | null) {
@@ -101,6 +117,7 @@ export class Actions {
   menu(t: VTask, evt: MouseEvent) {
     const m = new Menu();
     const today = localToday();
+    m.addItem((i) => i.setTitle("Edit…").setIcon("pencil").onClick(() => this.editWithTasks(t)));
     m.addItem((i) => i.setTitle("Open in note").setIcon("file-text").onClick(() => this.open(t)));
     m.addSeparator();
     m.addItem((i) => i.setTitle("Today").setIcon("sun").onClick(() => this.schedule(t, today)));
