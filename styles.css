@@ -117,10 +117,10 @@
 .nn-focus-empty { font-size: 1.4em; text-align: center; margin-top: var(--size-4-8); color: var(--text-muted); }
 
 /* sidebar */
-.nn-side { padding: var(--size-4-4); gap: var(--size-4-4); }
-.nn-side-head { display: flex; flex-direction: column; gap: var(--size-4-3); }
+.nn-side { padding: var(--size-4-5) var(--size-4-5); gap: var(--size-4-6); }
+.nn-side-head { display: flex; flex-direction: column; gap: var(--size-4-4); }
 .nn-side-title { font-weight: var(--font-semibold); }
-.nn-side-btns { display: flex; flex-wrap: wrap; gap: var(--size-4-2); }
+.nn-side-btns { display: flex; flex-wrap: wrap; gap: var(--size-4-3) var(--size-4-2); }
 .nn-side-btns .nn-text-btn { font-size: var(--font-ui-smaller); height: auto; padding: var(--size-4-1) var(--size-4-3); }
 .nn-side-h { font-size: var(--font-ui-small); font-weight: var(--font-semibold); color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: var(--size-4-2); }
 .nn-side-note { font-size: var(--font-ui-smaller); color: var(--text-accent); cursor: var(--cursor); }
@@ -162,3 +162,6 @@
 .nn-due.is-now { color: var(--text-accent); border-color: var(--text-accent); }
 .nn-drop:hover { color: var(--text-error); }
 .nn-undo-btn { margin-left: var(--size-4-2); }
+.nn-capture-multi { width: 100%; resize: vertical; line-height: var(--line-height-normal); padding: var(--size-4-2) var(--size-4-3); font-family: inherit; font-size: var(--font-ui-medium); }
+.nn-side .nn-day-list { gap: var(--size-4-2); }
+.nn-side .nn-side-h { margin-bottom: var(--size-4-3); }

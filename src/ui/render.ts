@@ -165,13 +165,17 @@ export function timeLeftBar(plugin: NowAndNextPlugin, parent: HTMLElement) {
   return wrap;
 }
 
-export function captureBox(plugin: NowAndNextPlugin, parent: HTMLElement, opts: { placeholder?: string; scheduled?: string; tag?: string } = {}) {
-  const input = parent.createEl("input", { type: "text", cls: "nn-capture" });
+export function captureBox(plugin: NowAndNextPlugin, parent: HTMLElement, opts: { placeholder?: string; scheduled?: string; tag?: string; lines?: number } = {}) {
+  // The main capture box is a two-line text area; Enter saves, Shift+Enter is ignored (one task per capture).
+  const input: HTMLInputElement | HTMLTextAreaElement = opts.lines && opts.lines > 1
+    ? parent.createEl("textarea", { cls: "nn-capture nn-capture-multi", attr: { rows: String(opts.lines) } })
+    : parent.createEl("input", { type: "text", cls: "nn-capture" });
   input.placeholder = opts.placeholder ?? "Capture a thought… (Enter saves to today's note)";
   input.addEventListener("keydown", async (e) => {
-    if (e.key !== "Enter" || !input.value.trim()) return;
+    if ((e as KeyboardEvent).key !== "Enter") return;
     e.preventDefault();
-    const v = input.value;
+    const v = input.value.replace(/\s+/g, " ").trim();
+    if (!v) return;
     input.value = "";
     await plugin.capture(v, { scheduled: opts.scheduled, tag: opts.tag });
   });

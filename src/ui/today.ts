@@ -46,7 +46,7 @@ export class TodayView extends ItemView {
     b("info", "Key", () => this.plugin.openKey());
     b("refresh-cw", "Reload", () => this.plugin.reloadApp());
 
-    if (this.plugin.on("capture")) captureBox(this.plugin, root);
+    if (this.plugin.on("capture")) captureBox(this.plugin, root, { lines: 2 });
 
     const late = overdue(tasks, today, f);
     if (late.length && this.plugin.on("carryOver")) {

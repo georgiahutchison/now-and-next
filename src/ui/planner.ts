@@ -59,7 +59,7 @@ export class PlannerView extends ItemView {
     const today = localToday();
 
     const top = root.createDiv({ cls: "nn-top" });
-    if (this.plugin.on("capture")) captureBox(this.plugin, top);
+    if (this.plugin.on("capture")) captureBox(this.plugin, top, { lines: 2 });
     if (this.plugin.on("carryOver")) carryOverTray(this.plugin, top, overdue(tasks, today, this.filter));
     const w = waiting(tasks);
     if (w.length) {
