@@ -96,3 +96,20 @@ export function hm(s: string): number {
   if (!m) return 0;
   return parseInt(m[1], 10) * 60 + (m[2] ? parseInt(m[2], 10) : 0);
 }
+
+export type SortMode = "priority" | "newest" | "oldest" | "due" | "az";
+export const SORT_LABELS: Record<SortMode, string> = {
+  priority: "Priority", newest: "Newest first", oldest: "Oldest first", due: "Deadline soonest", az: "A to Z",
+};
+
+export function sortTasks(list: VTask[], mode: SortMode): VTask[] {
+  const out = [...list];
+  const age = (a: VTask, b: VTask) => (a.added < b.added ? -1 : a.added > b.added ? 1 : a.path.localeCompare(b.path) || a.line - b.line);
+  switch (mode) {
+    case "newest": return out.sort((a, b) => age(b, a));
+    case "oldest": return out.sort(age);
+    case "due": return out.sort((a, b) => (a.due ?? "9999") < (b.due ?? "9999") ? -1 : (a.due ?? "9999") > (b.due ?? "9999") ? 1 : byPriority(a, b));
+    case "az": return out.sort((a, b) => a.text.localeCompare(b.text, undefined, { sensitivity: "base" }));
+    default: return out.sort(byPriority);
+  }
+}

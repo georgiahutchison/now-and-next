@@ -1,6 +1,7 @@
 import { App, PluginSettingTab, Setting } from "obsidian";
 import type NowAndNextPlugin from "./main";
 import type { Energy } from "./tasks";
+import type { SortMode } from "./queries";
 
 export type Zoom = "day" | "week" | "month";
 
@@ -37,6 +38,7 @@ export interface NowAndNextSettings {
   defaultZoom: Zoom;
   calm: boolean;
   energyFilter: Energy | "all";
+  sortBy: SortMode;
   supports: Record<SupportKey, boolean>;
 }
 
@@ -52,6 +54,7 @@ export const DEFAULT_SETTINGS: NowAndNextSettings = {
   defaultZoom: "week",
   calm: false,
   energyFilter: "all",
+  sortBy: "priority",
   supports: Object.fromEntries(SUPPORTS.map((x) => [x.key, true])) as Record<SupportKey, boolean>,
 };
 

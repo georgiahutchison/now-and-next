@@ -6,6 +6,8 @@ export interface VTask extends FileTask {
   path: string;
   key: string;
   mtime: number;
+  /** Best guess at when the task was added (YYYY-MM-DD): ➕ date, else the note's date in its name, else when the note was created. */
+  added: string;
   project: string | null;
   children: VTask[];
   parent: VTask | null;
@@ -79,6 +81,7 @@ export class TaskStore extends Events {
     const parsed = parseFile(content);
     const list: VTask[] = parsed.map((p) => ({
       ...p, path: f.path, key: `${f.path}::${p.line}`, mtime: f.stat.mtime, project: null, children: [], parent: null,
+      added: p.created ?? noteDate(f),
     }));
     const byLine = new Map(list.map((t) => [t.line, t]));
     for (const t of list) {
@@ -206,4 +209,11 @@ export function todayStr(): string {
 export function dailyNotePath(folder: string, format: string, date: string): string {
   const name = moment(date, "YYYY-MM-DD").format(format || "YYYY-MM-DD");
   return normalizePath(folder ? `${folder}/${name}.md` : `${name}.md`);
+}
+
+/** The date in a note's name (e.g. 2026-11-19), else the day the note was created. */
+function noteDate(f: TFile): string {
+  const m = /(\d{4})[-_. ]?(\d{2})[-_. ]?(\d{2})/.exec(f.basename);
+  if (m) return `${m[1]}-${m[2]}-${m[3]}`;
+  return moment(f.stat.ctime).format("YYYY-MM-DD");
 }

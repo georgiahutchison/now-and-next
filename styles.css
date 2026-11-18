@@ -165,3 +165,6 @@
 .nn-capture-multi { width: 100%; resize: vertical; line-height: var(--line-height-normal); padding: var(--size-4-2) var(--size-4-3); font-family: inherit; font-size: var(--font-ui-medium); }
 .nn-side .nn-day-list { gap: var(--size-4-2); }
 .nn-side .nn-side-h { margin-bottom: var(--size-4-3); }
+.nn-panel-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--size-4-2); }
+.nn-sort { display: inline-flex; align-items: center; gap: var(--size-4-1); }
+.nn-sort select { font-size: var(--font-ui-smaller); height: auto; padding: 2px var(--size-4-5) 2px var(--size-4-2); }

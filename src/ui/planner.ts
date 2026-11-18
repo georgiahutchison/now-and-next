@@ -2,7 +2,7 @@ import { ItemView, Scope, WorkspaceLeaf, setIcon } from "obsidian";
 import { addDays, localToday, mondayOf, formatMinutes } from "../tasks";
 import { VTask } from "../store";
 import {
-  openOn, doneOn, overdue, waiting, priorities, inProject, inbox, estimateTotal, stats, hm, EnergyFilter,
+  openOn, doneOn, overdue, waiting, priorities, inProject, inbox, estimateTotal, stats, hm, EnergyFilter, sortTasks, SORT_LABELS, SortMode,
 } from "../queries";
 import { renderTask, renderList, dropZone, timeLeftBar, captureBox, carryOverTray } from "./render";
 import type NowAndNextPlugin from "../main";
@@ -295,12 +295,24 @@ export class PlannerView extends ItemView {
         }
       });
     }
-    const hint = panel.createDiv({ cls: "nn-panel-hint" });
+    const hintRow = panel.createDiv({ cls: "nn-panel-row" });
+    const hint = hintRow.createDiv({ cls: "nn-panel-hint" });
+    const sortWrap = hintRow.createDiv({ cls: "nn-sort" });
+    sortWrap.createSpan({ cls: "nn-seg-label", text: "Sort" });
+    const sel = sortWrap.createEl("select", { cls: "dropdown" });
+    for (const [k, label] of Object.entries(SORT_LABELS)) {
+      const o = sel.createEl("option", { text: label, value: k });
+      if (k === this.plugin.settings.sortBy) o.selected = true;
+    }
+    sel.addEventListener("change", async () => {
+      this.plugin.settings.sortBy = sel.value as SortMode;
+      await this.plugin.saveSettings();
+    });
     hint.setText(this.tab === "priorities" ? "Undated tasks marked 🔺 or ⏫. Drag one onto a day to plan it."
       : this.tab === "diary" ? "Undated tasks from your daily notes that have no area yet. Drag one onto a day or an area."
       : `Undated tasks in ${this.plugin.settings.projectsFolder}/${this.tab} or tagged #${this.tab}.`);
     const list = panel.createDiv({ cls: "nn-panel-list" });
-    renderList(this.plugin, list, lists[this.tab], "Nothing here.", { hideProject: this.tab });
+    renderList(this.plugin, list, sortTasks(lists[this.tab], this.plugin.settings.sortBy), "Nothing here.", { hideProject: this.tab });
     if (this.tab !== "priorities") captureBox(this.plugin, panel, { placeholder: `+ Add to ${cap(this.tab)}`, tag: this.projectTag() });
   }
 
