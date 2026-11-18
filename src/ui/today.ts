@@ -1,7 +1,7 @@
 import { ItemView, WorkspaceLeaf, setIcon } from "obsidian";
 import { localToday } from "../tasks";
 import { openOn, doneOn, overdue, waiting } from "../queries";
-import { renderList, timeLeftBar, captureBox, dropZone } from "./render";
+import { renderList, captureBox, dropZone } from "./render";
 import type NowAndNextPlugin from "../main";
 
 export const TODAY_VIEW = "now-and-next-today";
@@ -46,7 +46,6 @@ export class TodayView extends ItemView {
     b("info", "Key", () => this.plugin.openKey());
     b("refresh-cw", "Reload", () => this.plugin.reloadApp());
 
-    if (this.plugin.on("visibleTime")) timeLeftBar(this.plugin, root);
     if (this.plugin.on("capture")) captureBox(this.plugin, root);
 
     const late = overdue(tasks, today, f);

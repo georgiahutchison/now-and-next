@@ -300,7 +300,7 @@ export class PlannerView extends ItemView {
       : this.tab === "diary" ? "Undated tasks from your daily notes that have no area yet. Drag one onto a day or an area."
       : `Undated tasks in ${this.plugin.settings.projectsFolder}/${this.tab} or tagged #${this.tab}.`);
     const list = panel.createDiv({ cls: "nn-panel-list" });
-    renderList(this.plugin, list, lists[this.tab], "Nothing here.");
+    renderList(this.plugin, list, lists[this.tab], "Nothing here.", { hideProject: this.tab });
     if (this.tab !== "priorities") captureBox(this.plugin, panel, { placeholder: `+ Add to ${cap(this.tab)}`, tag: this.projectTag() });
   }
 

@@ -6,7 +6,7 @@ import type NowAndNextPlugin from "../main";
 
 export const DRAG_TYPE = "text/x-now-and-next";
 
-export function renderTask(plugin: NowAndNextPlugin, parent: HTMLElement, t: VTask, opts: { showDate?: boolean; nested?: boolean } = {}) {
+export function renderTask(plugin: NowAndNextPlugin, parent: HTMLElement, t: VTask, opts: { showDate?: boolean; nested?: boolean; hideProject?: string } = {}) {
   const calm = plugin.settings.calm;
   const a = plugin.actions;
   const row = parent.createDiv({ cls: "nn-task" });
@@ -72,7 +72,7 @@ export function renderTask(plugin: NowAndNextPlugin, parent: HTMLElement, t: VTa
     if (t.energy && plugin.on("energy")) chips.createSpan({ cls: `nn-chip nn-energy nn-energy-${t.energy}`, text: { low: "low", mid: "med", high: "high" }[t.energy] });
     if (t.estimateMin && plugin.on("estimates")) chips.createSpan({ cls: "nn-chip", text: "~" + formatMinutes(t.estimateMin) });
     if (t.recurrence) { const r = chips.createSpan({ cls: "nn-chip" }); setIcon(r, "repeat"); r.setAttr("aria-label", t.recurrence); }
-    if (t.project) chips.createSpan({ cls: "nn-chip nn-chip-project", text: t.project });
+    if (t.project && t.project !== opts.hideProject) chips.createSpan({ cls: "nn-chip nn-chip-project", text: t.project });
     if (opts.showDate && planDate(t)) chips.createSpan({ cls: "nn-chip", text: shortDate(planDate(t)!) });
     if (plugin.on("firstStep") && needsFirstStep(t, localToday(), plugin.settings.stepPromptDays)) {
       const s = chips.createSpan({ cls: "nn-chip nn-step-chip", text: "first step?" });
@@ -103,12 +103,12 @@ export function renderTask(plugin: NowAndNextPlugin, parent: HTMLElement, t: VTa
       host = det;
     }
     const kids = host.createDiv({ cls: "nn-subtasks" });
-    for (const c of kidsShown) renderTask(plugin, kids, c, { nested: true });
+    for (const c of kidsShown) renderTask(plugin, kids, c, { nested: true, hideProject: opts.hideProject });
   }
   return row;
 }
 
-export function renderList(plugin: NowAndNextPlugin, parent: HTMLElement, list: VTask[], empty: string, opts: { showDate?: boolean } = {}) {
+export function renderList(plugin: NowAndNextPlugin, parent: HTMLElement, list: VTask[], empty: string, opts: { showDate?: boolean; hideProject?: string } = {}) {
   if (!list.length) { parent.createDiv({ cls: "nn-empty", text: empty }); return; }
   for (const t of list) renderTask(plugin, parent, t, opts);
 }
