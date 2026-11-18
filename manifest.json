@@ -3,7 +3,7 @@
   "name": "Now & Next",
   "version": "0.1.0",
   "minAppVersion": "1.7.2",
-  "description": "A gentle day, week and month planner built on Tasks: focus mode, daily cap, carry-over without guilt, energy tags, time estimates and a weekly review.",
+  "description": "A day, week and month planner built on Tasks: focus mode, daily cap, carry-over tray, energy tags, time estimates and a weekly review.",
   "author": "l0wtalker",
   "isDesktopOnly": false
 }

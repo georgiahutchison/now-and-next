@@ -9,7 +9,7 @@ export const DRAG_TYPE = "text/x-now-and-next";
 export function renderTask(plugin: NowAndNextPlugin, parent: HTMLElement, t: VTask, opts: { showDate?: boolean; nested?: boolean; hideProject?: string } = {}) {
   const calm = plugin.settings.calm;
   const a = plugin.actions;
-  const row = parent.createDiv({ cls: "nn-task" });
+  const row = parent.createDiv({ cls: opts.nested ? "nn-task is-nested" : "nn-task nn-card" });
   if (isDone(t)) row.addClass("is-done");
   if (isWaiting(t)) row.addClass("is-waiting");
   row.dataset.key = t.key;
@@ -30,7 +30,6 @@ export function renderTask(plugin: NowAndNextPlugin, parent: HTMLElement, t: VTa
   cb.addEventListener("click", (e) => { e.stopPropagation(); void a.toggleDone(t); });
 
   const text = line.createSpan({ cls: "nn-task-text", text: t.text || "(empty task)" });
-  text.setAttr("aria-label", "Click to open in note · double-click to edit");
   // A single click opens the note; a double-click edits the wording here instead.
   let clickTimer: number | null = null;
   text.addEventListener("click", () => {
@@ -87,30 +86,33 @@ export function renderTask(plugin: NowAndNextPlugin, parent: HTMLElement, t: VTa
     }
   }
 
+  const actions = line.createSpan({ cls: "nn-actions" });
   if (!isDone(t) && t.status !== "-") {
-    const drop = line.createSpan({ cls: "nn-more nn-drop clickable-icon" });
+    const drop = actions.createSpan({ cls: "nn-more nn-drop clickable-icon" });
     setIcon(drop, "x");
     drop.setAttr("aria-label", "Drop this task (you can undo)");
     drop.addEventListener("click", (e) => { e.stopPropagation(); void a.drop(t); });
   }
 
-  const more = line.createSpan({ cls: "nn-more clickable-icon" });
+  const more = actions.createSpan({ cls: "nn-more clickable-icon" });
   setIcon(more, "more-horizontal");
   more.setAttr("aria-label", "Task options");
   more.addEventListener("click", (e) => { e.stopPropagation(); a.menu(t, e); });
   row.addEventListener("contextmenu", (e) => { e.preventDefault(); a.menu(t, e); });
 
-  if (t.details.length && !calm) {
-    const ul = row.createEl("ul", { cls: "nn-details" });
+  // Details and sub-tasks start at the same left edge as the task text.
+  const kidsShown = t.children.filter((c) => !(planDate(c) && planDate(c) !== planDate(t))); // others show on their own day
+  const body = (t.details.length && !calm) || kidsShown.length ? row.createDiv({ cls: "nn-task-body" }) : null;
+  if (body && t.details.length && !calm) {
+    const ul = body.createEl("ul", { cls: "nn-details" });
     for (const d of t.details) ul.createEl("li", { text: d });
   }
 
-  const kidsShown = t.children.filter((c) => !(planDate(c) && planDate(c) !== planDate(t))); // others show on their own day
-  if (kidsShown.length) {
+  if (body && kidsShown.length) {
     // Long sub-task lists fold away so one task can't flood a column.
-    let host: HTMLElement = row;
+    let host: HTMLElement = body;
     if (kidsShown.length > 4) {
-      const det = row.createEl("details", { cls: "nn-subtasks-fold" });
+      const det = body.createEl("details", { cls: "nn-subtasks-fold" });
       const done = kidsShown.filter((c) => isDone(c)).length;
       det.createEl("summary", { text: `${kidsShown.length} sub-tasks${done ? ` · ${done} done` : ""}` });
       host = det;

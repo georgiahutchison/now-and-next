@@ -1,6 +1,6 @@
 # Now & Next
 
-A gentle day, week and month planner for [Obsidian](https://obsidian.md), built on the [Tasks](https://github.com/obsidian-tasks-group/obsidian-tasks) plugin and designed with ADHD and autistic brains in mind.
+A day, week and month planner for [Obsidian](https://obsidian.md), built on the [Tasks](https://github.com/obsidian-tasks-group/obsidian-tasks) plugin and designed with ADHD and autistic brains in mind.
 
 Your tasks stay where they are: ordinary Tasks lines in your notes. Now & Next is a way of looking at them, planning them across days and getting through them, one thing at a time.
 
@@ -24,12 +24,12 @@ Each support can be switched on or off in **Settings → Now & Next → Supports
 |---|---|
 | Focus mode | Shows today only: one task as **Now**, the following one as **Next**. Done, Not now, a timer and a first-step prompt sit under the current task. |
 | Daily cap | Set how many tasks you want on one day. A day over the cap says so quietly and offers to move the extras on to the next day. |
-| Gentle carry-over | Nothing turns red. Unfinished tasks from past days wait in a "Carry over?" tray: move each to today, tomorrow or another day, put it back in its list, or let it go. With this off, they show on today instead. |
+| Carry-over tray | Unfinished tasks from past days wait in a "Carry over?" tray: move each to today, tomorrow or another day, put it back in its list, or let it go. With this off, they show on today instead. |
 | Quick capture | A capture box that drops a thought into today's daily note as a task, so ideas get parked without a context switch. |
 | Done list | Each day shows what you finished, not only what's left. |
 | Energy tags | Tag tasks `#energy/low`, `#energy/mid` or `#energy/high`, then filter the planner to what fits how you feel right now. |
 | Visible time | A bar showing how much of your working day is left. |
-| Task timer | Start a countdown on a task. It shows in the status bar and chimes at the end. No log, no score. |
+| Task timer | Start a countdown on a task. It shows in the status bar and chimes at the end. |
 | Time estimates | Add an estimate such as `[est:: 30m]`. Each day totals its estimates against your working hours, so overload shows before it happens. |
 | First tiny step | A task with no sub-tasks that has sat for a while gets a quiet "first step?" prompt. Your answer becomes a sub-task. |
 | Waiting-on status | Mark a task as waiting on someone (`[w]`). It leaves the day's list for a separate "Waiting on others" strip. |

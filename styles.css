@@ -34,18 +34,8 @@
 .nn-carry-btns button, .nn-carry-actions button { font-size: var(--font-ui-smaller); height: auto; padding: 2px var(--size-4-2); }
 
 /* tasks */
-.nn-task { border-radius: var(--radius-s); }
 .nn-task[draggable="true"] { cursor: grab; }
 .nn-task.is-dragging { opacity: 0.4; }
-.nn-task-line { --nn-line: 1.4em; display: flex; flex-wrap: wrap; align-items: flex-start; gap: var(--size-4-2); padding: 3px var(--size-4-1); border-radius: var(--radius-s); }
-.nn-task-line:hover { background: var(--background-modifier-hover); }
-.nn-check { font-size: inherit; flex: none; margin: 0; align-self: flex-start; margin-top: calc((var(--nn-line) - var(--checkbox-size, 15px)) / 2); }
-.nn-task-text { flex: 1 1 0; min-width: 5em; cursor: var(--cursor); line-height: var(--nn-line); overflow-wrap: anywhere; }
-.nn-task.is-done > .nn-task-line .nn-task-text { color: var(--text-faint); text-decoration: line-through; }
-.nn-task.is-waiting > .nn-task-line .nn-task-text { color: var(--text-muted); font-style: italic; }
-.nn-chips { display: flex; flex-wrap: wrap; gap: 3px; order: 3; flex-basis: 100%; padding-left: calc(var(--checkbox-size, 15px) + var(--size-4-2)); }
-.nn-chips:empty { display: none; }
-.nn-more { order: 2; }
 .nn-chip { font-size: var(--font-ui-smaller); color: var(--text-muted); background: var(--background-modifier-hover); border-radius: var(--radius-s); padding: 0 5px; line-height: 1.6; white-space: nowrap; display: inline-flex; align-items: center; }
 .nn-chip svg { width: 11px; height: 11px; }
 .nn-chip-project { color: var(--text-accent); }
@@ -53,10 +43,6 @@
 .nn-energy-mid { color: var(--color-yellow); }
 .nn-energy-high { color: var(--color-orange); }
 .nn-step-chip { cursor: var(--cursor); color: var(--text-accent); background: transparent; border: 1px dashed var(--text-accent); }
-.nn-more { font-size: inherit; opacity: 0; flex: none; padding: 0 3px; height: var(--nn-line); display: inline-flex; align-items: center; }
-.nn-more svg { width: 14px; height: 14px; }
-.nn-task-line:hover .nn-more { opacity: 1; }
-.nn-subtasks { margin-left: calc(var(--size-4-4) + 4px); border-left: 1px solid var(--background-modifier-border); padding-left: var(--size-4-1); }
 
 /* week + day columns */
 .nn-body { min-height: 0; }
@@ -98,7 +84,6 @@
 .nn-tab.is-active { background: var(--interactive-accent); color: var(--text-on-accent); }
 .nn-tab-count { font-size: var(--font-ui-smaller); opacity: 0.75; }
 .nn-panel-hint { font-size: var(--font-ui-smaller); color: var(--text-faint); }
-.nn-panel-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1px var(--size-4-3); }
 
 /* time-left bar */
 .nn-timebar { display: flex; flex-direction: column; gap: 2px; }
@@ -148,11 +133,6 @@
   .nn-week { grid-template-columns: repeat(var(--nn-cols, 5), minmax(240px, 85vw)); }
 }
 .nn-tabs-label { font-size: var(--font-ui-smaller); color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; align-self: center; margin-right: var(--size-4-1); }
-.nn-details { margin: 0 0 2px calc(var(--checkbox-size, 15px) + var(--size-4-2) + var(--size-4-1)); padding-left: var(--size-4-3); font-size: var(--font-ui-smaller); color: var(--text-muted); }
-.nn-details li { margin: 0; line-height: 1.4; }
-.nn-subtasks-fold { margin-left: calc(var(--size-4-4) + 4px); }
-.nn-subtasks-fold > summary { font-size: var(--font-ui-smaller); color: var(--text-muted); cursor: var(--cursor); }
-.nn-side .nn-task-line { padding: var(--size-4-1) var(--size-4-1); }
 .nn-side .nn-day-list { gap: var(--size-4-1); }
 .nn-side .nn-timebar { gap: var(--size-4-1); }
 .nn-inline-edit { flex: 1 1 0; min-width: 5em; font-size: inherit; height: auto; padding: 0 var(--size-4-1); }
@@ -170,3 +150,35 @@
 .nn-sort { display: inline-flex; align-items: center; gap: var(--size-4-1); }
 .nn-sort select { font-size: var(--font-ui-smaller); height: auto; padding: 2px var(--size-4-5) 2px var(--size-4-2); }
 .nn-side .nn-capture-multi { font-size: var(--font-ui-small); }
+
+
+/* ---- task rows: subtle cards on a fixed grid ---- */
+.nn-task { --nn-line: 1.45em; --nn-indent: calc(var(--checkbox-size, 15px) + var(--size-4-2)); }
+.nn-card { background: var(--background-primary); border: 1px solid var(--background-modifier-border); border-radius: var(--radius-m); padding: var(--size-4-2) var(--size-4-2) var(--size-4-2) var(--size-4-3); }
+.nn-card:hover { border-color: var(--background-modifier-border-hover); }
+.nn-task.is-nested { padding: 2px 0; }
+.nn-task.is-nested > .nn-task-line > .nn-actions { top: 0; }
+.nn-task-line { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: var(--size-4-2); row-gap: 3px; align-items: start; }
+.nn-check { grid-column: 1; grid-row: 1; font-size: inherit; margin: 0; margin-top: calc((var(--nn-line) - var(--checkbox-size, 15px)) / 2); }
+.nn-task-text { grid-column: 2; grid-row: 1; line-height: var(--nn-line); cursor: var(--cursor); overflow-wrap: anywhere; }
+.nn-inline-edit { grid-column: 2; grid-row: 1; width: 100%; height: var(--nn-line); font-size: inherit; padding: 0 var(--size-4-1); }
+.nn-task { position: relative; }
+.nn-actions { position: absolute; top: var(--size-4-1); right: var(--size-4-1); display: inline-flex; height: var(--nn-line); align-items: center; gap: 2px; padding: 0 2px; border-radius: var(--radius-s); background: var(--background-primary); box-shadow: 0 0 0 1px var(--background-modifier-border); opacity: 0; pointer-events: none; }
+.nn-card:hover > .nn-task-line > .nn-actions, .nn-task.is-nested:hover > .nn-task-line > .nn-actions { opacity: 1; pointer-events: auto; }
+.nn-more { display: inline-flex; align-items: center; justify-content: center; padding: 2px; }
+.nn-more svg { width: 14px; height: 14px; }
+.nn-drop:hover { color: var(--text-error); }
+.nn-chips { grid-column: 2; grid-row: 2; display: flex; flex-wrap: wrap; gap: 4px; }
+.nn-chips:empty { display: none; }
+.nn-task.is-done > .nn-task-line .nn-task-text { color: var(--text-faint); text-decoration: line-through; }
+.nn-task.is-waiting > .nn-task-line .nn-task-text { color: var(--text-muted); font-style: italic; }
+.nn-task-body { margin-left: var(--nn-indent); margin-top: var(--size-4-1); display: flex; flex-direction: column; gap: var(--size-4-1); }
+.nn-details { margin: 0; padding: 0 0 0 1.1em; font-size: var(--font-ui-smaller); color: var(--text-muted); line-height: 1.5; }
+.nn-details li { margin: 0; }
+.nn-subtasks { display: flex; flex-direction: column; }
+.nn-subtasks-fold > summary { font-size: var(--font-ui-smaller); color: var(--text-muted); cursor: var(--cursor); list-style-position: inside; }
+.nn-subtasks-fold[open] > summary { margin-bottom: var(--size-4-1); }
+.nn-day-list, .nn-side .nn-day-list { display: flex; flex-direction: column; gap: var(--size-4-2); }
+/* tab lists: cards flow in columns, so a tall card leaves no gap beside it */
+.nn-panel-list { columns: 2 260px; column-gap: var(--size-4-3); }
+.nn-panel-list > .nn-card { break-inside: avoid; margin-bottom: var(--size-4-2); }

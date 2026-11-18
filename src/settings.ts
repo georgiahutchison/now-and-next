@@ -12,7 +12,7 @@ export type SupportKey =
 export const SUPPORTS: { key: SupportKey; name: string; desc: string }[] = [
   { key: "focus", name: "Focus mode", desc: "Today only, one task at a time: Now and Next." },
   { key: "dailyCap", name: "Daily cap", desc: "Shows when a day has more tasks than your cap and offers to move the extras on." },
-  { key: "carryOver", name: "Gentle carry-over", desc: "Unfinished tasks from past days wait in a 'Carry over?' tray. Off: they show on today instead." },
+  { key: "carryOver", name: "Carry-over tray", desc: "Unfinished tasks from past days wait in a 'Carry over?' tray. Off: they show on today instead." },
   { key: "capture", name: "Quick capture", desc: "A capture box at the top that drops a thought into today's note." },
   { key: "doneList", name: "Done list", desc: "Each day shows what you finished." },
   { key: "energy", name: "Energy tags", desc: "Low, medium, high energy on tasks, and a filter for how you feel right now." },

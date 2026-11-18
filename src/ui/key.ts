@@ -23,6 +23,9 @@ const ROWS: [string, string][] = [
   ["#health, #money …", "Area: puts the task in that area's tab"],
   ["Indented - [ ]", "Sub-task: its own checkbox"],
   ["Indented - (no box)", "Detail: shown under the task, not counted"],
+  ["Click task text", "Open the task in its note"],
+  ["Double-click task text", "Edit the wording in place (Enter saves, Escape cancels)"],
+  ["× on hover", "Drop the task (Undo appears for a few seconds)"],
 ];
 
 export class KeyModal extends Modal {

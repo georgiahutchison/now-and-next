@@ -1,7 +1,7 @@
 import { Notice } from "obsidian";
 import type NowAndNextPlugin from "./main";
 
-/** One countdown at a time, shown in the status bar. No log, no score. */
+/** One countdown at a time, shown in the status bar. */
 export class Timer {
   private el: HTMLElement;
   private handle: number | null = null;

@@ -23,7 +23,7 @@ export function openWeeklyReview(plugin: NowAndNextPlugin) {
       render: (el) => {
         const done = store.tasks.filter((t) => isDone(t) && inWeek(t.done));
         const st = weekStats(store.tasks, mon);
-        el.createEl("p", { text: done.length ? `${done.length} done this week (${st.pct}% of what was planned).` : "Nothing ticked off this week, and that's information, not a verdict." });
+        el.createEl("p", { text: done.length ? `${done.length} done this week (${st.pct}% of what was planned).` : "Nothing ticked off this week." });
         const list = el.createEl("ul", { cls: "nn-review-list" });
         for (const t of done) list.createEl("li", { text: t.text });
       },
