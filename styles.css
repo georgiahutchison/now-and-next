@@ -37,10 +37,10 @@
 .nn-task { border-radius: var(--radius-s); }
 .nn-task[draggable="true"] { cursor: grab; }
 .nn-task.is-dragging { opacity: 0.4; }
-.nn-task-line { display: flex; flex-wrap: wrap; align-items: flex-start; gap: var(--size-4-2); padding: 3px var(--size-4-1); border-radius: var(--radius-s); }
+.nn-task-line { --nn-line: 1.4em; display: flex; flex-wrap: wrap; align-items: flex-start; gap: var(--size-4-2); padding: 3px var(--size-4-1); border-radius: var(--radius-s); }
 .nn-task-line:hover { background: var(--background-modifier-hover); }
-.nn-check { margin-top: 3px; flex: none; }
-.nn-task-text { flex: 1 1 0; min-width: 5em; cursor: var(--cursor); line-height: var(--line-height-tight); overflow-wrap: anywhere; }
+.nn-check { font-size: inherit; flex: none; margin: 0; align-self: flex-start; margin-top: calc((var(--nn-line) - var(--checkbox-size, 15px)) / 2); }
+.nn-task-text { flex: 1 1 0; min-width: 5em; cursor: var(--cursor); line-height: var(--nn-line); overflow-wrap: anywhere; }
 .nn-task.is-done > .nn-task-line .nn-task-text { color: var(--text-faint); text-decoration: line-through; }
 .nn-task.is-waiting > .nn-task-line .nn-task-text { color: var(--text-muted); font-style: italic; }
 .nn-chips { display: flex; flex-wrap: wrap; gap: 3px; order: 3; flex-basis: 100%; padding-left: calc(var(--checkbox-size, 15px) + var(--size-4-2)); }
@@ -53,7 +53,8 @@
 .nn-energy-mid { color: var(--color-yellow); }
 .nn-energy-high { color: var(--color-orange); }
 .nn-step-chip { cursor: var(--cursor); color: var(--text-accent); background: transparent; border: 1px dashed var(--text-accent); }
-.nn-more { opacity: 0; flex: none; padding: 0 2px; }
+.nn-more { font-size: inherit; opacity: 0; flex: none; padding: 0 3px; height: var(--nn-line); display: inline-flex; align-items: center; }
+.nn-more svg { width: 14px; height: 14px; }
 .nn-task-line:hover .nn-more { opacity: 1; }
 .nn-subtasks { margin-left: calc(var(--size-4-4) + 4px); border-left: 1px solid var(--background-modifier-border); padding-left: var(--size-4-1); }
 
@@ -168,3 +169,4 @@
 .nn-panel-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--size-4-2); }
 .nn-sort { display: inline-flex; align-items: center; gap: var(--size-4-1); }
 .nn-sort select { font-size: var(--font-ui-smaller); height: auto; padding: 2px var(--size-4-5) 2px var(--size-4-2); }
+.nn-side .nn-capture-multi { font-size: var(--font-ui-small); }
