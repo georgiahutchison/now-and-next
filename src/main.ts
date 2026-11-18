@@ -1,0 +1,146 @@
+import { Notice, Plugin, TFolder, WorkspaceLeaf } from "obsidian";
+import { DEFAULT_SETTINGS, NowAndNextSettings, NowAndNextSettingTab, SupportKey } from "./settings";
+import { TaskStore, appendToFile, dailyNotePath } from "./store";
+import { Actions } from "./actions";
+import { newTaskLine, localToday } from "./tasks";
+import { PlannerView, PLANNER_VIEW } from "./ui/planner";
+import { TodayView, TODAY_VIEW } from "./ui/today";
+import { openWeeklyReview } from "./ui/review";
+import { TextPromptModal } from "./ui/modals";
+import { Timer } from "./timer";
+
+const CLAUDIAN_ID = "realclaudian";
+
+export default class NowAndNextPlugin extends Plugin {
+  settings!: NowAndNextSettings;
+  store!: TaskStore;
+  actions!: Actions;
+  timer!: Timer;
+
+  async onload() {
+    await this.loadSettings();
+    this.store = new TaskStore(this.app, this);
+    this.actions = new Actions(this);
+    this.timer = new Timer(this);
+
+    this.registerView(PLANNER_VIEW, (leaf) => new PlannerView(leaf, this));
+    this.registerView(TODAY_VIEW, (leaf) => new TodayView(leaf, this));
+    this.addSettingTab(new NowAndNextSettingTab(this.app, this));
+
+    this.addRibbonIcon("calendar-check", "Open Now & Next", () => this.openPlanner({}));
+
+    this.addCommand({ id: "open-planner", name: "Open planner", callback: () => this.openPlanner({}) });
+    this.addCommand({ id: "show-sidebar", name: "Show today in sidebar", callback: () => this.ensureSidebar(true) });
+    this.addCommand({ id: "focus-mode", name: "Focus mode", callback: () => { if (this.on("focus")) void this.openPlanner({ focus: true }); } });
+    this.addCommand({ id: "capture", name: "Capture a thought to today's note", callback: () => this.promptCapture() });
+    this.addCommand({ id: "weekly-review", name: "Weekly review", callback: () => { if (this.on("weeklyReview")) this.openReview(); } });
+    this.addCommand({ id: "talk-it-through", name: "Talk it through (open Claudian)", callback: () => { if (this.on("talk")) this.talkItThrough(); } });
+    this.addCommand({ id: "stop-timer", name: "Stop timer", callback: () => this.timer.stop() });
+    this.addCommand({
+      id: "toggle-calm", name: "Toggle calm view",
+      callback: async () => { this.settings.calm = !this.settings.calm; await this.saveSettings(); },
+    });
+
+    // Keep the areas folder setting pointing at the folder if it is renamed or moved.
+    this.registerEvent(this.app.vault.on("rename", async (f, oldPath) => {
+      const cur = this.settings.projectsFolder.replace(/\/$/, "");
+      if (f instanceof TFolder && oldPath === cur) {
+        this.settings.projectsFolder = f.path;
+        await this.saveSettings();
+        new Notice(`Now & Next: areas folder is now ${f.path}`);
+      }
+    }));
+
+    this.app.workspace.onLayoutReady(async () => {
+      await this.store.init();
+      await this.ensureSidebar(false);
+    });
+  }
+
+  onunload() {
+    this.timer.stop(true);
+  }
+
+  async loadSettings() {
+    const data = (await this.loadData()) ?? {};
+    this.settings = Object.assign({}, DEFAULT_SETTINGS, data);
+    this.settings.supports = Object.assign({}, DEFAULT_SETTINGS.supports, data.supports ?? {});
+  }
+
+  /** Is this support switched on in settings? */
+  on(k: SupportKey): boolean { return this.settings.supports[k] !== false; }
+
+  async saveSettings() {
+    await this.saveData(this.settings);
+    await this.store.reloadAll(); // folders may have changed; also re-renders every view
+  }
+
+  // ---------- views ----------
+
+  async openPlanner(opts: { focus?: boolean }) {
+    const { workspace } = this.app;
+    let leaf: WorkspaceLeaf | null = workspace.getLeavesOfType(PLANNER_VIEW)[0] ?? null;
+    if (!leaf) {
+      leaf = workspace.getLeaf("tab");
+      await leaf.setViewState({ type: PLANNER_VIEW, active: true });
+    }
+    await workspace.revealLeaf(leaf);
+    const v = leaf.view;
+    if (v instanceof PlannerView && opts.focus !== undefined) v.setFocus(opts.focus);
+  }
+
+  /** Put the Today view in the left sidebar, next to Files / Search / Bookmarks. */
+  async ensureSidebar(reveal: boolean) {
+    const { workspace } = this.app;
+    let leaf = workspace.getLeavesOfType(TODAY_VIEW)[0];
+    if (!leaf) {
+      const l = workspace.getLeftLeaf(false);
+      if (!l) return;
+      await l.setViewState({ type: TODAY_VIEW, active: reveal });
+      leaf = l;
+    }
+    if (reveal) await workspace.revealLeaf(leaf);
+  }
+
+  openReview() { openWeeklyReview(this); }
+
+  // ---------- daily note + capture ----------
+
+  dailyNoteOptions(): { folder: string; format: string; template: string } {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const dn = (this.app as any).internalPlugins?.getPluginById?.("daily-notes");
+    const o = dn?.instance?.options ?? {};
+    return { folder: (o.folder ?? "").replace(/\/$/, ""), format: o.format || "YYYY-MM-DD", template: o.template ?? "" };
+  }
+
+  async capture(text: string, opts: { scheduled?: string; tag?: string } = {}) {
+    const o = this.dailyNoteOptions();
+    const path = dailyNotePath(o.folder, o.format, localToday());
+    await appendToFile(this.app, path, newTaskLine(text, opts), o.template || undefined);
+    new Notice(`Saved to ${path}`, 1500);
+  }
+
+  promptCapture() {
+    new TextPromptModal(this.app, {
+      title: "Capture a thought",
+      hint: "Goes into today's daily note as a task. Sort it later.",
+      placeholder: "What's on your mind?",
+      cta: "Save",
+      onSubmit: (v) => this.capture(v),
+    }).open();
+  }
+
+  // ---------- Claudian ----------
+
+  talkItThrough() {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const plugins = (this.app as any).plugins;
+    if (!plugins?.enabledPlugins?.has(CLAUDIAN_ID)) {
+      new Notice("Claudian isn't switched on in this vault. Turn it on in Settings → Community plugins.");
+      return;
+    }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (this.app as any).commands.executeCommandById(`${CLAUDIAN_ID}:open-view`);
+    new Notice("Claudian is open. Press fn twice to dictate, then say what's on your plate. Claude adds the tasks to today's note.", 8000);
+  }
+}
