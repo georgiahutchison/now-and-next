@@ -35,15 +35,15 @@ export class TextPromptModal extends Modal {
 }
 
 export class DatePromptModal extends Modal {
-  constructor(app: App, private initial: string, private onPick: (d: string) => unknown) { super(app); }
+  constructor(app: App, private initial: string, private onPick: (d: string) => unknown, private titleText = "Pick a day", private cta = "Move") { super(app); }
 
   onOpen() {
-    this.setTitle("Pick a day");
+    this.setTitle(this.titleText);
     const input = this.contentEl.createEl("input", { type: "date", cls: "nn-modal-input" });
     input.value = this.initial;
     const go = () => { if (input.value) { this.close(); void this.onPick(input.value); } };
     input.addEventListener("keydown", (e) => { if (e.key === "Enter") go(); });
-    new Setting(this.contentEl).addButton((b) => b.setButtonText("Move").setCta().onClick(go));
+    new Setting(this.contentEl).addButton((b) => b.setButtonText(this.cta).setCta().onClick(go));
     window.setTimeout(() => input.focus(), 0);
   }
 

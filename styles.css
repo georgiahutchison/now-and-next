@@ -158,3 +158,7 @@
 .nn-key { border-collapse: collapse; width: 100%; font-size: var(--font-ui-small); }
 .nn-key td { padding: var(--size-4-1) var(--size-4-2); border-bottom: 1px solid var(--background-modifier-border); vertical-align: top; }
 .nn-key-sym { white-space: nowrap; font-family: var(--font-monospace); color: var(--text-normal); }
+.nn-due { color: var(--text-muted); border: 1px solid var(--background-modifier-border); background: transparent; }
+.nn-due.is-now { color: var(--text-accent); border-color: var(--text-accent); }
+.nn-drop:hover { color: var(--text-error); }
+.nn-undo-btn { margin-left: var(--size-4-2); }

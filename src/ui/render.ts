@@ -74,11 +74,24 @@ export function renderTask(plugin: NowAndNextPlugin, parent: HTMLElement, t: VTa
     if (t.recurrence) { const r = chips.createSpan({ cls: "nn-chip" }); setIcon(r, "repeat"); r.setAttr("aria-label", t.recurrence); }
     if (t.project && t.project !== opts.hideProject) chips.createSpan({ cls: "nn-chip nn-chip-project", text: t.project });
     if (opts.showDate && planDate(t)) chips.createSpan({ cls: "nn-chip", text: shortDate(planDate(t)!) });
+    if (t.due && !isDone(t)) {
+      const today = localToday();
+      const label = t.due === today ? "due today" : `due ${shortDate(t.due)}`;
+      const c = chips.createSpan({ cls: "nn-chip nn-due", text: label });
+      if (t.due <= today) c.addClass("is-now");
+    }
     if (plugin.on("firstStep") && needsFirstStep(t, localToday(), plugin.settings.stepPromptDays)) {
       const s = chips.createSpan({ cls: "nn-chip nn-step-chip", text: "first step?" });
       s.setAttr("aria-label", "Break this into a first 5-minute step");
       s.addEventListener("click", (e) => { e.stopPropagation(); a.promptFirstStep(t); });
     }
+  }
+
+  if (!isDone(t) && t.status !== "-") {
+    const drop = line.createSpan({ cls: "nn-more nn-drop clickable-icon" });
+    setIcon(drop, "x");
+    drop.setAttr("aria-label", "Drop this task (you can undo)");
+    drop.addEventListener("click", (e) => { e.stopPropagation(); void a.drop(t); });
   }
 
   const more = line.createSpan({ cls: "nn-more clickable-icon" });

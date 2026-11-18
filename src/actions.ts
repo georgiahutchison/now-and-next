@@ -67,8 +67,25 @@ export class Actions {
 
   async waiting(t: VTask, on: boolean) { await editTask(this.app, t, (l) => setStatus(l, on ? "w" : " ")); }
 
+  /** Drop (cancel) a task, with an Undo button for a few seconds. */
   async drop(t: VTask) {
-    await editTask(this.app, t, (l) => setDate(setStatus(l, "-"), "cancelled", localToday()));
+    const original = t.raw;
+    const dropped = setDate(setStatus(original, "-"), "cancelled", localToday());
+    if (!(await editTask(this.app, t, () => dropped))) return;
+    const frag = document.createDocumentFragment();
+    frag.createSpan({ text: `Dropped: ${t.text} ` });
+    const undo = frag.createEl("button", { text: "Undo", cls: "nn-undo-btn" });
+    const notice = new Notice(frag, 6000);
+    undo.addEventListener("click", async () => {
+      notice.hide();
+      await editTask(this.app, { ...t, raw: dropped } as VTask, () => original);
+    });
+  }
+
+  async deadline(t: VTask, date: string | null) { await editTask(this.app, t, (l) => setDate(l, "due", date)); }
+
+  promptDeadline(t: VTask) {
+    new DatePromptModal(this.app, t.due ?? localToday(), (d) => this.deadline(t, d), "Set a deadline", "Save").open();
   }
 
   async addSubtask(t: VTask, text: string) {
@@ -124,6 +141,8 @@ export class Actions {
     m.addItem((i) => i.setTitle("Move to next day").setIcon("arrow-right").onClick(() => this.shift(t, 1)));
     m.addItem((i) => i.setTitle("Move to previous day").setIcon("arrow-left").onClick(() => this.shift(t, -1)));
     m.addItem((i) => i.setTitle("Pick a day…").setIcon("calendar").onClick(() => this.promptDate(t)));
+    m.addItem((i) => i.setTitle(t.due ? "Change deadline…" : "Deadline…").setIcon("calendar-clock").onClick(() => this.promptDeadline(t)));
+    if (t.due) m.addItem((i) => i.setTitle("Remove deadline").setIcon("calendar-x").onClick(() => this.deadline(t, null)));
     if (t.scheduled) m.addItem((i) => i.setTitle("Unplan (back to its list)").setIcon("undo-2").onClick(() => this.schedule(t, null)));
     m.addSeparator();
     const pr: [Priority, string][] = [["highest", "Highest"], ["high", "High"], ["medium", "Medium"], ["none", "Normal"], ["low", "Low"]];
