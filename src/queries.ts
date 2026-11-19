@@ -37,8 +37,16 @@ export function isLater(t: VTask, today = localToday()): boolean {
   return t.tags.some((x) => x.toLowerCase() === "later") || (!!t.start && t.start > today);
 }
 
+/** A repeating task (🔁). Without a date it lives in the Routines panel. */
+export function isRoutine(t: VTask) { return !!t.recurrence; }
+
 function undatedOpen(t: VTask) {
-  return isOpen(t) && !planDate(t) && !isLater(t);
+  return isOpen(t) && !planDate(t) && !isLater(t) && !isRoutine(t);
+}
+
+/** Undated repeating tasks; deferred ones wait in Later. */
+export function routines(tasks: VTask[], f: EnergyFilter): VTask[] {
+  return tasks.filter((t) => isOpen(t) && isRoutine(t) && !planDate(t) && !isLater(t) && energyOk(t, f)).sort(byPriority);
 }
 
 export function later(tasks: VTask[], f: EnergyFilter): VTask[] {
@@ -53,7 +61,7 @@ export function isUrgent(t: VTask, today = localToday()) {
 }
 /** Triage holds undated open tasks: the ones still to be sorted before they get a day. */
 export function matrixTasks(tasks: VTask[], f: EnergyFilter): VTask[] {
-  return tasks.filter((t) => isOpen(t) && !planDate(t) && !isLater(t) && energyOk(t, f));
+  return tasks.filter((t) => isOpen(t) && !planDate(t) && !isLater(t) && !isRoutine(t) && energyOk(t, f));
 }
 
 export function inProject(tasks: VTask[], project: string, f: EnergyFilter): VTask[] {

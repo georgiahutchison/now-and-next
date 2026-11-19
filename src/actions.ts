@@ -161,6 +161,11 @@ export class Actions {
     }).open();
   }
 
+  /** Give a routine its next date; Tasks then repeats it by its rule. */
+  promptStart(t: VTask) {
+    new DatePromptModal(this.app, localToday(), (d) => this.schedule(t, d), `Next date for: ${t.text}`, "Start").open();
+  }
+
   promptDate(t: VTask) {
     new DatePromptModal(this.app, planDate(t) ?? localToday(), (d) => this.schedule(t, d)).open();
   }
@@ -181,6 +186,7 @@ export class Actions {
     const inLater = isLater(t);
     m.addItem((i) => i.setTitle(inLater ? "Back from Later" : "Move to Later").setIcon("archive").onClick(() => (inLater ? this.fromLater(t) : this.toLater(t))));
     m.addItem((i) => i.setTitle("Defer to next month").setIcon("calendar-arrow-up").onClick(() => this.deferToNextMonth(t)));
+    if (t.recurrence && !planDate(t)) m.addItem((i) => i.setTitle("Start routine…").setIcon("repeat").onClick(() => this.promptStart(t)));
     m.addSeparator();
     const pr: [Priority, string][] = [["highest", "Highest"], ["high", "High"], ["medium", "Medium"], ["none", "Normal"], ["low", "Low"]];
     for (const [p, label] of pr) {

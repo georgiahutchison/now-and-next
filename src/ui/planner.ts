@@ -4,9 +4,9 @@ import { VTask, planDate } from "../store";
 import { applyOrder, placeBefore, moveExtrasOn } from "../order";
 import {
   openOn, doneOn, overdue, waiting, inProject, inbox, estimateTotal, hm, EnergyFilter, sortTasks, SORT_LABELS, SortMode,
-  later, isImportant, isUrgent, matrixTasks,
+  later, routines, isImportant, isUrgent, matrixTasks,
 } from "../queries";
-import { renderList, dropZone, captureBox, carryOverTray } from "./render";
+import { renderList, renderTask, dropZone, captureBox, carryOverTray } from "./render";
 import type NowAndNextPlugin from "../main";
 import type { Zoom } from "../settings";
 
@@ -97,6 +97,7 @@ export class PlannerView extends ItemView {
     // Triage already holds every open task, so the area tabs would only repeat it.
     if (this.zoom !== "matrix") this.renderTabs(root);
     this.renderLater(root);
+    this.renderRoutines(root);
   }
 
   // ---------- header ----------
@@ -408,6 +409,24 @@ export class PlannerView extends ItemView {
     const inner = det.createDiv({ cls: "nn-panel-list" });
     renderList(this.plugin, inner, sortTasks(list, this.plugin.settings.sortBy), "Nothing here.");
     dropZone(det, this.plugin, (t) => this.plugin.actions.toLater(t));
+  }
+
+  // ---------- routines (repeating tasks without a date) ----------
+
+  private renderRoutines(root: HTMLElement) {
+    const list = routines(this.plugin.store.tasks, this.filter);
+    const det = root.createEl("details", { cls: "nn-later nn-routines" });
+    const sum = det.createEl("summary");
+    sum.createSpan({ text: "Routines" });
+    if (list.length) sum.createSpan({ cls: "nn-tab-count", text: ` ${list.length}` });
+    det.createDiv({ cls: "nn-panel-hint", text: "Repeating tasks (🔁) with no date. Start one to give it its next date; it then repeats by its rule." });
+    const inner = det.createDiv({ cls: "nn-panel-list" });
+    if (!list.length) { inner.createDiv({ cls: "nn-empty", text: "Nothing here." }); return; }
+    for (const t of list) {
+      const card = renderTask(this.plugin, inner, t, { showRule: true });
+      const start = card.createEl("button", { cls: "nn-routine-start", text: "Start" });
+      start.addEventListener("click", (e) => { e.stopPropagation(); this.plugin.actions.promptStart(t); });
+    }
   }
 
   // ---------- focus mode ----------

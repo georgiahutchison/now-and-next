@@ -72,7 +72,7 @@ export function parseTaskLine(line: string): ParsedTask | null {
   for (const [p, emoji] of Object.entries(PRIORITY_EMOJI) as [Priority, string][]) {
     if (body.includes(emoji)) { t.priority = p; break; }
   }
-  const rm = /🔁️? *([^📅⏳🛫➕✅❌🔺⏫🔼🔽⏬🆔⛔🏁#^]+)/u.exec(body);
+  const rm = /🔁\uFE0F? *([A-Za-z0-9][A-Za-z0-9 ,]*)/u.exec(body);
   if (rm) t.recurrence = rm[1].trim();
 
   const em = EST_RE.exec(body);

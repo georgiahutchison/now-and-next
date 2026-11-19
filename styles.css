@@ -338,3 +338,42 @@
   border-color: var(--interactive-accent);
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--interactive-accent) 30%, transparent), 0 0 18px color-mix(in srgb, var(--interactive-accent) 35%, transparent);
 }
+
+/* add-task field: clearly in the accent colour */
+.nn-root .nn-capture-row {
+  border: 1px solid var(--color-accent, var(--interactive-accent));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent, var(--interactive-accent)) 18%, transparent),
+              0 0 22px color-mix(in srgb, var(--color-accent, var(--interactive-accent)) 30%, transparent);
+}
+.nn-root .nn-capture-row:focus-within {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent, var(--interactive-accent)) 30%, transparent),
+              0 0 26px color-mix(in srgb, var(--color-accent, var(--interactive-accent)) 45%, transparent);
+}
+.nn-root .nn-capture-row .nn-capture-check { border-color: var(--color-accent, var(--interactive-accent)); }
+
+/* routines */
+.nn-routines { margin-top: 0; }
+.nn-routine-start { margin: var(--size-4-2) 0 0 var(--nn-indent); }
+
+/* task wording in the notes' text font */
+.nn-task-text, .nn-root .nn-capture-row textarea.nn-capture-multi, .nn-focus-text, .nn-focus-next { font-family: var(--font-text); }
+.nn-task-text .nn-chip, .nn-task-text .nn-prefix { font-family: var(--font-interface); }
+
+/* glow in the same accent as "Thu" (text accent), which this theme sets to chartreuse */
+.nn-root .nn-capture-row {
+  border: 1px solid var(--text-accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--text-accent) 20%, transparent),
+              0 0 22px color-mix(in srgb, var(--text-accent) 35%, transparent);
+}
+.nn-root .nn-capture-row:focus-within {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--text-accent) 32%, transparent),
+              0 0 26px color-mix(in srgb, var(--text-accent) 50%, transparent);
+}
+.nn-root .nn-capture-row .nn-capture-check { border-color: var(--text-accent); }
+
+/* insert marker: a thin accent line in the gap above the card, not a heavy edge */
+.nn-root .nn-card.is-insert-before { box-shadow: none; }
+.nn-root .nn-card.is-insert-before::before {
+  content: ""; position: absolute; left: 8px; right: 8px; top: -5px; height: 2px;
+  border-radius: 1px; background: var(--text-accent); pointer-events: none;
+}

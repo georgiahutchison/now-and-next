@@ -125,3 +125,7 @@ test("first wikilink is the task's link; display text shows the link text", () =
   assert.equal(t.link, "Privacy-Tracker");
   assert.equal(t.text, "ring the bank privacy about Other");
 });
+
+test("repeat rule stops at non-rule text", () => {
+  assert.equal(parseTaskLine("- [ ] pay 🔁 every month on the 1st 👤 G 🛫 2027-01-01")!.recurrence, "every month on the 1st");
+});

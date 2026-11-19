@@ -6,7 +6,7 @@ import type NowAndNextPlugin from "../main";
 
 export const DRAG_TYPE = "text/x-now-and-next";
 
-export function renderTask(plugin: NowAndNextPlugin, parent: HTMLElement, t: VTask, opts: { showDate?: boolean; nested?: boolean; hideProject?: string; shortLabel?: boolean } = {}) {
+export function renderTask(plugin: NowAndNextPlugin, parent: HTMLElement, t: VTask, opts: { showDate?: boolean; nested?: boolean; hideProject?: string; shortLabel?: boolean; showRule?: boolean } = {}) {
   const a = plugin.actions;
   const row = parent.createDiv({ cls: opts.nested ? "nn-task is-nested" : "nn-task nn-card" });
   if (isDone(t)) row.addClass("is-done");
@@ -79,7 +79,10 @@ export function renderTask(plugin: NowAndNextPlugin, parent: HTMLElement, t: VTa
     }
     if (t.energy && plugin.on("energy")) chips.createSpan({ cls: `nn-chip nn-energy nn-energy-${t.energy}`, text: { low: "low", mid: "med", high: "high" }[t.energy] });
     if (t.estimateMin && plugin.on("estimates")) chips.createSpan({ cls: "nn-chip", text: "~" + formatMinutes(t.estimateMin) });
-    if (t.recurrence) { const r = chips.createSpan({ cls: "nn-chip" }); setIcon(r, "repeat"); r.setAttr("aria-label", t.recurrence); }
+    if (t.recurrence) {
+      if (opts.showRule) chips.createSpan({ cls: "nn-chip", text: `🔁 ${t.recurrence}` });
+      else { const r = chips.createSpan({ cls: "nn-chip" }); setIcon(r, "repeat"); }
+    }
     if (opts.showDate && planDate(t)) chips.createSpan({ cls: "nn-chip", text: shortDate(planDate(t)!) });
     if (t.start && t.start > localToday()) chips.createSpan({ cls: "nn-chip", text: `from ${shortDate(t.start)}` });
     if (t.due && !isDone(t)) {
