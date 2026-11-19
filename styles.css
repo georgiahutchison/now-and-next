@@ -466,3 +466,8 @@
 .nn-habit-day { width: 1.7em; }
 .nn-habit-day.is-other, .nn-habit-cell.is-other { opacity: 0.4; }
 .nn-habit-day.is-week-start, .nn-habit-cell.is-week-start { border-left: 1px solid var(--background-modifier-border); }
+
+/* Key: the same two columns in every section */
+.nn-key { table-layout: fixed; }
+.nn-key td.nn-key-sym { width: 15em; white-space: normal; overflow-wrap: anywhere; }
+.nn-key + .nn-key-h, .nn-key-h { margin-top: var(--size-4-4); }
