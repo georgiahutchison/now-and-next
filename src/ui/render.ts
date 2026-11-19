@@ -1,5 +1,5 @@
 import { setIcon } from "obsidian";
-import { formatMinutes, localToday, PRIORITY_EMOJI, addDays } from "../tasks";
+import { formatMinutes, localToday, PRIORITY_EMOJI, ENERGY_EMOJI, addDays } from "../tasks";
 import { VTask, isDone, isWaiting, planDate } from "../store";
 import { needsFirstStep } from "../queries";
 import type NowAndNextPlugin from "../main";
@@ -97,7 +97,10 @@ export function renderTask(plugin: NowAndNextPlugin, parent: HTMLElement, t: VTa
       const c = chips.createSpan({ cls: "nn-chip nn-chip-priority", text: PRIORITY_EMOJI[t.priority as Exclude<typeof t.priority, "none">] });
       c.setAttr("aria-label", `Priority: ${t.priority}`);
     }
-    if (t.energy && plugin.on("energy")) chips.createSpan({ cls: `nn-chip nn-energy nn-energy-${t.energy}`, text: { low: "low", mid: "med", high: "high" }[t.energy] });
+    if (t.energy && plugin.on("energy")) {
+      const c = chips.createSpan({ cls: `nn-chip nn-energy nn-energy-${t.energy}`, text: ENERGY_EMOJI[t.energy] });
+      c.setAttr("aria-label", `${{ low: "Low", mid: "Medium", high: "High" }[t.energy]} energy`);
+    }
     if (t.estimateMin && plugin.on("estimates")) chips.createSpan({ cls: "nn-chip", text: "~" + formatMinutes(t.estimateMin) });
     if (t.recurrence) {
       if (opts.showRule) chips.createSpan({ cls: "nn-chip", text: `🔁 ${t.recurrence}` });

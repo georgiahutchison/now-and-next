@@ -1,7 +1,7 @@
 import { App, Menu, Notice, TFile } from "obsidian";
 import {
   setDate, setPriority, setEnergy, setEstimate, setRecurrence, setStatus, newTaskLine, addDays, localToday, addTag, setText, removeTags,
-  Priority, Energy, parseDuration, PRIORITY_EMOJI,
+  Priority, Energy, parseDuration, PRIORITY_EMOJI, ENERGY_EMOJI,
 } from "./tasks";
 import { VTask, editTask, insertAfter, isWaiting, planDate } from "./store";
 import { isLater } from "./queries";
@@ -223,7 +223,7 @@ export class Actions {
     if (on("energy")) {
       const en: [Energy | null, string][] = [["low", "Low"], ["mid", "Medium"], ["high", "High"], [null, "None"]];
       for (const [e, label] of en) {
-        m.addItem((i) => i.setTitle(`Energy: ${label}`).setChecked((t.energy ?? null) === e).onClick(() => this.energy(t, e)));
+        m.addItem((i) => i.setTitle(`Energy: ${e ? ENERGY_EMOJI[e] + " " : ""}${label}`).setChecked((t.energy ?? null) === e).onClick(() => this.energy(t, e)));
       }
     }
     if (on("estimates")) m.addItem((i) => i.setTitle("Estimate…").setIcon("hourglass").onClick(() => this.promptEstimate(t)));

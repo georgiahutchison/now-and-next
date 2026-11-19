@@ -27,7 +27,7 @@ const SECTIONS: [string, [string, string][]][] = [
     ["#health, #pro-practice …", "Area: puts the task in that area's tab (spaces become hyphens)"],
     ["#later", "In the Later panel, out of the area tabs"],
     ["#urgent", "Urgent in Triage (so is a deadline within 7 days)"],
-    ["#energy/low · /mid · /high", "Energy the task needs"],
+    ["#energy/low · /mid · /high", "Energy the task needs, shown as 🪫 low, 🔋 medium, ⚡ high"],
     ["[est:: 30m]", "Time estimate (30m, 1h, 1h30m)"],
     ["[[Note]] in a task", "Project: shown before the task (else the note it is in)"],
     ["Indented - [ ]", "A task in its own right (shown as its own card)"],

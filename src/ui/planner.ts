@@ -170,7 +170,7 @@ export class PlannerView extends ItemView {
       const row2 = right.createDiv({ cls: "nn-header-row" });
       const energy = row2.createDiv({ cls: "nn-seg nn-energy-filter" });
       energy.createSpan({ cls: "nn-seg-label", text: "Energy" });
-      for (const [k, label] of [["all", "Any"], ["low", "Low"], ["mid", "Med"], ["high", "High"]] as const) {
+      for (const [k, label] of [["all", "Any"], ["low", "🪫 Low"], ["mid", "🔋 Med"], ["high", "⚡ High"]] as const) {
         const b = energy.createEl("button", { text: label });
         if (s.energyFilter === k) b.addClass("is-active");
         b.addEventListener("click", async () => { s.energyFilter = k; await this.plugin.saveSettings(); });
