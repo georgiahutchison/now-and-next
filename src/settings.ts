@@ -38,7 +38,7 @@ export interface NowAndNextSettings {
   /** Manual order of tasks per day (YYYY-MM-DD -> note|wording ids). */
   order: Record<string, string[]>;
   supports: Record<SupportKey, boolean>;
-  /** Calendar links (ICS), shown read-only in Day, Week and Month. */
+  /** Calendar links (ICS), shown read-only in Plan (all spans). */
   calendars: CalendarLink[];
 }
 
@@ -106,7 +106,7 @@ export class NowAndNextSettingTab extends PluginSettingTab {
       .addToggle((t) => t.setValue(s.showWeekend).onChange(async (v) => { s.showWeekend = v; await save(); }));
 
     new Setting(containerEl).setName("Open at")
-      .addDropdown((d) => d.addOptions({ matrix: "Triage", focus: "Focus", day: "Day", three: "3 days", week: "Week", month: "Month" }).setValue(s.defaultZoom)
+      .addDropdown((d) => d.addOptions({ matrix: "Triage", focus: "Focus", day: "Plan: 1 day", three: "Plan: 3 days", week: "Plan: 7 days", month: "Plan: Month" }).setValue(s.defaultZoom)
         .onChange(async (v) => { s.defaultZoom = v as Zoom; await save(); }));
 
     new Setting(containerEl).setName("Supports").setHeading();
@@ -118,7 +118,7 @@ export class NowAndNextSettingTab extends PluginSettingTab {
 
     new Setting(containerEl).setName("Calendars").setHeading();
     containerEl.createEl("p", { cls: "setting-item-description", text:
-      "Events from these calendars show at the top of each day in Day, 3 days and Week, and as a count in Month. They are read-only. " +
+      "Events from these calendars show at the top of each day in Plan, and as a count in Month. They are read-only. " +
       "Google: Settings, your calendar, Secret address in iCal format. Outlook: Settings, Calendar, Shared calendars, Publish a calendar, ICS link. " +
       "The links are private: anyone with one can read that calendar. They are kept in this plugin's settings only." });
     const refetch = debounce(() => void this.plugin.calendars.refresh(), 1200, true);

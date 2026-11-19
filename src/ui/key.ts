@@ -49,7 +49,8 @@ const SECTIONS: [string, [string, string][]][] = [
     ["6/5 · Move extras on", "More tasks than your daily cap; moves the extras to the next working day with room"],
     ["Start (Routines)", "Gives an undated repeating task its next date"],
     ["Faint time and title", "A calendar event from your calendar links (read-only)"],
-    ["Cmd/Ctrl + and -", "Zoom between Day, 3 days, Week and Month"],
+    ["1 · 3 · 7 · Month", "In Plan: one day, yesterday to tomorrow, a week, or a month"],
+    ["Cmd/Ctrl + and -", "In Plan: step between 1, 3, 7 days and Month"],
     ["Reload icon", "Refresh Now & Next and fetch calendars again"],
   ]],
 ];

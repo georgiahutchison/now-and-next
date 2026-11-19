@@ -11,9 +11,10 @@ import type NowAndNextPlugin from "../main";
 import type { Zoom } from "../settings";
 
 export const PLANNER_VIEW = "now-and-next-planner";
-// The view switcher, left to right; Cmd +/- zooms between Day, 3 days, Week and Month.
-const VIEWS: [Zoom, string][] = [["matrix", "Triage"], ["focus", "Focus"], ["day", "Day"], ["three", "3 days"], ["week", "Week"], ["month", "Month"]];
+// The view switcher: Triage, Focus, Plan. Plan's span (1, 3, 7 days or Month) sits by the date;
+// Cmd +/- steps through the spans.
 const ZOOMS: Zoom[] = ["day", "three", "week", "month"];
+const SPANS: [Zoom, string, string][] = [["day", "1", "One day"], ["three", "3", "Yesterday, today and tomorrow"], ["week", "7", "Week"], ["month", "Month", "Month"]];
 const isDated = (z: Zoom) => ZOOMS.includes(z);
 
 export class PlannerView extends ItemView {
@@ -22,10 +23,13 @@ export class PlannerView extends ItemView {
   tab = "";
   private skipped: string[] = [];
   private beforeFocus: Zoom = "week";
+  /** The span Plan returns to after Triage or Focus. */
+  private planSpan: Zoom = "week";
 
   constructor(leaf: WorkspaceLeaf, private plugin: NowAndNextPlugin) {
     super(leaf);
     this.zoom = plugin.settings.defaultZoom;
+    if (isDated(this.zoom)) this.planSpan = this.zoom;
     if (this.zoom === "focus" && !plugin.on("focus")) this.zoom = "week";
     this.scope = new Scope(this.app.scope);
     this.scope.register(["Mod"], "=", () => { this.zoomBy(-1); return false; });
@@ -47,11 +51,13 @@ export class PlannerView extends ItemView {
     const cur = ZOOMS.indexOf(this.zoom);
     if (cur < 0) return;
     this.zoom = ZOOMS[Math.min(ZOOMS.length - 1, Math.max(0, cur + dir))];
+    this.planSpan = this.zoom;
     this.render();
   }
 
   setView(z: Zoom) {
     if (z === "focus" && this.zoom !== "focus") this.beforeFocus = this.zoom;
+    if (isDated(z)) this.planSpan = z;
     this.zoom = z;
     this.skipped = [];
     this.render();
@@ -111,6 +117,7 @@ export class PlannerView extends ItemView {
   // ---------- header ----------
 
   private renderHeader(root: HTMLElement) {
+    if (isDated(this.zoom)) this.planSpan = this.zoom; // also when a day name or month cell opened one day
     const s = this.plugin.settings;
     const h = root.createDiv({ cls: "nn-header" });
 
@@ -130,16 +137,29 @@ export class PlannerView extends ItemView {
       iconBtn(nav, "chevron-right", "Next", () => move(1));
     }
     nav.createDiv({ cls: "nn-title", text: this.title() });
+    if (dated) {
+      const span = nav.createDiv({ cls: "nn-seg nn-span" });
+      for (const [z, label, tip] of SPANS) {
+        const b = span.createEl("button", { text: label, attr: { "aria-label": tip } });
+        if (z === this.zoom) b.addClass("is-active");
+        b.addEventListener("click", () => this.setView(z));
+      }
+    }
 
     // Right: View over Energy, stacked; Key and Reload beside View.
     const right = h.createDiv({ cls: "nn-header-right" });
     const row1 = right.createDiv({ cls: "nn-header-row" });
     const zoom = row1.createDiv({ cls: "nn-seg" });
     zoom.createSpan({ cls: "nn-seg-label", text: "View" });
-    for (const [z, label] of VIEWS) {
+    const views: [Zoom, string, boolean][] = [
+      ["matrix", "Triage", this.zoom === "matrix"],
+      ["focus", "Focus", this.zoom === "focus"],
+      [this.planSpan, "Plan", isDated(this.zoom)],
+    ];
+    for (const [z, label, active] of views) {
       if (z === "focus" && !this.plugin.on("focus")) continue;
       const b = zoom.createEl("button", { text: label });
-      if (z === this.zoom) b.addClass("is-active");
+      if (active) b.addClass("is-active");
       b.addEventListener("click", () => this.setView(z));
     }
     const tools = row1.createDiv({ cls: "nn-tools" });
