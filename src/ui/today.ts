@@ -35,16 +35,10 @@ export class TodayView extends ItemView {
     const head = root.createDiv({ cls: "nn-side-head" });
     head.createDiv({ cls: "nn-side-title", text: new Date().toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long" }) });
     const btns = head.createDiv({ cls: "nn-side-btns" });
-    const b = (icon: string, label: string, fn: () => unknown) => {
-      const el = btns.createEl("button", { cls: "nn-text-btn" });
-      setIcon(el.createSpan({ cls: "nn-btn-icon" }), icon);
-      el.createSpan({ text: label });
-      el.addEventListener("click", () => void fn());
-    };
-    if (this.plugin.on("focus")) b("target", "Focus", () => this.plugin.openPlanner({ focus: true }));
-    b("calendar-range", "Week", () => this.plugin.openPlanner({}));
-    b("info", "Key", () => this.plugin.openKey());
-    b("refresh-cw", "Reload", () => void this.plugin.reloadApp());
+    const openBtn = btns.createEl("button", { cls: "nn-text-btn" });
+    setIcon(openBtn.createSpan({ cls: "nn-btn-icon" }), "calendar-range");
+    openBtn.createSpan({ text: "Open planner" });
+    openBtn.addEventListener("click", () => void this.plugin.openPlanner({}));
 
     if (this.plugin.on("capture")) captureBox(this.plugin, root, { lines: 2 });
 

@@ -30,7 +30,9 @@ export function renderTask(plugin: NowAndNextPlugin, parent: HTMLElement, t: VTa
 
   const text = line.createSpan({ cls: "nn-task-text" });
   // Faint "Project / Area – " before the wording; the area is left out inside its own tab.
-  const area = t.project && t.project !== opts.hideProject ? t.project.charAt(0).toUpperCase() + t.project.slice(1) : null;
+  // The daily notes' own area (Diary) is where things are captured, so it isn't worth a label.
+  const area = t.project && t.project !== opts.hideProject && t.project !== plugin.store.dailyArea()
+    ? t.project.charAt(0).toUpperCase() + t.project.slice(1) : null;
   const prefix = [t.projectNote, area].filter(Boolean).join(" / ");
   if (prefix) text.createSpan({ cls: "nn-prefix", text: `${prefix} – ` });
   text.appendText(t.text || "(empty task)");
