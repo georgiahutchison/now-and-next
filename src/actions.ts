@@ -22,6 +22,15 @@ function tasksApi(app: App): TasksApi | null {
 
 export class Actions {
   constructor(private plugin: NowAndNextPlugin) {}
+  /** Done and Drop, newest last: Cmd/Ctrl+Z in the planner undoes them one by one. */
+  private undoStack: (() => Promise<void>)[] = [];
+
+  /** Undo the latest Done or Drop. */
+  async undoLast() {
+    const fn = this.undoStack.pop();
+    if (!fn) { new Notice("Nothing to undo.", 1500); return; }
+    await fn();
+  }
   private get app() { return this.plugin.app; }
 
   /** Tick or untick through the Tasks plugin, so done dates and repeats work. Ticking offers Undo for a few seconds. */
@@ -66,13 +75,17 @@ export class Actions {
   }
 
   /** One quiet line: what happened (shortened) and an Undo link, for a few seconds. */
-  private undoNotice(label: string, undo: () => unknown) {
+  private undoNotice(label: string, undo: () => Promise<void>) {
+    let used = false;
+    const once = async () => { if (used) return; used = true; this.undoStack = this.undoStack.filter((f) => f !== once); await undo(); };
+    this.undoStack.push(once);
+    if (this.undoStack.length > 20) this.undoStack.shift();
     const frag = document.createDocumentFragment();
     const row = frag.createDiv({ cls: "nn-notice" });
     row.createSpan({ cls: "nn-notice-text", text: label.length > 46 ? label.slice(0, 45).trimEnd() + "…" : label });
     const btn = row.createEl("button", { text: "Undo", cls: "nn-undo-btn" });
     const notice = new Notice(frag, 6000);
-    btn.addEventListener("click", () => { notice.hide(); void undo(); });
+    btn.addEventListener("click", () => { notice.hide(); void once(); });
   }
 
   /** Change the wording only; dates, priority and tags stay. */

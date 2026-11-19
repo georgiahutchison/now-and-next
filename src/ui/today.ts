@@ -1,4 +1,4 @@
-import { ItemView, WorkspaceLeaf, setIcon } from "obsidian";
+import { Scope, ItemView, WorkspaceLeaf, setIcon } from "obsidian";
 import { localToday } from "../tasks";
 import { planDate } from "../store";
 import { applyOrder, placeBefore, moveExtrasOn } from "../order";
@@ -10,7 +10,17 @@ export const TODAY_VIEW = "now-and-next-today";
 
 /** Compact sidebar view: today only. */
 export class TodayView extends ItemView {
-  constructor(leaf: WorkspaceLeaf, private plugin: NowAndNextPlugin) { super(leaf); }
+  constructor(leaf: WorkspaceLeaf, private plugin: NowAndNextPlugin) {
+    super(leaf);
+    this.scope = new Scope(this.app.scope);
+    this.scope.register(["Mod"], "z", () => {
+      // While typing in a box, Cmd+Z undoes the typing as usual.
+      const el = document.activeElement;
+      if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement || (el as HTMLElement | null)?.isContentEditable) return true;
+      void this.plugin.actions.undoLast();
+      return false;
+    });
+  }
 
   getViewType() { return TODAY_VIEW; }
   getDisplayText() { return "Now & Next"; }

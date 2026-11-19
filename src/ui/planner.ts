@@ -42,6 +42,13 @@ export class PlannerView extends ItemView {
     this.scope = new Scope(this.app.scope);
     this.scope.register(["Mod"], "=", () => { this.zoomBy(-1); return false; });
     this.scope.register(["Mod"], "-", () => { this.zoomBy(1); return false; });
+    this.scope.register(["Mod"], "z", () => {
+      // While typing in a box, Cmd+Z undoes the typing as usual.
+      const el = document.activeElement;
+      if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement || (el as HTMLElement | null)?.isContentEditable) return true;
+      void this.plugin.actions.undoLast();
+      return false;
+    });
   }
 
   getViewType() { return PLANNER_VIEW; }
