@@ -59,7 +59,6 @@ export class PlannerView extends ItemView {
     const today = localToday();
 
     const top = root.createDiv({ cls: "nn-top" });
-    if (this.plugin.on("capture")) captureBox(this.plugin, top, { lines: 2 });
     if (this.plugin.on("carryOver")) carryOverTray(this.plugin, top, overdue(tasks, today, this.filter));
     const w = waiting(tasks);
     if (w.length) {
@@ -313,7 +312,13 @@ export class PlannerView extends ItemView {
       : `Undated tasks in ${this.plugin.settings.projectsFolder}/${this.tab} or tagged #${tagFor(this.tab)}.`);
     const list = panel.createDiv({ cls: "nn-panel-list" });
     renderList(this.plugin, list, sortTasks(lists[this.tab], this.plugin.settings.sortBy), "Nothing here.", { hideProject: this.tab });
-    if (this.tab !== "priorities") captureBox(this.plugin, panel, { placeholder: `+ Add to ${cap(this.tab)}`, tag: this.projectTag() });
+    // The one capture box in the planner sits at the base of the tab list.
+    if (this.tab !== "priorities") {
+      const isDiary = this.tab === "diary" || this.tab === this.plugin.store.dailyArea();
+      captureBox(this.plugin, panel, isDiary
+        ? { lines: 2 }
+        : { placeholder: `+ Add to ${cap(this.tab)} (Enter saves to today's note)`, tag: this.projectTag() });
+    }
   }
 
   // ---------- focus mode ----------

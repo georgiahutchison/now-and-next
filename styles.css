@@ -186,3 +186,16 @@
 /* alignment: Obsidian's task checkbox carries its own offsets; reset them here */
 .nn-task .nn-task-line > input.nn-check.task-list-item-checkbox { position: static; top: auto; inset: auto; vertical-align: top; margin: calc((var(--nn-line) - var(--checkbox-size, 15px)) / 2) 0 0 0; }
 .nn-card > .nn-task-line > .nn-actions { top: var(--size-4-2); right: var(--size-4-2); }
+
+/* ---- one pill size for every button on the page ---- */
+.nn-root { --nn-pill-h: 28px; }
+.nn-root button:not(.clickable-icon):not(.nn-more),
+.nn-root .nn-sort select {
+  height: var(--nn-pill-h); min-height: var(--nn-pill-h); line-height: 1;
+  padding: 0 var(--size-4-3); font-size: var(--font-ui-small);
+  border-radius: 999px; display: inline-flex; align-items: center; gap: var(--size-4-1);
+}
+.nn-root .nn-sort select { padding-right: var(--size-4-6); }
+.nn-root .nn-seg { height: var(--nn-pill-h); padding: 2px; gap: 2px; border-radius: 999px; }
+.nn-root .nn-seg button { height: calc(var(--nn-pill-h) - 4px); min-height: 0; padding: 0 var(--size-4-3); }
+.nn-root .nn-btn-icon svg { width: 14px; height: 14px; }
