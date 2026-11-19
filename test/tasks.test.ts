@@ -129,3 +129,16 @@ test("first wikilink is the task's link; display text shows the link text", () =
 test("repeat rule stops at non-rule text", () => {
   assert.equal(parseTaskLine("- [ ] pay 🔁 every month on the 1st 👤 G 🛫 2027-01-01")!.recurrence, "every month on the 1st");
 });
+
+test("setRecurrence adds after priority and before dates, replaces and removes", async () => {
+  const { setRecurrence } = await import("../src/tasks.ts");
+  let l = "- [ ] Water plants ⏫ ⏳ 2026-11-20 #home";
+  l = setRecurrence(l, "every week");
+  assert.equal(l, "- [ ] Water plants ⏫ 🔁 every week ⏳ 2026-11-20 #home");
+  assert.equal(parseTaskLine(l)!.recurrence, "every week");
+  l = setRecurrence(l, "every 2 weeks");
+  assert.equal(l, "- [ ] Water plants ⏫ 🔁 every 2 weeks ⏳ 2026-11-20 #home");
+  l = setRecurrence(l, null);
+  assert.equal(l, "- [ ] Water plants ⏫ ⏳ 2026-11-20 #home");
+  assert.equal(setRecurrence("- [ ] Stretch", "every day"), "- [ ] Stretch 🔁 every day");
+});

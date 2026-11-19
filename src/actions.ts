@@ -1,6 +1,6 @@
 import { App, Menu, Notice, TFile } from "obsidian";
 import {
-  setDate, setPriority, setEnergy, setEstimate, setStatus, newTaskLine, addDays, localToday, addTag, setText, removeTags,
+  setDate, setPriority, setEnergy, setEstimate, setRecurrence, setStatus, newTaskLine, addDays, localToday, addTag, setText, removeTags,
   Priority, Energy, parseDuration, PRIORITY_EMOJI,
 } from "./tasks";
 import { VTask, editTask, insertAfter, isWaiting, planDate } from "./store";
@@ -90,6 +90,19 @@ export class Actions {
   async priority(t: VTask, p: Priority) { await editTask(this.app, t, (l) => setPriority(l, p)); }
   async energy(t: VTask, e: Energy | null) { await editTask(this.app, t, (l) => setEnergy(l, e)); }
   async estimate(t: VTask, min: number | null) { await editTask(this.app, t, (l) => setEstimate(l, min)); }
+  async repeat(t: VTask, rule: string | null) { await editTask(this.app, t, (l) => setRecurrence(l, rule)); }
+
+  promptRepeat(t: VTask) {
+    new TextPromptModal(this.app, {
+      title: "Repeat",
+      hint: "In the Tasks plugin's words, for example: every 3 days, every week on Monday, every month on the 15th, every 2 weeks when done.",
+      placeholder: "every 3 days",
+      value: t.recurrence ?? "",
+      cta: "Save",
+      allowEmpty: true,
+      onSubmit: (v) => this.repeat(t, v.trim() || null),
+    }).open();
+  }
 
   async tag(t: VTask, tag: string) { await editTask(this.app, t, (l) => addTag(l, tag)); }
 
@@ -187,6 +200,18 @@ export class Actions {
     m.addItem((i) => i.setTitle(inLater ? "Back from Later" : "Move to Later").setIcon("archive").onClick(() => (inLater ? this.fromLater(t) : this.toLater(t))));
     m.addItem((i) => i.setTitle("Defer to next month").setIcon("calendar-arrow-up").onClick(() => this.deferToNextMonth(t)));
     if (t.recurrence && !planDate(t)) m.addItem((i) => i.setTitle("Start routine…").setIcon("repeat").onClick(() => this.promptStart(t)));
+    m.addSeparator();
+    const rules: [string | null, string][] = [
+      ["every day", "Daily"], ["every weekday", "Weekdays"], ["every week", "Weekly"], ["every 2 weeks", "Fortnightly"],
+      ["every month", "Monthly"], ["every year", "Yearly"],
+    ];
+    const cur = t.recurrence?.toLowerCase() ?? null;
+    for (const [r, label] of rules) {
+      m.addItem((i) => i.setTitle(`Repeat: ${label}`).setChecked(cur === r).onClick(() => this.repeat(t, r)));
+    }
+    const custom = cur !== null && !rules.some(([r]) => r === cur);
+    m.addItem((i) => i.setTitle(custom ? `Repeat: ${t.recurrence}…` : "Repeat: Other…").setChecked(custom).onClick(() => this.promptRepeat(t)));
+    m.addItem((i) => i.setTitle("Repeat: None").setChecked(cur === null).onClick(() => this.repeat(t, null)));
     m.addSeparator();
     const pr: [Priority, string][] = [["highest", "Highest"], ["high", "High"], ["medium", "Medium"], ["none", "Normal"], ["low", "Low"]];
     for (const [p, label] of pr) {

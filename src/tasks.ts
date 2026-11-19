@@ -180,6 +180,14 @@ export function setEstimate(line: string, minutes: number | null): string {
   return tidy(out);
 }
 
+/** Set or clear the repeat rule (🔁 every week). It goes after priority and before dates, as Tasks writes it. */
+export function setRecurrence(line: string, rule: string | null): string {
+  let out = line.replace(/ ?🔁\uFE0F? *[^📅⏳🛫➕✅❌🔺⏫🔼🔽⏬🆔⛔🏁#^]*/gu, " ");
+  const r = rule?.trim().replace(/^🔁\uFE0F? */u, "");
+  if (r) out = insertBefore(tidy(out), ["➕", "🛫", "⏳", "📅", "✅", "❌"], `🔁 ${r}`);
+  return tidy(out);
+}
+
 /** Insert a token before the first of the given emojis in the body, or at the end. */
 function insertBefore(line: string, emojis: string[], token: string): string {
   const m = TASK_RE.exec(line);
