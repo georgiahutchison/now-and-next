@@ -104,6 +104,7 @@ export function renderTask(plugin: NowAndNextPlugin, parent: HTMLElement, t: VTa
       const c = chips.createSpan({ cls: "nn-chip nn-chip-priority", text: PRIORITY_EMOJI[t.priority as Exclude<typeof t.priority, "none">] });
       c.setAttr("aria-label", `Priority: ${t.priority}`);
     }
+    if (t.eventLink) chips.createSpan({ cls: "nn-chip nn-event-chip", text: `${t.eventLink.kind} ${t.eventLink.title}` });
     if (t.energy && plugin.on("energy")) {
       const c = chips.createSpan({ cls: `nn-chip nn-energy nn-energy-${t.energy}`, text: ENERGY_EMOJI[t.energy] });
       c.setAttr("aria-label", `${{ low: "Low", mid: "Medium", high: "High" }[t.energy]} energy`);

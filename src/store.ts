@@ -24,7 +24,11 @@ export function isOpen(t: VTask) { return OPEN.has(t.status); }
 export function isDone(t: VTask) { return DONE.has(t.status); }
 export function isWaiting(t: VTask) { return t.status === WAITING; }
 /** The day a task sits on: scheduled, else due. */
-export function planDate(t: VTask): string | undefined { return t.scheduled ?? t.due; }
+/** Finds the day for a task tied to a calendar event; set by the plugin once calendars load. */
+let eventDayFor: (t: VTask) => string | undefined = () => undefined;
+export function setEventResolver(fn: (t: VTask) => string | undefined) { eventDayFor = fn; }
+/** The day a task sits on: its scheduled date, else the day from its event link, else its due date. */
+export function planDate(t: VTask): string | undefined { return t.scheduled ?? (t.eventLink ? eventDayFor(t) : undefined) ?? t.due; }
 export function byPriority(a: VTask, b: VTask) {
   return PRIORITY_RANK[a.priority] - PRIORITY_RANK[b.priority] || a.path.localeCompare(b.path) || a.line - b.line;
 }

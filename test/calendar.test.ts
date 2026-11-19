@@ -2,7 +2,7 @@
 process.env.TZ = "Australia/Sydney";
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { expandEvents, nextDay, cycleDay, lutealStartsIn } from "../src/calendar.ts";
+import { expandEvents, nextDay, cycleDay, lutealStartsIn, linkedDay } from "../src/calendar.ts";
 
 const SYDNEY = `BEGIN:VTIMEZONE
 TZID:Australia/Sydney
@@ -160,4 +160,13 @@ test("days until luteal: counts down to the day after the ovulation window, then
   assert.equal(at("2026-11-07"), 5);   // first day of the 5-day lead-up
   assert.equal(at("2026-11-11"), 1);
   assert.equal(at("2026-11-12"), null); // luteal
+});
+
+test("event links: the day before the next occurrence, the day after the latest one", () => {
+  const days = ["2026-11-18", "2026-11-26", "2026-12-24"];
+  assert.equal(linkedDay("before", days, "2026-11-19"), "2026-11-25");
+  assert.equal(linkedDay("before", days, "2026-11-26"), "2026-11-26"); // event today: prep sits on today, not in the past
+  assert.equal(linkedDay("after", days, "2026-11-19"), "2026-11-19");  // event yesterday: follow-up today
+  assert.equal(linkedDay("after", days, "2026-11-21"), "2026-11-27");
+  assert.equal(linkedDay("before", days, "2027-01-01"), undefined);
 });

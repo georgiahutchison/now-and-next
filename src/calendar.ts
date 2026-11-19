@@ -121,3 +121,18 @@ export function lutealStartsIn(c: CycleDay): number | null {
   const firstLuteal = c.length - 14 + 2;
   return c.day < firstLuteal ? firstLuteal - c.day : null;
 }
+
+/**
+ * The day a task tied to an event sits on: the day before the next occurrence (never earlier than today),
+ * or the day after the latest occurrence from yesterday on. `eventDays` are the event's days, sorted.
+ */
+export function linkedDay(kind: "before" | "after", eventDays: string[], today: string): string | undefined {
+  if (kind === "before") {
+    const d = eventDays.find((x) => x >= today);
+    if (!d) return undefined;
+    const prev = nextDay(d, -1);
+    return prev < today ? today : prev;
+  }
+  const d = eventDays.find((x) => x >= nextDay(today, -1));
+  return d ? nextDay(d) : undefined;
+}

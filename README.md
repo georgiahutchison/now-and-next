@@ -54,6 +54,7 @@ Now & Next reads and writes the Tasks plugin's emoji format. Everything it adds 
 | `#energy/low`, `#energy/mid`, `#energy/high` | Energy needed. |
 | `[est:: 30m]` | Time estimate (`30m`, `1h`, `1h30m`). It goes before the emoji fields so Tasks still reads them. |
 | `[w]` | Waiting on someone. |
+| `[before:: Event]`, `[after:: Event]` | Ties the task to a calendar event: it sits on the day before (prep) or the day after (follow-up) the event's next occurrence, and moves when the event moves. Set it from the task menu. A scheduled ⏳ date overrides it. The Tasks plugin itself does not see this date. |
 
 New tasks go into today's daily note, using the folder and date format from Obsidian's Daily notes settings. A task captured in a daily note with an area tag shows under that area; an untagged one shows under the daily notes' own tab, ready to be planned or sorted.
 

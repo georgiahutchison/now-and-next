@@ -2,6 +2,8 @@ import { Events, normalizePath, requestUrl } from "obsidian";
 import type NowAndNextPlugin from "./main";
 import { CalEvent, CycleDay, cycleDay, expandEvents, nextDay } from "./calendar";
 
+const localDay = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; };
+
 interface Cached { ics: string; fetchedAt: number }
 
 /**
@@ -57,7 +59,28 @@ export class CalendarStore extends Events {
     this.changed();
   }
 
+  private linkDays = new Map<string, string[]>();
+
+  /** Days (from yesterday, about a year ahead) on which an event with this title happens. Exact title first, else a title containing it. */
+  eventDays(title: string): string[] {
+    const key = title.trim().toLowerCase();
+    const hit = this.linkDays.get(key);
+    if (hit) return hit;
+    const exact: string[] = [];
+    const partial: string[] = [];
+    const start = nextDay(localDay(), -1);
+    for (let i = 0, d = start; i < 400; i++, d = nextDay(d)) {
+      const evs = this.eventsOn(d);
+      if (evs.some((e) => e.title.trim().toLowerCase() === key)) exact.push(d);
+      else if (evs.some((e) => e.title.toLowerCase().includes(key))) partial.push(d);
+    }
+    const days = exact.length ? exact : partial;
+    this.linkDays.set(key, days);
+    return days;
+  }
+
   private changed() {
+    this.linkDays.clear();
     this.months.clear();
     this.trigger("changed");
   }

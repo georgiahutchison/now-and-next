@@ -127,7 +127,12 @@
 .nn-key-sym { white-space: nowrap; font-family: var(--font-monospace); color: var(--text-normal); }
 .nn-due { color: var(--text-muted); border: 1px solid var(--background-modifier-border); background: transparent; }
 .nn-drop:hover { color: var(--text-error); }
-.nn-undo-btn { margin-left: var(--size-4-2); }
+.nn-notice { display: flex; align-items: baseline; gap: var(--size-4-3); }
+.nn-notice-text { min-width: 0; }
+.notice .nn-undo-btn, .notice button.nn-undo-btn {
+  flex: none; height: auto; min-height: 0; padding: 0; margin: 0; border: none; border-radius: 0;
+  background: none; box-shadow: none; font: inherit; color: inherit; text-decoration: underline; text-underline-offset: 2px; cursor: var(--cursor);
+}
 .nn-capture-multi { width: 100%; resize: vertical; line-height: var(--line-height-normal); padding: var(--size-4-2) var(--size-4-3); font-family: inherit; font-size: var(--font-ui-medium); }
 .nn-side .nn-day-list { gap: var(--size-4-2); }
 .nn-side .nn-side-h { margin-bottom: var(--size-4-3); }
@@ -453,3 +458,4 @@
 .nn-habit-link { cursor: var(--cursor); color: var(--text-normal); font-family: var(--font-text); }
 .nn-habit-rule { margin-left: var(--size-4-2); color: var(--text-faint); font-size: var(--font-ui-smaller); }
 .nn-habit-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--text-muted); }
+.nn-event-chip { font-style: normal; }

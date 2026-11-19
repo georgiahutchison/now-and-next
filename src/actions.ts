@@ -1,6 +1,6 @@
 import { App, Menu, Notice, TFile } from "obsidian";
 import {
-  setDate, setPriority, setEnergy, setEstimate, setRecurrence, setStatus, newTaskLine, addDays, localToday, addTag, setText, removeTags,
+  setDate, setPriority, setEnergy, setEstimate, setRecurrence, setEventLink, setStatus, newTaskLine, addDays, localToday, addTag, setText, removeTags,
   Priority, Energy, parseDuration, PRIORITY_EMOJI, ENERGY_EMOJI,
 } from "./tasks";
 import { VTask, editTask, insertAfter, isWaiting, planDate } from "./store";
@@ -90,6 +90,22 @@ export class Actions {
   async priority(t: VTask, p: Priority) { await editTask(this.app, t, (l) => setPriority(l, p)); }
   async energy(t: VTask, e: Energy | null) { await editTask(this.app, t, (l) => setEnergy(l, e)); }
   async estimate(t: VTask, min: number | null) { await editTask(this.app, t, (l) => setEstimate(l, min)); }
+  /** Tie the task to a calendar event; its own scheduled date is cleared so the event decides the day. */
+  async eventLink(t: VTask, link: { kind: "before" | "after"; title: string } | null) {
+    await editTask(this.app, t, (l) => setEventLink(link ? setDate(l, "scheduled", null) : l, link));
+  }
+
+  promptEventLink(t: VTask, kind: "before" | "after") {
+    new TextPromptModal(this.app, {
+      title: kind === "before" ? "Do this the day before an event" : "Do this the day after an event",
+      hint: "The event's title as it appears in your calendar. The task follows the event if it moves.",
+      placeholder: "Supervision meeting",
+      value: t.eventLink?.title ?? "",
+      cta: "Save",
+      onSubmit: (v) => this.eventLink(t, { kind, title: v.trim() }),
+    }).open();
+  }
+
   async repeat(t: VTask, rule: string | null) { await editTask(this.app, t, (l) => setRecurrence(l, rule)); }
 
   promptRepeat(t: VTask) {
@@ -119,9 +135,12 @@ export class Actions {
     const original = t.raw;
     const dropped = setDate(setStatus(original, "-"), "cancelled", localToday());
     if (!(await editTask(this.app, t, () => dropped))) return;
+    // One quiet line: the task's wording (shortened) and an Undo link.
     const frag = document.createDocumentFragment();
-    frag.createSpan({ text: `Dropped: ${t.text} ` });
-    const undo = frag.createEl("button", { text: "Undo", cls: "nn-undo-btn" });
+    const row = frag.createDiv({ cls: "nn-notice" });
+    const name = t.text.length > 40 ? t.text.slice(0, 39).trimEnd() + "…" : t.text;
+    row.createSpan({ cls: "nn-notice-text", text: `Dropped: ${name}` });
+    const undo = row.createEl("button", { text: "Undo", cls: "nn-undo-btn" });
     const notice = new Notice(frag, 6000);
     undo.addEventListener("click", async () => {
       notice.hide();
@@ -199,6 +218,9 @@ export class Actions {
     const inLater = isLater(t);
     m.addItem((i) => i.setTitle(inLater ? "Back from Later" : "Move to Later").setIcon("archive").onClick(() => (inLater ? this.fromLater(t) : this.toLater(t))));
     m.addItem((i) => i.setTitle("Defer to next month").setIcon("calendar-arrow-up").onClick(() => this.deferToNextMonth(t)));
+    m.addItem((i) => i.setTitle("Day before an event…").setIcon("calendar-minus").setChecked(t.eventLink?.kind === "before").onClick(() => this.promptEventLink(t, "before")));
+    m.addItem((i) => i.setTitle("Day after an event…").setIcon("calendar-plus").setChecked(t.eventLink?.kind === "after").onClick(() => this.promptEventLink(t, "after")));
+    if (t.eventLink) m.addItem((i) => i.setTitle("Remove event link").setIcon("unlink").onClick(() => this.eventLink(t, null)));
     if (t.recurrence && !planDate(t)) m.addItem((i) => i.setTitle("Start routine…").setIcon("repeat").onClick(() => this.promptStart(t)));
     m.addSeparator();
     const rules: [string | null, string][] = [

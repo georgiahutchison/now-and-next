@@ -1,6 +1,6 @@
 import { Notice, Plugin, TFolder, WorkspaceLeaf } from "obsidian";
 import { DEFAULT_SETTINGS, NowAndNextSettings, NowAndNextSettingTab, SupportKey } from "./settings";
-import { TaskStore, appendToFile, dailyNotePath } from "./store";
+import { TaskStore, appendToFile, dailyNotePath, setEventResolver } from "./store";
 import { Actions } from "./actions";
 import { newTaskLine, localToday } from "./tasks";
 import { PlannerView, PLANNER_VIEW } from "./ui/planner";
@@ -10,6 +10,7 @@ import { TextPromptModal } from "./ui/modals";
 import { KeyModal } from "./ui/key";
 import { Timer } from "./timer";
 import { CalendarStore } from "./calendarStore";
+import { linkedDay } from "./calendar";
 
 export default class NowAndNextPlugin extends Plugin {
   settings!: NowAndNextSettings;
@@ -24,6 +25,7 @@ export default class NowAndNextPlugin extends Plugin {
     this.actions = new Actions(this);
     this.timer = new Timer(this);
     this.calendars = new CalendarStore(this);
+    setEventResolver((t) => t.eventLink ? linkedDay(t.eventLink.kind, this.calendars.eventDays(t.eventLink.title), localToday()) : undefined);
 
     this.registerView(PLANNER_VIEW, (leaf) => new PlannerView(leaf, this));
     this.registerView(TODAY_VIEW, (leaf) => new TodayView(leaf, this));

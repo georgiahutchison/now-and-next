@@ -29,6 +29,7 @@ const SECTIONS: [string, [string, string][]][] = [
     ["#urgent", "Urgent in Triage (so is a deadline within 7 days)"],
     ["#energy/low · /mid · /high", "Energy the task needs, shown as spoons: 🥄 low, 🥄🥄 medium, 🥄🥄🥄 high"],
     ["[est:: 30m]", "Time estimate (30m, 1h, 1h30m)"],
+    ["[before:: Event] · [after:: Event]", "The day before or after that calendar event; follows the event if it moves (menu: Day before / after an event)"],
     ["[[Note]] in a task", "Project: shown before the task (else the note it is in)"],
     ["Indented - [ ]", "A task in its own right (shown as its own card)"],
     ["Indented - (no box)", "Detail: stays in the note, not shown or counted"],

@@ -18,6 +18,7 @@ export class TodayView extends ItemView {
 
   async onOpen() {
     this.registerEvent(this.plugin.store.on("changed", () => this.render()));
+    this.registerEvent(this.plugin.calendars.on("changed", () => this.render()));
     this.registerInterval(window.setInterval(() => this.render(), 60_000));
     this.render();
   }

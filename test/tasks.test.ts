@@ -142,3 +142,14 @@ test("setRecurrence adds after priority and before dates, replaces and removes",
   assert.equal(l, "- [ ] Water plants ⏫ ⏳ 2026-11-20 #home");
   assert.equal(setRecurrence("- [ ] Stretch", "every day"), "- [ ] Stretch 🔁 every day");
 });
+
+test("event links: parsed, kept out of the wording, set and removed", async () => {
+  const { setEventLink } = await import("../src/tasks.ts");
+  const t = parseTaskLine("- [ ] Print chapter [before:: Supervision meeting] ⏫ #uni")!;
+  assert.deepEqual(t.eventLink, { kind: "before", title: "Supervision meeting" });
+  assert.equal(t.text, "Print chapter");
+  let l = setEventLink("- [ ] Send notes ⏳ 2026-11-20 #uni", { kind: "after", title: "Supervision meeting" });
+  assert.equal(l, "- [ ] Send notes [after:: Supervision meeting] ⏳ 2026-11-20 #uni");
+  l = setEventLink(l, null);
+  assert.equal(l, "- [ ] Send notes ⏳ 2026-11-20 #uni");
+});
