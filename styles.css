@@ -224,3 +224,9 @@
 .nn-later { margin-top: var(--size-4-3); padding-top: var(--size-4-4); }
 .nn-later > summary { padding: var(--size-4-2) 0; }
 .nn-panel { padding-top: var(--size-4-4); gap: var(--size-4-3); }
+
+/* segmented switches: pills centred, no drop shadow */
+.nn-root .nn-seg { align-items: center; box-sizing: border-box; }
+.nn-root .nn-seg button { margin: 0; box-shadow: none; box-sizing: border-box; align-self: center; }
+.nn-root .nn-seg button.is-active { box-shadow: 0 0 0 1px var(--background-modifier-border); }
+.nn-root .nn-seg-label { display: inline-flex; align-items: center; height: calc(var(--nn-pill-h) - 4px); padding: 0 var(--size-4-2); }
