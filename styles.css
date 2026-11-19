@@ -405,3 +405,6 @@
 .nn-tabs { align-items: center; }
 .nn-tabs .nn-spoons { margin-left: auto; }
 .nn-triage-panel { margin-top: var(--size-4-4); }
+
+/* add-task box: centre the checkbox on the lower-case letters of the first line, not the line box (1px lower) */
+.nn-root .nn-capture-row input.nn-capture-check { margin-top: calc((var(--nn-line) - var(--checkbox-size, 15px)) / 2 + 1px); }
