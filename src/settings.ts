@@ -98,7 +98,7 @@ export class NowAndNextSettingTab extends PluginSettingTab {
       .addToggle((t) => t.setValue(s.showWeekend).onChange(async (v) => { s.showWeekend = v; await save(); }));
 
     new Setting(containerEl).setName("Open at")
-      .addDropdown((d) => d.addOptions({ focus: "Focus", day: "Day", week: "Week", month: "Month", matrix: "Triage" }).setValue(s.defaultZoom)
+      .addDropdown((d) => d.addOptions({ matrix: "Triage", focus: "Focus", day: "Day", week: "Week", month: "Month" }).setValue(s.defaultZoom)
         .onChange(async (v) => { s.defaultZoom = v as Zoom; await save(); }));
 
     new Setting(containerEl).setName("Supports").setHeading();

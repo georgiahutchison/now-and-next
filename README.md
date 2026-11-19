@@ -6,7 +6,7 @@ Your tasks stay where they are: ordinary Tasks lines in your notes. Now & Next i
 
 ## What it does
 
-- **Views: Focus, Day, Week, Month and Triage.** Week is the default. `Cmd/Ctrl` `+` and `-` zoom between Day, Week and Month.
+- **Views: Triage, Focus, Day, Week and Month.** Week is the default. `Cmd/Ctrl` `+` and `-` zoom between Day, Week and Month.
 - **Triage.** Undated tasks in four boxes by importance (🔺 or ⏫) and urgency (a deadline within 7 days, or `#urgent`): Do, Plan, Quick, Not now. Dragging a task between boxes sets or clears ⏫ and `#urgent`; deadlines are left as they are.
 - **Later.** A panel at the base, closed by default, for tasks tagged `#later` or deferred to a later month (a future `🛫` start date). They stay out of the area tabs until then.
 - **Plan by dragging.** Drag a task onto a day to schedule it (it gets a `⏳` scheduled date). Drag it onto a tab to take it off its day again.

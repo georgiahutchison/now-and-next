@@ -11,7 +11,7 @@ import type { Zoom } from "../settings";
 
 export const PLANNER_VIEW = "now-and-next-planner";
 // The view switcher, left to right; Cmd +/- zooms between Day, Week and Month.
-const VIEWS: [Zoom, string][] = [["focus", "Focus"], ["day", "Day"], ["week", "Week"], ["month", "Month"], ["matrix", "Triage"]];
+const VIEWS: [Zoom, string][] = [["matrix", "Triage"], ["focus", "Focus"], ["day", "Day"], ["week", "Week"], ["month", "Month"]];
 const ZOOMS: Zoom[] = ["day", "week", "month"];
 
 export class PlannerView extends ItemView {
