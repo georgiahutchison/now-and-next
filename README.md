@@ -10,7 +10,7 @@ Your tasks stay where they are: ordinary Tasks lines in your notes. Now & Next i
 - **Triage.** Undated tasks in four boxes by importance (🔺 or ⏫) and urgency (a deadline within 7 days, or `#urgent`): Do, Plan, Quick, Not now. Dragging a task between boxes sets or clears ⏫ and `#urgent`; deadlines are left as they are.
 - **Later.** A panel at the base, closed by default, for tasks tagged `#later` or deferred to a later month (a future `🛫` start date). They stay out of the area tabs until then.
 - **Plan by dragging.** Drag a task onto a day to schedule it (it gets a `⏳` scheduled date). Drag it onto a tab to take it off its day again.
-- **Areas.** Each subfolder of your areas folder gets a tab, along with any task tagged with that folder's name (for example `#health`). Add a folder and a new tab appears.
+- **Areas.** Each subfolder of your areas folder gets a tab, along with any task tagged with that folder's name (for example `#health`). Add a folder and a new tab appears. Drag an area tab onto any task to move the task to that area.
 - **Today in the sidebar.** A compact Today view sits in the left sidebar next to Files, Search and Bookmarks. The ribbon icon opens the full planner.
 - **Calendar events.** Events from Google Calendar, Outlook or any other calendar with an ICS link show faintly at the top of each day in Day, 3 days and Week, and as a count in Month. They are read-only: no checkbox, no dragging. See Calendars below.
 - **Task menu.** The `…` button or a right-click on a task opens a menu: move it between days, set a deadline, move it to Later, set it to repeat (daily, weekdays, weekly, fortnightly, monthly, yearly or your own rule), and set priority, energy and an estimate.

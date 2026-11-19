@@ -5,6 +5,8 @@ import { needsFirstStep } from "../queries";
 import type NowAndNextPlugin from "../main";
 
 export const DRAG_TYPE = "text/x-now-and-next";
+/** An area tab being dragged onto a task: the task moves to that area. */
+export const AREA_DRAG_TYPE = "text/x-now-and-next-area";
 
 export function renderTask(plugin: NowAndNextPlugin, parent: HTMLElement, t: VTask, opts: { showDate?: boolean; nested?: boolean; hideProject?: string; shortLabel?: boolean; showRule?: boolean } = {}) {
   const a = plugin.actions;
@@ -22,6 +24,24 @@ export function renderTask(plugin: NowAndNextPlugin, parent: HTMLElement, t: VTa
       row.addClass("is-dragging");
     });
     row.addEventListener("dragend", () => row.removeClass("is-dragging"));
+    // Drop an area tab on the card to move the task to that area.
+    row.addEventListener("dragover", (e) => {
+      if (!e.dataTransfer?.types.includes(AREA_DRAG_TYPE)) return;
+      e.preventDefault();
+      e.stopPropagation();
+      e.dataTransfer.dropEffect = "link";
+      row.addClass("is-area-target");
+    });
+    row.addEventListener("dragleave", (e) => { if (!row.contains(e.relatedTarget as Node)) row.removeClass("is-area-target"); });
+    row.addEventListener("drop", (e) => {
+      const area = e.dataTransfer?.getData(AREA_DRAG_TYPE);
+      row.removeClass("is-area-target");
+      if (!area) return;
+      e.preventDefault();
+      e.stopPropagation();
+      const fresh = plugin.store.get(t.key);
+      if (fresh) void a.moveToArea(fresh, area);
+    });
   }
 
   const line = row.createDiv({ cls: "nn-task-line" });

@@ -394,3 +394,6 @@
 .nn-month-events { font-size: var(--font-ui-smaller); color: var(--text-faint); }
 .nn-cal-note { font-size: var(--font-ui-small); color: var(--text-faint); }
 .nn-cal-url { width: 22em; }
+
+/* ---- an area tab dragged over a task ---- */
+.nn-root .nn-card.is-area-target, .nn-side .nn-card.is-area-target { outline: 2px dashed var(--interactive-accent); outline-offset: -2px; }

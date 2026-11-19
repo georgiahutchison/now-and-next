@@ -41,6 +41,7 @@ const SECTIONS: [string, [string, string][]][] = [
     ["Drag onto a day", "Schedule it there; the thin line shows where it lands in the day's order"],
     ["Drag onto an area tab", "Take it off its day and back to that area"],
     ["Drag onto Later", "Move it to Later"],
+    ["Drag an area tab onto a task", "Move the task to that area (its other area tags are removed)"],
     ["Drag between Triage boxes", "Sets or clears ⏫ and #urgent; deadlines are left as they are"],
   ]],
   ["In the planner", [

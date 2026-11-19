@@ -6,7 +6,7 @@ import {
   openOn, doneOn, overdue, waiting, inProject, inbox, estimateTotal, hm, EnergyFilter, sortTasks, SORT_LABELS, SortMode,
   later, routines, isImportant, isUrgent, matrixTasks,
 } from "../queries";
-import { renderList, renderTask, dropZone, captureBox, carryOverTray } from "./render";
+import { renderList, renderTask, dropZone, captureBox, carryOverTray, AREA_DRAG_TYPE } from "./render";
 import type NowAndNextPlugin from "../main";
 import type { Zoom } from "../settings";
 
@@ -345,6 +345,14 @@ export class PlannerView extends ItemView {
       if (lists[key].length) b.createSpan({ cls: "nn-tab-count", text: String(lists[key].length) });
       if (key === this.tab) b.addClass("is-active");
       b.addEventListener("click", () => { this.tab = key; this.render(); });
+      // Drag an area tab onto any task to move the task to that area.
+      if (projects.includes(key) && key !== store.dailyArea()) {
+        b.draggable = true;
+        b.addEventListener("dragstart", (e) => {
+          e.dataTransfer?.setData(AREA_DRAG_TYPE, key);
+          if (e.dataTransfer) e.dataTransfer.effectAllowed = "link";
+        });
+      }
       // Dropping on a tab takes the task off its day and back to that list.
       dropZone(b, this.plugin, async (t) => {
         await this.plugin.actions.schedule(t, null);
