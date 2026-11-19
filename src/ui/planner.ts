@@ -377,9 +377,7 @@ export class PlannerView extends ItemView {
     });
     hint.setText(this.tab === "diary" ? "Undated tasks from your daily notes that have no area yet. Drag one onto a day or an area."
       : `Undated tasks in ${this.plugin.settings.projectsFolder}/${this.tab} or tagged #${tagFor(this.tab)}.`);
-    const list = panel.createDiv({ cls: "nn-panel-list" });
-    renderList(this.plugin, list, sortTasks(lists[this.tab], this.plugin.settings.sortBy), "Nothing here.", { hideProject: this.tab });
-    // The one capture box in the planner sits at the base of the tab list.
+    // The one capture box in the planner sits above the tab's list.
     {
       const isDiary = this.tab === "diary" || this.tab === this.plugin.store.dailyArea();
       // Same box in every tab; an area tab tags the new task with its area.
@@ -387,6 +385,8 @@ export class PlannerView extends ItemView {
         ? { lines: 2 }
         : { lines: 2, placeholder: `Add task to ${cap(this.tab)} (saved in today's daily note)`, tag: this.projectTag() });
     }
+    const list = panel.createDiv({ cls: "nn-panel-list" });
+    renderList(this.plugin, list, sortTasks(lists[this.tab], this.plugin.settings.sortBy), "Nothing here.", { hideProject: this.tab });
   }
 
   // ---------- triage (importance x urgency) ----------
