@@ -6,12 +6,14 @@ Your tasks stay where they are: ordinary Tasks lines in your notes. Now & Next i
 
 ## What it does
 
-- **Views: Triage, Focus, Day, Week and Month.** Week is the default. `Cmd/Ctrl` `+` and `-` zoom between Day, Week and Month.
+- **Views: Triage, Focus, Day, 3 days, Week and Month.** Week is the default. 3 days shows yesterday, today and tomorrow in full. `Cmd/Ctrl` `+` and `-` zoom between Day, 3 days, Week and Month.
 - **Triage.** Undated tasks in four boxes by importance (🔺 or ⏫) and urgency (a deadline within 7 days, or `#urgent`): Do, Plan, Quick, Not now. Dragging a task between boxes sets or clears ⏫ and `#urgent`; deadlines are left as they are.
 - **Later.** A panel at the base, closed by default, for tasks tagged `#later` or deferred to a later month (a future `🛫` start date). They stay out of the area tabs until then.
 - **Plan by dragging.** Drag a task onto a day to schedule it (it gets a `⏳` scheduled date). Drag it onto a tab to take it off its day again.
 - **Areas.** Each subfolder of your areas folder gets a tab, along with any task tagged with that folder's name (for example `#health`). Add a folder and a new tab appears.
 - **Today in the sidebar.** A compact Today view sits in the left sidebar next to Files, Search and Bookmarks. The ribbon icon opens the full planner.
+- **Calendar events.** Events from Google Calendar, Outlook or any other calendar with an ICS link show faintly at the top of each day in Day, 3 days and Week, and as a count in Month. They are read-only: no checkbox, no dragging. See Calendars below.
+- **Task menu.** The `…` button or a right-click on a task opens a menu: move it between days, set a deadline, move it to Later, set it to repeat (daily, weekdays, weekly, fortnightly, monthly, yearly or your own rule), and set priority, energy and an estimate.
 - **Project and area on each task.** Cards read `Project / Area – task`, faintly. The project is the first `[[link]]` in the task, or else the note the task is in (daily notes don't count). The area is left out inside its own tab. Plain bullets under a task stay in the note and are not shown on cards.
 
 Ticking a task goes through the Tasks plugin, so done dates and repeating tasks behave exactly as they do in Tasks itself.
@@ -54,6 +56,19 @@ Now & Next reads and writes the Tasks plugin's emoji format. Everything it adds 
 
 New tasks go into today's daily note, using the folder and date format from Obsidian's Daily notes settings. A task captured in a daily note with an area tag shows under that area; an untagged one shows under the daily notes' own tab, ready to be planned or sorted.
 
+## Calendars
+
+Add each calendar in **Settings → Now & Next → Calendars** with a name and its private ICS link:
+
+- **Google Calendar:** Settings → your calendar under "Settings for my calendars" → "Secret address in iCal format".
+- **Outlook:** Settings → Calendar → Shared calendars → Publish a calendar → choose the calendar and "Can view all details" → copy the ICS link.
+
+The planner fetches the links when it opens and when you press its Reload icon. Repeating events, removed dates, moved occurrences and time zones are handled; times show in your computer's time zone. If a calendar can't be reached, the last copy fetched stays and a faint line says so. Google can take a few hours to update its secret-address feed.
+
+The links are private: anyone with one can read that calendar. They are kept in the plugin's settings (`data.json`), and the last copy of each calendar in `calendar-cache.json`, both in the plugin's folder. Neither is part of your notes.
+
+Parsing uses [ical.js](https://github.com/kewisch/ical.js) (MPL 2.0), bundled into `main.js`.
+
 ## Requirements
 
 - Obsidian 1.7.2 or later.
@@ -81,6 +96,7 @@ Now & Next is not yet in the community plugin list. To install it by hand:
 | First-step prompt after | 5 days | |
 | Show weekend | Off | |
 | Open at | Week | |
+| Calendars | none | Name and ICS link for each calendar. |
 | Ideas note | `Now & Next ideas.md` | Where "Add a plugin idea" writes. |
 
 
@@ -93,10 +109,10 @@ Open planner · Show today in sidebar · Focus mode · Add task to today's daily
 ```bash
 npm install
 npm run build                # type-check and bundle to main.js
-node --test test/*.test.ts   # task-line parser tests (Node 23.6 or later)
+node --test test/*.test.ts   # task-line and calendar parser tests (Node 23.6 or later)
 ```
 
-The task-line parser in `src/tasks.ts` has no Obsidian imports, so it can be tested with plain Node.
+The task-line parser in `src/tasks.ts` and the calendar parser in `src/calendar.ts` have no Obsidian imports, so they can be tested with plain Node.
 
 ## Licence
 

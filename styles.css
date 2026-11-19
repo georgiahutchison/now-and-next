@@ -120,6 +120,8 @@
 .nn-tabs-label { font-size: var(--font-ui-smaller); color: var(--text-muted); align-self: center; margin-right: var(--size-4-1); }
 .nn-side .nn-day-list { gap: var(--size-4-1); }
 .nn-inline-edit { flex: 1 1 0; min-width: 5em; font-size: inherit; height: auto; padding: 0 var(--size-4-1); }
+.nn-key-h { font-size: var(--font-ui-small); font-weight: var(--font-semibold); color: var(--text-muted); margin: var(--size-4-4) 0 var(--size-4-1); }
+.nn-key-h:first-child { margin-top: 0; }
 .nn-key { border-collapse: collapse; width: 100%; font-size: var(--font-ui-small); }
 .nn-key td { padding: var(--size-4-1) var(--size-4-2); border-bottom: 1px solid var(--background-modifier-border); vertical-align: top; }
 .nn-key-sym { white-space: nowrap; font-family: var(--font-monospace); color: var(--text-normal); }
@@ -383,3 +385,12 @@
 .nn-root .nn-tabs-label, .nn-root .nn-tab, .nn-root .nn-seg-label, .nn-root .nn-seg button,
 .nn-root .nn-panel-hint, .nn-root .nn-matrix-hint, .nn-root .nn-empty,
 .nn-root .nn-day-name, .nn-root .nn-day.is-strip .nn-day-name { font-size: var(--font-ui-small); }
+
+/* ---- calendar events: faint, read-only, at the top of a day ---- */
+.nn-events { display: flex; flex-direction: column; gap: 2px; margin: var(--size-4-1) 0 var(--size-4-2); }
+.nn-event { display: flex; gap: var(--size-4-2); font-size: var(--font-ui-small); color: var(--text-faint); line-height: 1.4; cursor: default; }
+.nn-event-time { flex: none; font-variant-numeric: tabular-nums; min-width: 3.2em; }
+.nn-event-title { min-width: 0; overflow-wrap: anywhere; }
+.nn-month-events { font-size: var(--font-ui-smaller); color: var(--text-faint); }
+.nn-cal-note { font-size: var(--font-ui-small); color: var(--text-faint); }
+.nn-cal-url { width: 22em; }

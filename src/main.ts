@@ -9,18 +9,21 @@ import { IdeaModal } from "./ui/ideas";
 import { TextPromptModal } from "./ui/modals";
 import { KeyModal } from "./ui/key";
 import { Timer } from "./timer";
+import { CalendarStore } from "./calendarStore";
 
 export default class NowAndNextPlugin extends Plugin {
   settings!: NowAndNextSettings;
   store!: TaskStore;
   actions!: Actions;
   timer!: Timer;
+  calendars!: CalendarStore;
 
   async onload() {
     await this.loadSettings();
     this.store = new TaskStore(this.app, this);
     this.actions = new Actions(this);
     this.timer = new Timer(this);
+    this.calendars = new CalendarStore(this);
 
     this.registerView(PLANNER_VIEW, (leaf) => new PlannerView(leaf, this));
     this.registerView(TODAY_VIEW, (leaf) => new TodayView(leaf, this));
@@ -50,6 +53,7 @@ export default class NowAndNextPlugin extends Plugin {
     this.app.workspace.onLayoutReady(async () => {
       await this.store.init();
       await this.ensureSidebar(false);
+      void this.calendars.init();
     });
   }
 
@@ -62,6 +66,7 @@ export default class NowAndNextPlugin extends Plugin {
     this.settings = Object.assign({}, DEFAULT_SETTINGS, data);
     this.settings.supports = Object.assign({}, DEFAULT_SETTINGS.supports, data.supports ?? {});
     this.settings.order = Object.assign({}, data.order ?? {});
+    this.settings.calendars = Array.isArray(data.calendars) ? data.calendars : [];
     // The energy filter is for right now: it starts at "Any" each time so it can't hide tasks unnoticed.
     this.settings.energyFilter = "all";
   }

@@ -11,9 +11,10 @@ import type NowAndNextPlugin from "../main";
 import type { Zoom } from "../settings";
 
 export const PLANNER_VIEW = "now-and-next-planner";
-// The view switcher, left to right; Cmd +/- zooms between Day, Week and Month.
-const VIEWS: [Zoom, string][] = [["matrix", "Triage"], ["focus", "Focus"], ["day", "Day"], ["week", "Week"], ["month", "Month"]];
-const ZOOMS: Zoom[] = ["day", "week", "month"];
+// The view switcher, left to right; Cmd +/- zooms between Day, 3 days, Week and Month.
+const VIEWS: [Zoom, string][] = [["matrix", "Triage"], ["focus", "Focus"], ["day", "Day"], ["three", "3 days"], ["week", "Week"], ["month", "Month"]];
+const ZOOMS: Zoom[] = ["day", "three", "week", "month"];
+const isDated = (z: Zoom) => ZOOMS.includes(z);
 
 export class PlannerView extends ItemView {
   zoom: Zoom;
@@ -37,6 +38,7 @@ export class PlannerView extends ItemView {
 
   async onOpen() {
     this.registerEvent(this.plugin.store.on("changed", () => this.render()));
+    this.registerEvent(this.plugin.calendars.on("changed", () => { if (isDated(this.zoom)) this.render(); }));
     this.registerInterval(window.setInterval(() => { if (this.zoom === "focus") this.render(); }, 60_000));
     this.render();
   }
@@ -44,7 +46,7 @@ export class PlannerView extends ItemView {
   zoomBy(dir: number) {
     const cur = ZOOMS.indexOf(this.zoom);
     if (cur < 0) return;
-    this.zoom = ZOOMS[Math.min(2, Math.max(0, cur + dir))];
+    this.zoom = ZOOMS[Math.min(ZOOMS.length - 1, Math.max(0, cur + dir))];
     this.render();
   }
 
@@ -88,8 +90,14 @@ export class PlannerView extends ItemView {
       renderList(this.plugin, d, w, "", { showDate: true });
     }
 
+    const failed = this.plugin.calendars.failed;
+    if (failed.length && isDated(this.zoom)) {
+      top.createDiv({ cls: "nn-cal-note", text: `Couldn't reach ${failed.join(", ")}. Showing the last copy fetched.` });
+    }
+
     const body = root.createDiv({ cls: "nn-body" });
     if (this.zoom === "day") this.renderDay(body, this.anchor);
+    else if (this.zoom === "three") this.renderThree(body);
     else if (this.zoom === "week") this.renderWeek(body);
     else if (this.zoom === "month") this.renderMonth(body);
     else this.renderMatrix(body);
@@ -108,10 +116,10 @@ export class PlannerView extends ItemView {
 
     // Left: the date and its arrows (blank where a view has no date).
     const left = h.createDiv({ cls: "nn-header-left" });
-    const dated = this.zoom === "day" || this.zoom === "week" || this.zoom === "month";
+    const dated = isDated(this.zoom);
     const nav = left.createDiv({ cls: "nn-nav" });
     if (dated) {
-      const step = this.zoom === "day" ? 1 : this.zoom === "week" ? 7 : 0;
+      const step = this.zoom === "day" || this.zoom === "three" ? 1 : this.zoom === "week" ? 7 : 0;
       const move = (dir: number) => {
         if (step) this.anchor = addDays(this.anchor, dir * step);
         else { const d = new Date(this.anchor + "T00:00:00"); d.setMonth(d.getMonth() + dir, 1); this.anchor = toStr(d); }
@@ -155,6 +163,10 @@ export class PlannerView extends ItemView {
     const a = new Date(this.anchor + "T00:00:00");
     if (this.zoom === "day") return a.toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long" });
     if (this.zoom === "month") return a.toLocaleDateString(undefined, { month: "long", year: "numeric" });
+    if (this.zoom === "three") {
+      const f = (d: string) => new Date(d + "T00:00:00").toLocaleDateString(undefined, { day: "numeric", month: "short" });
+      return `${f(addDays(this.anchor, -1))} to ${f(addDays(this.anchor, 1))}`;
+    }
     if (this.zoom === "focus") return "Today";
     if (this.zoom === "matrix") return "Triage";
     const mon = mondayOf(this.anchor);
@@ -165,7 +177,7 @@ export class PlannerView extends ItemView {
 
   // ---------- day / week ----------
 
-  private dayColumn(parent: HTMLElement, day: string, wide: boolean) {
+  private dayColumn(parent: HTMLElement, day: string, wide: boolean, pastAsStrip = true) {
     const s = this.plugin.settings;
     const today = localToday();
     const tasks = this.plugin.store.tasks;
@@ -203,12 +215,22 @@ export class PlannerView extends ItemView {
       }
     }
 
-    if (!wide && day < today) {
+    if (!wide && pastAsStrip && day < today) {
       // A past day in Week view: just a count, the day name opens it.
       col.addClass("is-strip");
       if (open.length) col.createDiv({ cls: "nn-strip-note", text: `${open.length} open` });
       if (done.length && this.plugin.on("doneList")) col.createDiv({ cls: "nn-strip-note", text: `${done.length} done` });
       return;
+    }
+    const events = this.plugin.calendars.eventsOn(day);
+    if (events.length) {
+      const ev = col.createDiv({ cls: "nn-events" });
+      for (const e of events) {
+        const row = ev.createDiv({ cls: "nn-event" });
+        row.createSpan({ cls: "nn-event-time", text: e.time ?? "All day" });
+        row.createSpan({ cls: "nn-event-title", text: e.title });
+        row.setAttr("aria-label", e.calendar);
+      }
     }
     const list = col.createDiv({ cls: "nn-day-list" });
     renderList(this.plugin, list, open, day < today ? "" : "Nothing planned", {
@@ -237,6 +259,13 @@ export class PlannerView extends ItemView {
     this.dayColumn(wrap, day, true);
   }
 
+  /** Yesterday, today and tomorrow (around the chosen day), each in full. */
+  private renderThree(body: HTMLElement) {
+    const wrap = body.createDiv({ cls: "nn-week nn-three" });
+    wrap.style.gridTemplateColumns = "repeat(3, minmax(130px, 1fr))";
+    for (const d of [-1, 0, 1].map((n) => addDays(this.anchor, n))) this.dayColumn(wrap, d, false, false);
+  }
+
   private renderWeek(body: HTMLElement) {
     const mon = mondayOf(this.anchor);
     const n = this.plugin.settings.showWeekend ? 7 : 5;
@@ -263,6 +292,8 @@ export class PlannerView extends ItemView {
         if (!day.startsWith(month)) cell.addClass("is-other");
         if (day === today) cell.addClass("is-today");
         cell.createDiv({ cls: "nn-month-num", text: String(Number(day.slice(8))) });
+        const nEvents = this.plugin.calendars.eventsOn(day).length;
+        if (nEvents) cell.createDiv({ cls: "nn-month-events", text: `${nEvents} ${nEvents === 1 ? "event" : "events"}` });
         const open = openOn(tasks, day, this.filter);
         for (const t of open.slice(0, 3)) {
           const r = cell.createDiv({ cls: "nn-month-task", text: t.text });
@@ -343,9 +374,10 @@ export class PlannerView extends ItemView {
     // The one capture box in the planner sits at the base of the tab list.
     {
       const isDiary = this.tab === "diary" || this.tab === this.plugin.store.dailyArea();
+      // Same box in every tab; an area tab tags the new task with its area.
       captureBox(this.plugin, panel, isDiary
         ? { lines: 2 }
-        : { placeholder: `+ Add to ${cap(this.tab)} (Enter saves to today's note)`, tag: this.projectTag() });
+        : { lines: 2, placeholder: `Add task to ${cap(this.tab)} (saved in today's daily note)`, tag: this.projectTag() });
     }
   }
 

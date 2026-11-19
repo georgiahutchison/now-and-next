@@ -1,9 +1,9 @@
-import { App, PluginSettingTab, Setting } from "obsidian";
+import { App, PluginSettingTab, Setting, debounce } from "obsidian";
 import type NowAndNextPlugin from "./main";
 import type { Energy } from "./tasks";
 import type { SortMode } from "./queries";
 
-export type Zoom = "focus" | "day" | "week" | "month" | "matrix";
+export type Zoom = "focus" | "day" | "three" | "week" | "month" | "matrix";
 
 export type SupportKey =
   | "focus" | "dailyCap" | "carryOver" | "capture" | "doneList" | "energy"
@@ -38,7 +38,11 @@ export interface NowAndNextSettings {
   /** Manual order of tasks per day (YYYY-MM-DD -> note|wording ids). */
   order: Record<string, string[]>;
   supports: Record<SupportKey, boolean>;
+  /** Calendar links (ICS), shown read-only in Day, Week and Month. */
+  calendars: CalendarLink[];
 }
+
+export interface CalendarLink { name: string; url: string }
 
 export const DEFAULT_SETTINGS: NowAndNextSettings = {
   projectsFolder: "domains",
@@ -55,6 +59,7 @@ export const DEFAULT_SETTINGS: NowAndNextSettings = {
   sortBy: "priority",
   order: {},
   supports: Object.fromEntries(SUPPORTS.map((x) => [x.key, true])) as Record<SupportKey, boolean>,
+  calendars: [],
 };
 
 export class NowAndNextSettingTab extends PluginSettingTab {
@@ -101,7 +106,7 @@ export class NowAndNextSettingTab extends PluginSettingTab {
       .addToggle((t) => t.setValue(s.showWeekend).onChange(async (v) => { s.showWeekend = v; await save(); }));
 
     new Setting(containerEl).setName("Open at")
-      .addDropdown((d) => d.addOptions({ matrix: "Triage", focus: "Focus", day: "Day", week: "Week", month: "Month" }).setValue(s.defaultZoom)
+      .addDropdown((d) => d.addOptions({ matrix: "Triage", focus: "Focus", day: "Day", three: "3 days", week: "Week", month: "Month" }).setValue(s.defaultZoom)
         .onChange(async (v) => { s.defaultZoom = v as Zoom; await save(); }));
 
     new Setting(containerEl).setName("Supports").setHeading();
@@ -110,6 +115,27 @@ export class NowAndNextSettingTab extends PluginSettingTab {
       new Setting(containerEl).setName(sp.name).setDesc(sp.desc)
         .addToggle((t) => t.setValue(s.supports[sp.key]).onChange(async (v) => { s.supports[sp.key] = v; await save(); }));
     }
+
+    new Setting(containerEl).setName("Calendars").setHeading();
+    containerEl.createEl("p", { cls: "setting-item-description", text:
+      "Events from these calendars show at the top of each day in Day, 3 days and Week, and as a count in Month. They are read-only. " +
+      "Google: Settings, your calendar, Secret address in iCal format. Outlook: Settings, Calendar, Shared calendars, Publish a calendar, ICS link. " +
+      "The links are private: anyone with one can read that calendar. They are kept in this plugin's settings only." });
+    const refetch = debounce(() => void this.plugin.calendars.refresh(), 1200, true);
+    s.calendars.forEach((c, i) => {
+      new Setting(containerEl)
+        .addText((t) => t.setPlaceholder("Name").setValue(c.name).onChange(async (v) => { c.name = v.trim(); await save(); refetch(); }))
+        .addText((t) => {
+          t.setPlaceholder("https://… .ics").setValue(c.url).onChange(async (v) => { c.url = v.trim(); await save(); refetch(); });
+          t.inputEl.addClass("nn-cal-url");
+        })
+        .addExtraButton((b) => b.setIcon("trash-2").setTooltip("Remove").onClick(async () => {
+          s.calendars.splice(i, 1); await save(); refetch(); this.display();
+        }));
+    });
+    new Setting(containerEl).addButton((b) => b.setButtonText("Add calendar").onClick(async () => {
+      s.calendars.push({ name: "", url: "" }); await save(); this.display();
+    }));
 
     new Setting(containerEl).setName("Notes").setHeading();
 
