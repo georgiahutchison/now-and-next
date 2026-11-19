@@ -25,7 +25,24 @@ export class Actions {
   /** Done and Drop, newest last: Cmd/Ctrl+Z in the planner undoes them one by one. */
   private undoStack: (() => Promise<void>)[] = [];
 
-  /** Undo the latest Done or Drop. */
+  /** Edit a task line and keep an undo step for Cmd/Ctrl+Z (no notice). */
+  private async editUndoable(t: VTask, fn: (line: string) => string) {
+    const original = t.raw;
+    let written = "";
+    const ok = await editTask(this.app, t, (l) => (written = fn(l)));
+    if (!ok || written === original) return;
+    this.pushUndo(() => this.replaceLines(t.path, [written], [original]));
+  }
+
+  private pushUndo(undo: () => Promise<void>): () => Promise<void> {
+    let used = false;
+    const once = async () => { if (used) return; used = true; this.undoStack = this.undoStack.filter((f) => f !== once); await undo(); };
+    this.undoStack.push(once);
+    if (this.undoStack.length > 20) this.undoStack.shift();
+    return once;
+  }
+
+  /** Undo the latest Done, Drop or move to another day. */
   async undoLast() {
     const fn = this.undoStack.pop();
     if (!fn) { new Notice("Nothing to undo.", 1500); return; }
@@ -76,10 +93,7 @@ export class Actions {
 
   /** One quiet line: what happened (shortened) and an Undo link, for a few seconds. */
   private undoNotice(label: string, undo: () => Promise<void>) {
-    let used = false;
-    const once = async () => { if (used) return; used = true; this.undoStack = this.undoStack.filter((f) => f !== once); await undo(); };
-    this.undoStack.push(once);
-    if (this.undoStack.length > 20) this.undoStack.shift();
+    const once = this.pushUndo(undo);
     const frag = document.createDocumentFragment();
     const row = frag.createDiv({ cls: "nn-notice" });
     row.createSpan({ cls: "nn-notice-text", text: label.length > 46 ? label.slice(0, 45).trimEnd() + "…" : label });
@@ -106,7 +120,7 @@ export class Actions {
   async schedule(t: VTask, date: string | null) {
     // Moving a task moves its scheduled date; a due-only task gains a scheduled date.
     // Planning a task onto a day also brings it back from Later.
-    await editTask(this.app, t, (l) => {
+    await this.editUndoable(t, (l) => {
       let out = setDate(l, "scheduled", date);
       if (date) out = setDate(removeTags(out, ["later"]), "start", null);
       return out;
@@ -115,12 +129,12 @@ export class Actions {
 
   /** Into the Later panel: tagged #later and taken off its day. */
   async toLater(t: VTask) {
-    await editTask(this.app, t, (l) => addTag(setDate(l, "scheduled", null), "later"));
+    await this.editUndoable(t, (l) => addTag(setDate(l, "scheduled", null), "later"));
   }
 
   /** Out of Later: no #later tag and no future start date. */
   async fromLater(t: VTask) {
-    await editTask(this.app, t, (l) => setDate(removeTags(l, ["later"]), "start", null));
+    await this.editUndoable(t, (l) => setDate(removeTags(l, ["later"]), "start", null));
   }
 
   /** Hide until the 1st of next month (🛫 start date), off its day. */
@@ -128,7 +142,7 @@ export class Actions {
     const now = new Date();
     const first = new Date(now.getFullYear(), now.getMonth() + 1, 1);
     const d = `${first.getFullYear()}-${String(first.getMonth() + 1).padStart(2, "0")}-01`;
-    await editTask(this.app, t, (l) => setDate(setDate(l, "scheduled", null), "start", d));
+    await this.editUndoable(t, (l) => setDate(setDate(l, "scheduled", null), "start", d));
   }
 
   async urgent(t: VTask, on: boolean) {
@@ -207,7 +221,8 @@ export class Actions {
   /** Move a task to an area: drop any other area tags, then add this one. */
   async moveToArea(t: VTask, area: string) {
     const others = this.plugin.store.projects().filter((p) => p !== area);
-    await editTask(this.app, t, (l) => addTag(removeTags(l, others), area));
+    // Undoable too: dropping a task on an area tab unplans it and moves it, two steps for Cmd/Ctrl+Z.
+    await this.editUndoable(t, (l) => addTag(removeTags(l, others), area));
   }
 
   async waiting(t: VTask, on: boolean) { await editTask(this.app, t, (l) => setStatus(l, on ? "w" : " ")); }

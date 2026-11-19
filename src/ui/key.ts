@@ -52,7 +52,7 @@ const SECTIONS: [string, [string, string][]][] = [
     ["… or right-click", "Menu: days, deadline, Later, milestone, repeat, priority, energy, estimate, timer, first step, waiting, drop"],
     ["× on hover", "Drop the task (Undo appears for a few seconds)"],
     ["Tick a task", "Done; Undo appears for a few seconds and puts it back as it was"],
-    ["Cmd/Ctrl + Z", "In the planner or sidebar: undo the latest Done or Drop, one at a time"],
+    ["Cmd/Ctrl + Z", "In the planner or sidebar: undo the latest Done, Drop or move to another day (or to Later), one at a time"],
     ["Drag onto a day", "Schedule it there; the thin line shows where it lands in the day's order"],
     ["Drag onto an area tab", "Take it off its day and back to that area"],
     ["Drag onto Later", "Move it to Later"],
