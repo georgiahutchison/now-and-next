@@ -60,6 +60,7 @@ export default class NowAndNextPlugin extends Plugin {
     const data = (await this.loadData()) ?? {};
     this.settings = Object.assign({}, DEFAULT_SETTINGS, data);
     this.settings.supports = Object.assign({}, DEFAULT_SETTINGS.supports, data.supports ?? {});
+    this.settings.order = Object.assign({}, data.order ?? {});
   }
 
   /** Is this support switched on in settings? */

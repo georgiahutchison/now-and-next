@@ -232,3 +232,7 @@
 .nn-root .nn-seg-label { display: inline-flex; align-items: center; height: calc(var(--nn-pill-h) - 4px); padding: 0 var(--size-4-2); }
 
 .nn-prefix { color: var(--text-faint); }
+
+/* drag to reorder: a line above the card you drop on */
+.nn-card.is-insert-before { box-shadow: 0 -3px 0 0 var(--interactive-accent); }
+.nn-side-note .nn-over-btn { margin-left: var(--size-4-1); }

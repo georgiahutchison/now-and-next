@@ -107,9 +107,35 @@ export function renderTask(plugin: NowAndNextPlugin, parent: HTMLElement, t: VTa
   return row;
 }
 
-export function renderList(plugin: NowAndNextPlugin, parent: HTMLElement, list: VTask[], empty: string, opts: { showDate?: boolean; hideProject?: string } = {}) {
+export function renderList(
+  plugin: NowAndNextPlugin, parent: HTMLElement, list: VTask[], empty: string,
+  opts: { showDate?: boolean; hideProject?: string; onReorder?: (moved: VTask, before: VTask | null) => unknown } = {},
+) {
   if (!list.length) { parent.createDiv({ cls: "nn-empty", text: empty }); return; }
-  for (const t of list) renderTask(plugin, parent, t, opts);
+  for (const t of list) {
+    const card = renderTask(plugin, parent, t, opts);
+    if (opts.onReorder) reorderTarget(card, plugin, t, opts.onReorder);
+  }
+}
+
+/** Dropping a task on a card puts it just above that card. */
+function reorderTarget(card: HTMLElement, plugin: NowAndNextPlugin, target: VTask, onReorder: (moved: VTask, before: VTask | null) => unknown) {
+  card.addEventListener("dragover", (e) => {
+    if (!e.dataTransfer?.types.includes(DRAG_TYPE)) return;
+    e.preventDefault();
+    e.stopPropagation();
+    card.addClass("is-insert-before");
+  });
+  card.addEventListener("dragleave", (e) => { if (!card.contains(e.relatedTarget as Node)) card.removeClass("is-insert-before"); });
+  card.addEventListener("drop", (e) => {
+    card.removeClass("is-insert-before");
+    const key = e.dataTransfer?.getData(DRAG_TYPE);
+    if (!key) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const moved = plugin.store.get(key);
+    if (moved && moved.key !== target.key) void onReorder(moved, target);
+  });
 }
 
 /** Make an element accept dropped tasks. */

@@ -35,6 +35,8 @@ export interface NowAndNextSettings {
   ideasNote: string;
   energyFilter: Energy | "all";
   sortBy: SortMode;
+  /** Manual order of tasks per day (YYYY-MM-DD -> note|wording ids). */
+  order: Record<string, string[]>;
   supports: Record<SupportKey, boolean>;
 }
 
@@ -51,6 +53,7 @@ export const DEFAULT_SETTINGS: NowAndNextSettings = {
   ideasNote: "Now & Next ideas.md",
   energyFilter: "all",
   sortBy: "priority",
+  order: {},
   supports: Object.fromEntries(SUPPORTS.map((x) => [x.key, true])) as Record<SupportKey, boolean>,
 };
 

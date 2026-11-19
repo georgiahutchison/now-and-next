@@ -1,5 +1,7 @@
 import { ItemView, WorkspaceLeaf, setIcon } from "obsidian";
 import { localToday } from "../tasks";
+import { planDate } from "../store";
+import { applyOrder, placeBefore, moveExtrasOn } from "../order";
 import { openOn, doneOn, overdue, waiting } from "../queries";
 import { renderList, captureBox, dropZone } from "./render";
 import type NowAndNextPlugin from "../main";
@@ -55,15 +57,29 @@ export class TodayView extends ItemView {
 
     let open = openOn(tasks, today, f);
     if (!this.plugin.on("carryOver")) open = [...late, ...open];
+    open = applyOrder(this.plugin, today, open);
     const capOn = this.plugin.on("dailyCap");
     const cap = this.plugin.settings.dailyCap;
     const sec = root.createDiv({ cls: "nn-side-section" });
     const h = sec.createDiv({ cls: "nn-side-h", text: "Today" });
     if (capOn && open.length > cap) h.createSpan({ cls: "nn-day-meta", text: ` ${open.length}/${cap}` });
-    if (capOn && open.length > cap) sec.createDiv({ cls: "nn-side-note", text: "Over your cap. Open the week to move some on." });
+    if (capOn && open.length > cap) {
+      const note = sec.createDiv({ cls: "nn-side-note" });
+      note.setText("Over your cap. ");
+      const b = note.createEl("button", { cls: "nn-over-btn", text: "Move extras on" });
+      b.addEventListener("click", () => void moveExtrasOn(this.plugin, today, open));
+    }
     const list = sec.createDiv({ cls: "nn-day-list" });
-    renderList(this.plugin, list, open, "Nothing planned for today.");
-    dropZone(sec, this.plugin, (t) => this.plugin.actions.schedule(t, today));
+    renderList(this.plugin, list, open, "Nothing planned for today.", {
+      onReorder: async (moved, before) => {
+        if (planDate(moved) !== today) await this.plugin.actions.schedule(moved, today);
+        await placeBefore(this.plugin, today, open, moved, before, today);
+      },
+    });
+    dropZone(sec, this.plugin, async (t) => {
+      if (planDate(t) !== today) await this.plugin.actions.schedule(t, today);
+      await placeBefore(this.plugin, today, open, t, null, today);
+    });
 
     const w = waiting(tasks);
     if (w.length) {

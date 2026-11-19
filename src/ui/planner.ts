@@ -1,6 +1,7 @@
 import { ItemView, Scope, WorkspaceLeaf, setIcon } from "obsidian";
 import { addDays, localToday, mondayOf, formatMinutes, tagFor } from "../tasks";
-import { VTask } from "../store";
+import { VTask, planDate } from "../store";
+import { applyOrder, placeBefore, moveExtrasOn } from "../order";
 import {
   openOn, doneOn, overdue, waiting, inProject, inbox, estimateTotal, hm, EnergyFilter, sortTasks, SORT_LABELS, SortMode,
   later, isImportant, isUrgent, matrixTasks,
@@ -167,6 +168,7 @@ export class PlannerView extends ItemView {
     let open = openOn(tasks, day, this.filter);
     // With carry-over off, unfinished tasks from past days sit on today.
     if (day === today && !this.plugin.on("carryOver")) open = [...overdue(tasks, today, this.filter), ...open];
+    open = applyOrder(this.plugin, day, open);
     const done = doneOn(tasks, day);
     const capOn = this.plugin.on("dailyCap");
     const over = capOn && open.length > s.dailyCap;
@@ -177,9 +179,7 @@ export class PlannerView extends ItemView {
         col.addClass("is-over");
         meta.createSpan({ text: `${open.length}/${s.dailyCap}` });
         const btn = meta.createEl("button", { cls: "nn-over-btn", text: "Move extras on" });
-        btn.addEventListener("click", async () => {
-          for (const t of open.slice(s.dailyCap)) await this.plugin.actions.schedule(t, addDays(day, 1));
-        });
+        btn.addEventListener("click", () => void moveExtrasOn(this.plugin, day, open));
       }
       if (est) {
         const avail = Math.max(0, hm(s.dayEnd) - hm(s.dayStart));
@@ -189,8 +189,16 @@ export class PlannerView extends ItemView {
     }
 
     const list = col.createDiv({ cls: "nn-day-list" });
-    renderList(this.plugin, list, open, day < today ? "" : "Nothing planned");
-    dropZone(col, this.plugin, (t) => this.plugin.actions.schedule(t, day));
+    renderList(this.plugin, list, open, day < today ? "" : "Nothing planned", {
+      onReorder: async (moved, before) => {
+        if (planDate(moved) !== day) await this.plugin.actions.schedule(moved, day);
+        await placeBefore(this.plugin, day, open, moved, before, today);
+      },
+    });
+    dropZone(col, this.plugin, async (t) => {
+      if (planDate(t) !== day) await this.plugin.actions.schedule(t, day);
+      await placeBefore(this.plugin, day, open, t, null, today);
+    });
 
     if (day >= today) captureBox(this.plugin, col, { placeholder: "+ Add", scheduled: day, tag: this.projectTag() });
 
