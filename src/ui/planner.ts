@@ -114,6 +114,7 @@ export class PlannerView extends ItemView {
     nav.createDiv({ cls: "nn-title", text: this.title() });
 
     const zoom = h.createDiv({ cls: "nn-seg" });
+    zoom.createSpan({ cls: "nn-seg-label", text: "View" });
     for (const [z, label] of VIEWS) {
       if (z === "focus" && !this.plugin.on("focus")) continue;
       const b = zoom.createEl("button", { text: label });
