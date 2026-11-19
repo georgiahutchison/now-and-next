@@ -459,3 +459,5 @@
 .nn-habit-rule { margin-left: var(--size-4-2); color: var(--text-faint); font-size: var(--font-ui-smaller); }
 .nn-habit-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--text-muted); }
 .nn-event-chip { font-style: normal; }
+.nn-root table.nn-habit-table { width: auto; max-width: 100%; }
+.nn-habit-table td.nn-habit-name { font-weight: normal; }
