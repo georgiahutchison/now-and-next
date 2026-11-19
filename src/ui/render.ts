@@ -1,5 +1,5 @@
 import { setIcon } from "obsidian";
-import { formatMinutes, localToday, PRIORITY_EMOJI, ENERGY_EMOJI, addDays } from "../tasks";
+import { formatMinutes, localToday, PRIORITY_EMOJI, ENERGY_EMOJI, addDays, type Energy } from "../tasks";
 import { VTask, isDone, isWaiting, planDate } from "../store";
 import { needsFirstStep } from "../queries";
 import type NowAndNextPlugin from "../main";
@@ -7,6 +7,8 @@ import type NowAndNextPlugin from "../main";
 export const DRAG_TYPE = "text/x-now-and-next";
 /** An area tab being dragged onto a task: the task moves to that area. */
 export const AREA_DRAG_TYPE = "text/x-now-and-next-area";
+/** A spoon (energy level) being dragged onto a task: sets its energy. */
+export const ENERGY_DRAG_TYPE = "text/x-now-and-next-energy";
 
 export function renderTask(plugin: NowAndNextPlugin, parent: HTMLElement, t: VTask, opts: { showDate?: boolean; nested?: boolean; hideProject?: string; shortLabel?: boolean; showRule?: boolean } = {}) {
   const a = plugin.actions;
@@ -24,23 +26,27 @@ export function renderTask(plugin: NowAndNextPlugin, parent: HTMLElement, t: VTa
       row.addClass("is-dragging");
     });
     row.addEventListener("dragend", () => row.removeClass("is-dragging"));
-    // Drop an area tab on the card to move the task to that area.
+    // Drop an area tab on the card to move the task to that area, or a spoon to set its energy.
     row.addEventListener("dragover", (e) => {
-      if (!e.dataTransfer?.types.includes(AREA_DRAG_TYPE)) return;
+      const types = e.dataTransfer?.types;
+      if (!types || !(types.includes(AREA_DRAG_TYPE) || types.includes(ENERGY_DRAG_TYPE))) return;
       e.preventDefault();
       e.stopPropagation();
-      e.dataTransfer.dropEffect = "link";
+      e.dataTransfer!.dropEffect = "link";
       row.addClass("is-area-target");
     });
     row.addEventListener("dragleave", (e) => { if (!row.contains(e.relatedTarget as Node)) row.removeClass("is-area-target"); });
     row.addEventListener("drop", (e) => {
       const area = e.dataTransfer?.getData(AREA_DRAG_TYPE);
+      const energy = e.dataTransfer?.getData(ENERGY_DRAG_TYPE) as Energy | "" | undefined;
       row.removeClass("is-area-target");
-      if (!area) return;
+      if (!area && !energy) return;
       e.preventDefault();
       e.stopPropagation();
       const fresh = plugin.store.get(t.key);
-      if (fresh) void a.moveToArea(fresh, area);
+      if (!fresh) return;
+      if (area) void a.moveToArea(fresh, area);
+      else if (energy) void a.energy(fresh, energy);
     });
   }
 

@@ -1,12 +1,12 @@
 import { ItemView, Scope, WorkspaceLeaf, setIcon } from "obsidian";
-import { addDays, localToday, mondayOf, formatMinutes, tagFor } from "../tasks";
+import { addDays, localToday, mondayOf, formatMinutes, tagFor, ENERGY_EMOJI } from "../tasks";
 import { VTask, planDate } from "../store";
 import { applyOrder, placeBefore, moveExtrasOn } from "../order";
 import {
   openOn, doneOn, overdue, waiting, inProject, inbox, estimateTotal, hm, EnergyFilter, sortTasks, SORT_LABELS, SortMode,
   later, routines, isImportant, isUrgent, matrixTasks,
 } from "../queries";
-import { renderList, renderTask, dropZone, captureBox, carryOverTray, AREA_DRAG_TYPE } from "./render";
+import { renderList, renderTask, dropZone, captureBox, carryOverTray, AREA_DRAG_TYPE, ENERGY_DRAG_TYPE } from "./render";
 import type NowAndNextPlugin from "../main";
 import type { Zoom } from "../settings";
 
@@ -23,6 +23,8 @@ export class PlannerView extends ItemView {
   tab = "";
   private skipped: string[] = [];
   private beforeFocus: Zoom = "week";
+  /** Area shown in Triage ("" = all). */
+  private triageArea = "";
   /** The span Plan returns to after Triage or Focus. */
   private planSpan: Zoom = "week";
 
@@ -166,7 +168,8 @@ export class PlannerView extends ItemView {
     iconBtn(tools, "info", "Key", () => this.plugin.openKey());
     iconBtn(tools, "refresh-cw", "Reload", () => void this.plugin.reloadApp());
 
-    if (this.plugin.on("energy")) {
+    // Spoons sit in the Areas row in Plan and Triage; Focus has no Areas row, so they stay up here.
+    if (this.plugin.on("energy") && this.zoom === "focus") {
       const row2 = right.createDiv({ cls: "nn-header-row" });
       const energy = row2.createDiv({ cls: "nn-seg nn-energy-filter" });
       energy.createSpan({ cls: "nn-seg-label", text: "Energy" });
@@ -360,28 +363,9 @@ export class PlannerView extends ItemView {
     if (!names.some(([k]) => k === this.tab)) this.tab = dailyTab[0];
     bar.createSpan({ cls: "nn-tabs-label", text: "Areas" });
     for (const [key, label] of names) {
-      const b = bar.createEl("button", { cls: "nn-tab" });
-      b.createSpan({ text: label });
-      if (lists[key].length) b.createSpan({ cls: "nn-tab-count", text: String(lists[key].length) });
-      if (key === this.tab) b.addClass("is-active");
-      b.addEventListener("click", () => { this.tab = key; this.render(); });
-      // Drag an area tab onto any task to move the task to that area.
-      if (projects.includes(key) && key !== store.dailyArea()) {
-        b.draggable = true;
-        b.addEventListener("dragstart", (e) => {
-          e.dataTransfer?.setData(AREA_DRAG_TYPE, key);
-          if (e.dataTransfer) e.dataTransfer.effectAllowed = "link";
-        });
-      }
-      // Dropping on a tab takes the task off its day and back to that list.
-      dropZone(b, this.plugin, async (t) => {
-        await this.plugin.actions.schedule(t, null);
-        if (projects.includes(key) && key !== store.dailyArea() && t.project !== key) {
-          const fresh = this.plugin.store.get(t.key);
-          if (fresh) await this.plugin.actions.moveToArea(fresh, key);
-        }
-      });
+      this.areaTab(bar, key, label, lists[key].length, key === this.tab, () => { this.tab = key; this.render(); });
     }
+    this.spoons(bar);
     const hintRow = panel.createDiv({ cls: "nn-panel-row" });
     const hint = hintRow.createDiv({ cls: "nn-panel-hint" });
     const sortWrap = hintRow.createDiv({ cls: "nn-sort" });
@@ -411,9 +395,79 @@ export class PlannerView extends ItemView {
 
   // ---------- triage (importance x urgency) ----------
 
+  /** One area tab: click to choose, drag onto a task to assign the area, drop a task on it to move it there. */
+  private areaTab(bar: HTMLElement, key: string, label: string, count: number, active: boolean, onClick: () => void) {
+    const store = this.plugin.store;
+    const projects = store.projects();
+    const b = bar.createEl("button", { cls: "nn-tab" });
+    b.createSpan({ text: label });
+    if (count) b.createSpan({ cls: "nn-tab-count", text: String(count) });
+    if (active) b.addClass("is-active");
+    b.addEventListener("click", onClick);
+    const isArea = projects.includes(key) && key !== store.dailyArea();
+    if (isArea) {
+      b.draggable = true;
+      b.addEventListener("dragstart", (e) => {
+        e.dataTransfer?.setData(AREA_DRAG_TYPE, key);
+        if (e.dataTransfer) e.dataTransfer.effectAllowed = "link";
+      });
+    }
+    if (!key) return; // "All" in Triage only filters
+    // Dropping a task on a tab takes it off its day and into that area's list.
+    dropZone(b, this.plugin, async (t) => {
+      await this.plugin.actions.schedule(t, null);
+      if (isArea && t.project !== key) {
+        const fresh = this.plugin.store.get(t.key);
+        if (fresh) await this.plugin.actions.moveToArea(fresh, key);
+      }
+    });
+  }
+
+  /**
+   * The spoons (energy) at the end of the Areas row: click to show only tasks needing that much energy,
+   * drag a spoon onto a task to set its energy, or drop a task on a spoon.
+   */
+  private spoons(bar: HTMLElement) {
+    if (!this.plugin.on("energy")) return;
+    const s = this.plugin.settings;
+    const seg = bar.createDiv({ cls: "nn-seg nn-energy-filter nn-spoons" });
+    seg.createSpan({ cls: "nn-seg-label", text: "Spoons" });
+    const opts: [EnergyFilter, string, string][] = [
+      ["all", "Any", "Any energy"], ["low", ENERGY_EMOJI.low, "Low energy"], ["mid", ENERGY_EMOJI.mid, "Medium energy"], ["high", ENERGY_EMOJI.high, "High energy"],
+    ];
+    for (const [k, label, tip] of opts) {
+      const b = seg.createEl("button", { text: label, attr: { "aria-label": tip } });
+      if (s.energyFilter === k) b.addClass("is-active");
+      b.addEventListener("click", async () => { s.energyFilter = k; await this.plugin.saveSettings(); });
+      if (k === "all") continue;
+      const level = k;
+      b.draggable = true;
+      b.addEventListener("dragstart", (e) => {
+        e.dataTransfer?.setData(ENERGY_DRAG_TYPE, level);
+        if (e.dataTransfer) e.dataTransfer.effectAllowed = "link";
+      });
+      dropZone(b, this.plugin, (t) => this.plugin.actions.energy(t, level));
+    }
+  }
+
   private renderMatrix(body: HTMLElement) {
     const today = localToday();
-    const all = matrixTasks(this.plugin.store.tasks, this.filter);
+    const store = this.plugin.store;
+    const every = matrixTasks(store.tasks, this.filter);
+    // Areas row: All, Diary (no area), then each area. Choosing one filters all four boxes.
+    const inArea = (t: VTask, key: string) => !key || (key === "diary" ? !t.project : t.project === key);
+    const keys: [string, string][] = [["", "All"]];
+    if (store.dailyArea() === null) keys.push(["diary", "Diary"]);
+    for (const p of store.projects()) keys.push([p, cap(p)]);
+    if (!keys.some(([k]) => k === this.triageArea)) this.triageArea = "";
+    const bar = body.createDiv({ cls: "nn-tabs nn-triage-areas" });
+    bar.createSpan({ cls: "nn-tabs-label", text: "Areas" });
+    for (const [key, label] of keys) {
+      const n = every.filter((t) => inArea(t, key)).length;
+      this.areaTab(bar, key, label, key ? n : 0, key === this.triageArea, () => { this.triageArea = key; this.render(); });
+    }
+    this.spoons(bar);
+    const all = every.filter((t) => inArea(t, this.triageArea));
     const grid = body.createDiv({ cls: "nn-matrix" });
     const boxes: { title: string; hint: string; imp: boolean; urg: boolean }[] = [
       { title: "Do", hint: "Important and urgent", imp: true, urg: true },
@@ -465,7 +519,7 @@ export class PlannerView extends ItemView {
     const sum = det.createEl("summary");
     sum.createSpan({ text: "Later" });
     if (list.length) sum.createSpan({ cls: "nn-tab-count", text: ` ${list.length}` });
-    det.createDiv({ cls: "nn-panel-hint", text: "Tagged #later, or deferred to a later month. Drop a task here to move it to Later." });
+    det.createDiv({ cls: "nn-panel-hint", text: "Tagged #later, or with a future start date (🛫). Drop a task here to move it to Later." });
     const inner = det.createDiv({ cls: "nn-panel-list" });
     renderList(this.plugin, inner, sortTasks(list, this.plugin.settings.sortBy), "Nothing here.");
     dropZone(det, this.plugin, (t) => this.plugin.actions.toLater(t));

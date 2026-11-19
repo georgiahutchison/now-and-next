@@ -5,7 +5,7 @@ const SECTIONS: [string, [string, string][]][] = [
   ["Dates", [
     ["⏳ 2026-11-24", "Scheduled: the day the task sits on in the planner"],
     ["📅 2026-11-28", "Due: the deadline. A task with only a due date sits on that day"],
-    ["🛫 2026-11-20", "Start: not before this day. A start in a later month puts the task in Later"],
+    ["🛫 2026-11-20", "Start: not before this day. Any future start date puts the task in Later until then"],
     ["✅ 2026-11-19", "Done on this day (added when you tick it)"],
     ["❌ 2026-11-19", "Cancelled (dropped) on this day"],
     ["➕ 2026-11-10", "Created on this day"],
@@ -42,12 +42,14 @@ const SECTIONS: [string, [string, string][]][] = [
     ["Drag onto an area tab", "Take it off its day and back to that area"],
     ["Drag onto Later", "Move it to Later"],
     ["Drag an area tab onto a task", "Move the task to that area (its other area tags are removed)"],
+    ["Drag a spoon onto a task", "Set the task's energy; dragging the task onto a spoon does the same"],
     ["Drag between Triage boxes", "Sets or clears ⏫ and #urgent; deadlines are left as they are"],
   ]],
   ["In the planner", [
     ["Day name", "Opens that day"],
     ["6/5 · Move extras on", "More tasks than your daily cap; moves the extras to the next working day with room"],
     ["Start (Routines)", "Gives an undated repeating task its next date"],
+    ["Areas and Spoons row", "Click to show one area or energy level; in Triage, All shows every area"],
     ["Faint time and title", "A calendar event from your calendar links (read-only)"],
     ["1 · 3 · 7 · Month", "In Plan: one day, yesterday to tomorrow, a week, or a month"],
     ["Cmd/Ctrl + and -", "In Plan: step between 1, 3, 7 days and Month"],

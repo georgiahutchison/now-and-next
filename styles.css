@@ -400,3 +400,8 @@
 
 /* ---- Plan's span control, beside the date ---- */
 .nn-span { margin-left: var(--size-4-3); }
+
+/* ---- Spoons at the end of the Areas row; Areas row above the Triage boxes ---- */
+.nn-tabs { align-items: center; }
+.nn-tabs .nn-spoons { margin-left: auto; }
+.nn-triage-areas { margin-bottom: var(--size-4-3); }
