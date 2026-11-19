@@ -72,6 +72,7 @@ export default class NowAndNextPlugin extends Plugin {
     this.settings.order = Object.assign({}, data.order ?? {});
     this.settings.calendars = Array.isArray(data.calendars) ? data.calendars : [];
     this.settings.goTo = Array.isArray(data.goTo) ? data.goTo : [];
+    this.settings.onlyFolders = Array.isArray(data.onlyFolders) ? data.onlyFolders : [];
     // The energy filter is for right now: it starts at "Any" each time so it can't hide tasks unnoticed.
     this.settings.energyFilter = "all";
   }

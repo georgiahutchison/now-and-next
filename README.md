@@ -101,7 +101,8 @@ Now & Next is not yet in the community plugin list. To install it by hand:
 | Setting | Default | Notes |
 |---|---|---|
 | Areas folder | `domains` | Each subfolder becomes a tab. If you rename or move the folder inside Obsidian, the setting follows it. |
-| Folders to ignore | `systems/templates` | Tasks in these folders (for example templates) are left out. |
+| Only these folders | empty | When filled in, only tasks in these folders or notes are read. Empty means the whole vault. |
+| Folders to ignore | `systems/templates` | Folders or notes whose tasks are left out (for example templates). |
 | Daily cap | 5 | |
 | Working day | 09:00 to 17:00 | Used for estimate totals. |
 | Timer length | 25 minutes | |

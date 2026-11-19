@@ -66,10 +66,14 @@ export class TaskStore extends Events {
 
   isReady() { return this.ready; }
 
+  /** Left out: Obsidian's config, anything outside "Only these folders" (when set), and ignored folders or notes. */
   private excluded(path: string): boolean {
-    const ex = this.plugin.settings.excludeFolders.map((x) => x.replace(/\/$/, "")).filter(Boolean);
+    const clean = (xs: string[]) => xs.map((x) => x.replace(/\/$/, "")).filter(Boolean);
+    const under = (f: string) => path === f || path === f + ".md" || path.startsWith(f + "/");
     if (path.startsWith(this.app.vault.configDir + "/")) return true;
-    return ex.some((f) => path === f || path.startsWith(f + "/"));
+    const only = clean(this.plugin.settings.onlyFolders ?? []);
+    if (only.length && !only.some(under)) return true;
+    return clean(this.plugin.settings.excludeFolders).some(under);
   }
 
   async reloadAll() {

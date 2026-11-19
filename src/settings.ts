@@ -25,6 +25,8 @@ export const SUPPORTS: { key: SupportKey; name: string; desc: string }[] = [
 export interface NowAndNextSettings {
   projectsFolder: string;
   excludeFolders: string[];
+  /** When set, only tasks in these folders (or notes) are read. Empty: the whole vault. */
+  onlyFolders: string[];
   dailyCap: number;
   dayStart: string;
   dayEnd: string;
@@ -57,6 +59,7 @@ export interface CalendarLink { name: string; url: string }
 export const DEFAULT_SETTINGS: NowAndNextSettings = {
   projectsFolder: "domains",
   excludeFolders: ["systems/templates"],
+  onlyFolders: [],
   dailyCap: 5,
   dayStart: "09:00",
   dayEnd: "17:00",
@@ -94,8 +97,14 @@ export class NowAndNextSettingTab extends PluginSettingTab {
       .setDesc("Each subfolder is an area and gets a tab. Follows the folder if you rename or move it. A tag with the same name (for example #health) also counts.")
       .addText((t) => t.setValue(s.projectsFolder).onChange(async (v) => { s.projectsFolder = v.trim(); await save(); }));
 
+    new Setting(containerEl).setName("Only these folders")
+      .setDesc("One per line. When filled in, the planner reads tasks only from these folders or notes. Leave empty for the whole vault.")
+      .addTextArea((t) => t.setValue((s.onlyFolders ?? []).join("\n")).onChange(async (v) => {
+        s.onlyFolders = v.split("\n").map((x) => x.trim()).filter(Boolean); await save();
+      }));
+
     new Setting(containerEl).setName("Folders to ignore")
-      .setDesc("One per line. Tasks in these folders (for example templates) are not shown.")
+      .setDesc("One per line: a folder or a note. Tasks in these (for example templates) are not shown.")
       .addTextArea((t) => t.setValue(s.excludeFolders.join("\n")).onChange(async (v) => {
         s.excludeFolders = v.split("\n").map((x) => x.trim()).filter(Boolean); await save();
       }));
