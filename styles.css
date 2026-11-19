@@ -285,3 +285,14 @@
 .nn-root .nn-header-right .nn-header-row { width: auto; justify-content: flex-end; }
 .nn-root .nn-header-right .nn-energy-filter, .nn-root .nn-header-right .nn-tools { margin-left: 0; }
 .nn-tools-spacer { width: calc(2 * (var(--icon-size, 18px) + 12px) + var(--size-4-1)); }
+
+/* sidebar: room above the date */
+.nn-root.nn-side { padding-top: var(--size-4-8); }
+
+/* capture row: a task-like card with an empty checkbox */
+.nn-capture-row { display: flex; align-items: flex-start; gap: var(--size-4-2); background: var(--background-primary); border: 1px solid var(--background-modifier-border); border-radius: var(--radius-m); padding: var(--size-4-2) var(--size-4-3); cursor: text; }
+.nn-capture-row:focus-within { border-color: var(--background-modifier-border-focus); }
+.nn-capture-row .nn-capture-check { flex: none; margin: 0; margin-top: calc((1.5em - var(--checkbox-size, 15px)) / 2); opacity: 0.6; pointer-events: none; }
+.nn-capture-row .nn-capture-multi { flex: 1; border: none; background: transparent; box-shadow: none; padding: 0; resize: none; font-size: var(--font-ui-medium); line-height: 1.5; min-height: 1.5em; }
+.nn-capture-row .nn-capture-multi:focus { box-shadow: none; }
+.nn-side .nn-capture-row .nn-capture-multi { font-size: var(--font-ui-medium); }

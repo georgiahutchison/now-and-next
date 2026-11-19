@@ -160,13 +160,22 @@ export function dropZone(el: HTMLElement, plugin: NowAndNextPlugin, onDrop: (t: 
   });
 }
 
-export function captureBox(plugin: NowAndNextPlugin, parent: HTMLElement, opts: { placeholder?: string; scheduled?: string; tag?: string; lines?: number } = {}) {
+export function captureBox(plugin: NowAndNextPlugin, parent: HTMLElement, opts: { placeholder?: string; scheduled?: string; tag?: string; lines?: number; fixed?: boolean } = {}) {
   // The main capture box is a two-line text area; Enter saves, Shift+Enter is ignored (one task per capture).
+  let host = parent;
+  if (opts.lines && opts.lines > 1) {
+    // Looks like a new task: an empty checkbox beside the text area, as a prompt.
+    host = parent.createDiv({ cls: "nn-capture-row" });
+    const box = host.createEl("input", { type: "checkbox", cls: "task-list-item-checkbox nn-capture-check" });
+    box.disabled = true;
+    box.tabIndex = -1;
+  }
   const input: HTMLInputElement | HTMLTextAreaElement = opts.lines && opts.lines > 1
-    ? parent.createEl("textarea", { cls: "nn-capture nn-capture-multi", attr: { rows: "1" } })
-    : parent.createEl("input", { type: "text", cls: "nn-capture" });
-  // The text area is one line until you click in it, then grows to its full height.
-  if (input instanceof HTMLTextAreaElement) {
+    ? host.createEl("textarea", { cls: "nn-capture nn-capture-multi", attr: { rows: opts.fixed ? String(opts.lines) : "1" } })
+    : host.createEl("input", { type: "text", cls: "nn-capture" });
+  if (host !== parent) host.addEventListener("click", () => input.focus());
+  // The text area is one line until you click in it, then grows to its full height (unless fixed).
+  if (input instanceof HTMLTextAreaElement && !opts.fixed) {
     const full = String(opts.lines);
     input.addEventListener("focus", () => { input.rows = Number(full); });
     input.addEventListener("blur", () => { if (!input.value.trim()) input.rows = 1; });
