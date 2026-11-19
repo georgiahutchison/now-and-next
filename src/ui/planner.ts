@@ -87,7 +87,8 @@ export class PlannerView extends ItemView {
     else if (this.zoom === "month") this.renderMonth(body);
     else this.renderMatrix(body);
 
-    this.renderTabs(root);
+    // Triage already holds every open task, so the area tabs would only repeat it.
+    if (this.zoom !== "matrix") this.renderTabs(root);
     this.renderLater(root);
   }
 
