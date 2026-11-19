@@ -1,6 +1,6 @@
 import { lutealStartsIn } from "../calendar";
 import { TFile, TFolder, normalizePath, setIcon } from "obsidian";
-import { formatMinutes, localToday, PRIORITY_EMOJI, ENERGY_EMOJI, addDays, type Energy } from "../tasks";
+import { areaLabel, formatMinutes, localToday, PRIORITY_EMOJI, ENERGY_EMOJI, addDays, type Energy } from "../tasks";
 import { VTask, isDone, isOpen, isWaiting, planDate } from "../store";
 import { needsFirstStep, isLater, isUrgent, isImportant } from "../queries";
 import type NowAndNextPlugin from "../main";
@@ -60,7 +60,7 @@ export function renderTask(plugin: NowAndNextPlugin, parent: HTMLElement, t: VTa
   // A faint "Area – " before the wording (Settings: Show area on cards). Left out inside the area's own tab,
   // and for the daily notes' own area (Diary), where things are captured.
   const area = plugin.settings.showAreaOnCards && t.project && t.project !== opts.hideProject && t.project !== plugin.store.dailyArea()
-    ? t.project.charAt(0).toUpperCase() + t.project.slice(1) : null;
+    ? areaLabel(t.project) : null;
   if (area) text.createSpan({ cls: "nn-prefix", text: `${area} – ` });
   text.appendText(t.text || "(empty task)");
   // A single click opens the note; a double-click edits the wording here instead.

@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
+  areaLabel,
   parseTaskLine, parseFile, setDate, setPriority, setEnergy, setEstimate, setStatus,
   addTag, setText, tagFor, removeTags, newTaskLine, parseDuration, formatMinutes, addDays, mondayOf, weekday, daysBetween,
 } from "../src/tasks.ts";
@@ -152,4 +153,12 @@ test("event links: parsed, kept out of the wording, set and removed", async () =
   assert.equal(l, "- [ ] Send notes [after:: Supervision meeting] ⏳ 2026-11-20 #uni");
   l = setEventLink(l, null);
   assert.equal(l, "- [ ] Send notes ⏳ 2026-11-20 #uni");
+});
+
+test("areaLabel drops leading numbers and capitalises", () => {
+  assert.equal(areaLabel("4 Method"), "Method");
+  assert.equal(areaLabel("05 Thesis Writing"), "Thesis Writing");
+  assert.equal(areaLabel("1-Decisions"), "Decisions");
+  assert.equal(areaLabel("health"), "Health");
+  assert.equal(areaLabel("2026"), "2026");
 });

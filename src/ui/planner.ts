@@ -1,5 +1,5 @@
 import { ItemView, Scope, WorkspaceLeaf, setIcon } from "obsidian";
-import { addDays, daysBetween, localToday, mondayOf, formatMinutes, tagFor, ENERGY_EMOJI, PRIORITY_RANK } from "../tasks";
+import { addDays, areaLabel, daysBetween, localToday, mondayOf, formatMinutes, tagFor, ENERGY_EMOJI, PRIORITY_RANK } from "../tasks";
 import { habits, monthSpan } from "../habits";
 import { Goal, goals, numbers, isMilestone, isOpenStatus, daysLeftLabel, GoalNumbers, span, dayRange } from "../goals";
 import { VTask, planDate } from "../store";
@@ -845,7 +845,8 @@ function textBtn(parent: HTMLElement, icon: string, label: string, fn: () => unk
   b.addEventListener("click", () => void fn());
   return b;
 }
-function cap(s: string) { return s.charAt(0).toUpperCase() + s.slice(1); }
+/** An area name as shown: no leading number, capital first letter. */
+function cap(s: string) { return areaLabel(s); }
 function toStr(d: Date) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }

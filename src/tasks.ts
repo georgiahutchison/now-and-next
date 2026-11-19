@@ -277,6 +277,12 @@ export function setText(line: string, text: string): string {
   return tidy(`${m[1]}${m[2]} [${m[3]}] ${[text.trim(), ...kept].join(" ")}${block}`);
 }
 
+/** An area's folder name as shown: leading numbers dropped, first letter capital ("4 Method" -> "Method", "health" -> "Health"). */
+export function areaLabel(name: string): string {
+  const s = name.replace(/^\d+[\s._-]*/, "").trim() || name;
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
 /** A folder name as a tag: spaces become hyphens ("pro practice" -> "pro-practice"). */
 export function tagFor(name: string): string {
   return name.trim().replace(/^#/, "").replace(/\s+/g, "-");
