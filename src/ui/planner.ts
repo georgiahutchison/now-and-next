@@ -266,7 +266,7 @@ export class PlannerView extends ItemView {
         for (const t of open.slice(0, 3)) {
           const r = cell.createDiv({ cls: "nn-month-task", text: t.text });
           r.draggable = true;
-          r.addEventListener("dragstart", (e) => e.dataTransfer?.setData("text/x-now-and-next", t.key));
+          r.addEventListener("dragstart", (e) => { e.dataTransfer?.setData("text/x-now-and-next", t.key); if (e.dataTransfer) e.dataTransfer.effectAllowed = "move"; });
           r.addEventListener("click", (e) => { e.stopPropagation(); void this.plugin.actions.open(t); });
         }
         if (open.length > 3) cell.createDiv({ cls: "nn-month-more", text: `+${open.length - 3} more` });

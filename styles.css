@@ -296,3 +296,6 @@
 .nn-capture-row .nn-capture-multi { flex: 1; border: none; background: transparent; box-shadow: none; padding: 0; resize: none; font-size: var(--font-ui-medium); line-height: 1.5; min-height: 1.5em; }
 .nn-capture-row .nn-capture-multi:focus { box-shadow: none; }
 .nn-side .nn-capture-row .nn-capture-multi { font-size: var(--font-ui-medium); }
+
+/* no focus ring on cards while pressing or dragging */
+.nn-root .nn-task:focus, .nn-root .nn-task:focus-visible { outline: none; }

@@ -16,8 +16,9 @@ export function renderTask(plugin: NowAndNextPlugin, parent: HTMLElement, t: VTa
   if (!opts.nested) {
     row.draggable = true;
     row.addEventListener("dragstart", (e) => {
+      // Only the planner's own type: plain text would make Obsidian draw its pane drop outline.
       e.dataTransfer?.setData(DRAG_TYPE, t.key);
-      e.dataTransfer?.setData("text/plain", t.text);
+      if (e.dataTransfer) e.dataTransfer.effectAllowed = "move";
       row.addClass("is-dragging");
     });
     row.addEventListener("dragend", () => row.removeClass("is-dragging"));
@@ -147,6 +148,8 @@ export function dropZone(el: HTMLElement, plugin: NowAndNextPlugin, onDrop: (t: 
   el.addEventListener("dragover", (e) => {
     if (!e.dataTransfer?.types.includes(DRAG_TYPE)) return;
     e.preventDefault();
+    e.stopPropagation();
+    e.dataTransfer.dropEffect = "move";
     el.addClass("is-drop-target");
   });
   el.addEventListener("dragleave", (e) => { if (!el.contains(e.relatedTarget as Node)) el.removeClass("is-drop-target"); });
@@ -155,6 +158,7 @@ export function dropZone(el: HTMLElement, plugin: NowAndNextPlugin, onDrop: (t: 
     const key = e.dataTransfer?.getData(DRAG_TYPE);
     if (!key) return;
     e.preventDefault();
+    e.stopPropagation();
     const t = plugin.store.get(key);
     if (t) void onDrop(t);
   });
