@@ -105,21 +105,9 @@ export class PlannerView extends ItemView {
     const s = this.plugin.settings;
     const h = root.createDiv({ cls: "nn-header" });
 
-    const dated = this.zoom === "day" || this.zoom === "week" || this.zoom === "month";
-    const nav = h.createDiv({ cls: "nn-nav" });
-    if (!dated) nav.addClass("is-hidden");
-    const step = this.zoom === "day" ? 1 : this.zoom === "week" ? 7 : 0;
-    const move = (dir: number) => {
-      if (step) this.anchor = addDays(this.anchor, dir * step);
-      else { const d = new Date(this.anchor + "T00:00:00"); d.setMonth(d.getMonth() + dir, 1); this.anchor = toStr(d); }
-      this.render();
-    };
-    iconBtn(nav, "chevron-left", "Previous", () => move(-1));
-    nav.createEl("button", { text: "Today", cls: "nn-today-btn" }).addEventListener("click", () => { this.anchor = localToday(); this.render(); });
-    iconBtn(nav, "chevron-right", "Next", () => move(1));
-    nav.createDiv({ cls: "nn-title", text: this.title() });
-
-    const zoom = h.createDiv({ cls: "nn-seg" });
+    // Row 1 never changes between views: the switcher, and Key / Reload as icons.
+    const row1 = h.createDiv({ cls: "nn-header-row" });
+    const zoom = row1.createDiv({ cls: "nn-seg" });
     zoom.createSpan({ cls: "nn-seg-label", text: "View" });
     for (const [z, label] of VIEWS) {
       if (z === "focus" && !this.plugin.on("focus")) continue;
@@ -127,9 +115,29 @@ export class PlannerView extends ItemView {
       if (z === this.zoom) b.addClass("is-active");
       b.addEventListener("click", () => this.setView(z));
     }
+    const tools = row1.createDiv({ cls: "nn-tools" });
+    iconBtn(tools, "info", "Key", () => this.plugin.openKey());
+    iconBtn(tools, "refresh-cw", "Reload", () => void this.plugin.reloadApp());
+
+    // Row 2 keeps its height in every view; the date part is blank where a view has no date.
+    const row2 = h.createDiv({ cls: "nn-header-row" });
+    const dated = this.zoom === "day" || this.zoom === "week" || this.zoom === "month";
+    const nav = row2.createDiv({ cls: "nn-nav" });
+    if (dated) {
+      const step = this.zoom === "day" ? 1 : this.zoom === "week" ? 7 : 0;
+      const move = (dir: number) => {
+        if (step) this.anchor = addDays(this.anchor, dir * step);
+        else { const d = new Date(this.anchor + "T00:00:00"); d.setMonth(d.getMonth() + dir, 1); this.anchor = toStr(d); }
+        this.render();
+      };
+      iconBtn(nav, "chevron-left", "Previous", () => move(-1));
+      nav.createEl("button", { text: "Today", cls: "nn-today-btn" }).addEventListener("click", () => { this.anchor = localToday(); this.render(); });
+      iconBtn(nav, "chevron-right", "Next", () => move(1));
+    }
+    nav.createDiv({ cls: "nn-title", text: this.title() });
 
     if (this.plugin.on("energy")) {
-      const energy = h.createDiv({ cls: "nn-seg nn-energy-filter" });
+      const energy = row2.createDiv({ cls: "nn-seg nn-energy-filter" });
       energy.createSpan({ cls: "nn-seg-label", text: "Energy" });
       for (const [k, label] of [["all", "Any"], ["low", "Low"], ["mid", "Med"], ["high", "High"]] as const) {
         const b = energy.createEl("button", { text: label });
@@ -137,10 +145,6 @@ export class PlannerView extends ItemView {
         b.addEventListener("click", async () => { s.energyFilter = k; await this.plugin.saveSettings(); });
       }
     }
-
-    const tools = h.createDiv({ cls: "nn-tools" });
-    textBtn(tools, "info", "Key", () => this.plugin.openKey());
-    textBtn(tools, "refresh-cw", "Reload", () => void this.plugin.reloadApp());
   }
 
   private title(): string {
@@ -195,6 +199,13 @@ export class PlannerView extends ItemView {
       }
     }
 
+    if (!wide && day < today) {
+      // A past day in Week view: just a count, the day name opens it.
+      col.addClass("is-strip");
+      if (open.length) col.createDiv({ cls: "nn-strip-note", text: `${open.length} open` });
+      if (done.length && this.plugin.on("doneList")) col.createDiv({ cls: "nn-strip-note", text: `${done.length} done` });
+      return;
+    }
     const list = col.createDiv({ cls: "nn-day-list" });
     renderList(this.plugin, list, open, day < today ? "" : "Nothing planned", {
       onReorder: async (moved, before) => {
@@ -226,8 +237,11 @@ export class PlannerView extends ItemView {
     const mon = mondayOf(this.anchor);
     const n = this.plugin.settings.showWeekend ? 7 : 5;
     const wrap = body.createDiv({ cls: "nn-week" });
-    wrap.style.setProperty("--nn-cols", String(n));
-    for (let i = 0; i < n; i++) this.dayColumn(wrap, addDays(mon, i), false);
+    const today = localToday();
+    // Past days shrink to a narrow strip so the days ahead get the room.
+    const days = Array.from({ length: n }, (_, i) => addDays(mon, i));
+    wrap.style.gridTemplateColumns = days.map((d) => (d < today ? "minmax(56px, 0.3fr)" : "minmax(130px, 1fr)")).join(" ");
+    for (const d of days) this.dayColumn(wrap, d, false);
   }
 
   private renderMonth(body: HTMLElement) {
@@ -350,7 +364,24 @@ export class PlannerView extends ItemView {
       head.createSpan({ cls: "nn-matrix-title", text: bx.title });
       head.createSpan({ cls: "nn-matrix-hint", text: `${bx.hint}${list.length ? ` · ${list.length}` : ""}` });
       const inner = cell.createDiv({ cls: "nn-matrix-list" });
-      renderList(this.plugin, inner, sortTasks(list, this.plugin.settings.sortBy), "Nothing here.");
+      if (!list.length) inner.createDiv({ cls: "nn-empty", text: "Nothing here." });
+      // Grouped by area; long boxes start folded so they read as a short list of areas.
+      const groups = new Map<string, VTask[]>();
+      for (const t of sortTasks(list, this.plugin.settings.sortBy)) {
+        const k = t.project ?? "";
+        if (!groups.has(k)) groups.set(k, []);
+        groups.get(k)!.push(t);
+      }
+      const fold = list.length > 8;
+      for (const [area, items] of [...groups.entries()].sort((a, b) => a[0].localeCompare(b[0]))) {
+        const g = inner.createEl("details", { cls: "nn-group" });
+        g.open = !fold;
+        const sum = g.createEl("summary");
+        sum.createSpan({ text: area ? cap(area) : "No area" });
+        sum.createSpan({ cls: "nn-tab-count", text: ` ${items.length}` });
+        const gl = g.createDiv({ cls: "nn-group-list" });
+        renderList(this.plugin, gl, items, "", { hideProject: area || undefined });
+      }
       dropZone(cell, this.plugin, async (t) => {
         if (isImportant(t) !== bx.imp) await this.plugin.actions.priority(t, bx.imp ? "high" : "none");
         const fresh = this.plugin.store.get(t.key) ?? t;
@@ -359,7 +390,7 @@ export class PlannerView extends ItemView {
         if (!bx.urg && hasTag) await this.plugin.actions.urgent(fresh, false);
       });
     }
-    body.createDiv({ cls: "nn-panel-hint", text: "Undated tasks. Important: 🔺 or ⏫. Urgent: a deadline within 7 days, or #urgent. Drag between boxes to change either; drag onto Week or Day later to give it a day." });
+    body.createDiv({ cls: "nn-panel-hint", text: "Important: 🔺 ⏫ · Urgent: deadline within 7 days or #urgent" });
   }
 
   // ---------- later (hidden by default) ----------

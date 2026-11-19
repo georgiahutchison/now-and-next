@@ -6,7 +6,7 @@ import type NowAndNextPlugin from "../main";
 
 export const DRAG_TYPE = "text/x-now-and-next";
 
-export function renderTask(plugin: NowAndNextPlugin, parent: HTMLElement, t: VTask, opts: { showDate?: boolean; nested?: boolean; hideProject?: string } = {}) {
+export function renderTask(plugin: NowAndNextPlugin, parent: HTMLElement, t: VTask, opts: { showDate?: boolean; nested?: boolean; hideProject?: string; shortLabel?: boolean } = {}) {
   const a = plugin.actions;
   const row = parent.createDiv({ cls: opts.nested ? "nn-task is-nested" : "nn-task nn-card" });
   if (isDone(t)) row.addClass("is-done");
@@ -33,7 +33,8 @@ export function renderTask(plugin: NowAndNextPlugin, parent: HTMLElement, t: VTa
   // The daily notes' own area (Diary) is where things are captured, so it isn't worth a label.
   const area = t.project && t.project !== opts.hideProject && t.project !== plugin.store.dailyArea()
     ? t.project.charAt(0).toUpperCase() + t.project.slice(1) : null;
-  const prefix = [t.projectNote, area].filter(Boolean).join(" / ");
+  // In narrow places (the sidebar) one label is enough: the project, else the area.
+  const prefix = opts.shortLabel ? (t.projectNote ?? area ?? "") : [t.projectNote, area].filter(Boolean).join(" / ");
   if (prefix) text.createSpan({ cls: "nn-prefix", text: `${prefix} – ` });
   text.appendText(t.text || "(empty task)");
   // A single click opens the note; a double-click edits the wording here instead.
@@ -112,7 +113,7 @@ export function renderTask(plugin: NowAndNextPlugin, parent: HTMLElement, t: VTa
 
 export function renderList(
   plugin: NowAndNextPlugin, parent: HTMLElement, list: VTask[], empty: string,
-  opts: { showDate?: boolean; hideProject?: string; onReorder?: (moved: VTask, before: VTask | null) => unknown } = {},
+  opts: { showDate?: boolean; hideProject?: string; shortLabel?: boolean; onReorder?: (moved: VTask, before: VTask | null) => unknown } = {},
 ) {
   if (!list.length) { parent.createDiv({ cls: "nn-empty", text: empty }); return; }
   for (const t of list) {
@@ -162,8 +163,14 @@ export function dropZone(el: HTMLElement, plugin: NowAndNextPlugin, onDrop: (t: 
 export function captureBox(plugin: NowAndNextPlugin, parent: HTMLElement, opts: { placeholder?: string; scheduled?: string; tag?: string; lines?: number } = {}) {
   // The main capture box is a two-line text area; Enter saves, Shift+Enter is ignored (one task per capture).
   const input: HTMLInputElement | HTMLTextAreaElement = opts.lines && opts.lines > 1
-    ? parent.createEl("textarea", { cls: "nn-capture nn-capture-multi", attr: { rows: String(opts.lines) } })
+    ? parent.createEl("textarea", { cls: "nn-capture nn-capture-multi", attr: { rows: "1" } })
     : parent.createEl("input", { type: "text", cls: "nn-capture" });
+  // The text area is one line until you click in it, then grows to its full height.
+  if (input instanceof HTMLTextAreaElement) {
+    const full = String(opts.lines);
+    input.addEventListener("focus", () => { input.rows = Number(full); });
+    input.addEventListener("blur", () => { if (!input.value.trim()) input.rows = 1; });
+  }
   input.placeholder = opts.placeholder ?? "Add task to today's daily note";
   input.addEventListener("keydown", async (e) => {
     if ((e as KeyboardEvent).key !== "Enter") return;

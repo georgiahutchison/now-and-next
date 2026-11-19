@@ -67,6 +67,7 @@ export class TodayView extends ItemView {
     }
     const list = sec.createDiv({ cls: "nn-day-list" });
     renderList(this.plugin, list, open, "Nothing planned for today.", {
+      shortLabel: true,
       onReorder: async (moved, before) => {
         if (planDate(moved) !== today) await this.plugin.actions.schedule(moved, today);
         await placeBefore(this.plugin, today, open, moved, before, today);
@@ -81,7 +82,7 @@ export class TodayView extends ItemView {
     if (w.length) {
       const d = root.createEl("details", { cls: "nn-waiting" });
       d.createEl("summary", { text: `Waiting on others (${w.length})` });
-      renderList(this.plugin, d, w, "");
+      renderList(this.plugin, d, w, "", { shortLabel: true });
     }
 
     const done = doneOn(tasks, today);
@@ -89,7 +90,7 @@ export class TodayView extends ItemView {
       const d = root.createEl("details", { cls: "nn-done" });
       d.open = true;
       d.createEl("summary", { text: `Done today (${done.length})` });
-      renderList(this.plugin, d, done, "");
+      renderList(this.plugin, d, done, "", { shortLabel: true });
     }
 
     // One way into the full planner, at the base of the panel.
