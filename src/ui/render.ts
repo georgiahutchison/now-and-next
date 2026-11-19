@@ -28,7 +28,12 @@ export function renderTask(plugin: NowAndNextPlugin, parent: HTMLElement, t: VTa
   cb.checked = isDone(t);
   cb.addEventListener("click", (e) => { e.stopPropagation(); void a.toggleDone(t); });
 
-  const text = line.createSpan({ cls: "nn-task-text", text: t.text || "(empty task)" });
+  const text = line.createSpan({ cls: "nn-task-text" });
+  // Faint "Project / Area – " before the wording; the area is left out inside its own tab.
+  const area = t.project && t.project !== opts.hideProject ? t.project.charAt(0).toUpperCase() + t.project.slice(1) : null;
+  const prefix = [t.projectNote, area].filter(Boolean).join(" / ");
+  if (prefix) text.createSpan({ cls: "nn-prefix", text: `${prefix} – ` });
+  text.appendText(t.text || "(empty task)");
   // A single click opens the note; a double-click edits the wording here instead.
   let clickTimer: number | null = null;
   text.addEventListener("click", () => {
@@ -86,8 +91,6 @@ export function renderTask(plugin: NowAndNextPlugin, parent: HTMLElement, t: VTa
   }
 
   const actions = line.createSpan({ cls: "nn-actions" });
-  // The area shows only on hover, beside the buttons, so cards stay quiet.
-  if (t.project && t.project !== opts.hideProject) actions.createSpan({ cls: "nn-hover-area", text: t.project });
   if (!isDone(t) && t.status !== "-") {
     const drop = actions.createSpan({ cls: "nn-more nn-drop clickable-icon" });
     setIcon(drop, "x");
@@ -99,12 +102,7 @@ export function renderTask(plugin: NowAndNextPlugin, parent: HTMLElement, t: VTa
   more.addEventListener("click", (e) => { e.stopPropagation(); a.menu(t, e); });
   row.addEventListener("contextmenu", (e) => { e.preventDefault(); a.menu(t, e); });
 
-  // Details start at the same left edge as the task text.
-  const body = t.details.length ? row.createDiv({ cls: "nn-task-body" }) : null;
-  if (body) {
-    const ul = body.createEl("ul", { cls: "nn-details" });
-    for (const d of t.details) ul.createEl("li", { text: d });
-  }
+  // Detail bullets stay in the note; cards don't show them.
 
   return row;
 }

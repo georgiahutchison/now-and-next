@@ -230,3 +230,5 @@
 .nn-root .nn-seg button { margin: 0; box-shadow: none; box-sizing: border-box; align-self: center; }
 .nn-root .nn-seg button.is-active { box-shadow: 0 0 0 1px var(--background-modifier-border); }
 .nn-root .nn-seg-label { display: inline-flex; align-items: center; height: calc(var(--nn-pill-h) - 4px); padding: 0 var(--size-4-2); }
+
+.nn-prefix { color: var(--text-faint); }

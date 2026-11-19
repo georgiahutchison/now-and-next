@@ -119,3 +119,9 @@ test("area names with spaces become hyphenated tags", () => {
 test("removeTags drops area tags only", () => {
   assert.equal(removeTags("- [ ] cv #health #energy/low #pro-practice", ["health", "pro practice"]), "- [ ] cv #energy/low");
 });
+
+test("first wikilink is the task's link; display text shows the link text", () => {
+  const t = parseTaskLine("- [ ] ring the bank [[Privacy-Tracker|privacy]] about [[Other]] ⏳ 2026-11-20")!;
+  assert.equal(t.link, "Privacy-Tracker");
+  assert.equal(t.text, "ring the bank privacy about Other");
+});

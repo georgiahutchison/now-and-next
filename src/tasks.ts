@@ -51,6 +51,8 @@ export interface ParsedTask {
   recurrence?: string;
   estimateMin?: number;
   energy?: Energy;
+  /** First [[wikilink]] in the task, if any (the target, without alias or heading). */
+  link?: string;
 }
 
 export function isTaskLine(line: string): boolean {
@@ -86,6 +88,9 @@ export function parseTaskLine(line: string): ParsedTask | null {
     if (e === "low" || e === "mid" || e === "high") t.energy = e;
   }
 
+  const lm = /\[\[([^\]|#]+)(?:#[^\]|]*)?(?:\|[^\]]*)?\]\]/.exec(body);
+  if (lm) t.link = lm[1].trim();
+
   t.text = displayText(body);
   return t;
 }
@@ -99,6 +104,7 @@ export function displayText(body: string): string {
   s = s.replace(/(🆔|⛔|🏁)️? *[^\s]+/gu, "");
   s = s.replace(/[🔺⏫🔼🔽⏬]️?/gu, "");
   s = s.replace(TAG_RE, "$1");
+  s = s.replace(/\[\[([^\]|]+)\|([^\]]+)\]\]/g, "$2").replace(/\[\[([^\]]+)\]\]/g, "$1");
   return s.replace(/\s+/g, " ").trim();
 }
 

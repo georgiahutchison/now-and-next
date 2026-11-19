@@ -9,6 +9,8 @@ export interface VTask extends FileTask {
   /** Best guess at when the task was added (YYYY-MM-DD): ➕ date, else the note's date in its name, else when the note was created. */
   added: string;
   project: string | null;
+  /** The project: a [[link]] in the task, else the note it's in (daily notes don't count). */
+  projectNote: string | null;
   children: VTask[];
   parent: VTask | null;
 }
@@ -80,7 +82,7 @@ export class TaskStore extends Events {
   private build(f: TFile, content: string): VTask[] {
     const parsed = parseFile(content);
     const list: VTask[] = parsed.map((p) => ({
-      ...p, path: f.path, key: `${f.path}::${p.line}`, mtime: f.stat.mtime, project: null, children: [], parent: null,
+      ...p, path: f.path, key: `${f.path}::${p.line}`, mtime: f.stat.mtime, project: null, projectNote: null, children: [], parent: null,
       added: p.created ?? noteDate(f),
     }));
     const byLine = new Map(list.map((t) => [t.line, t]));
@@ -100,6 +102,7 @@ export class TaskStore extends Events {
     for (const list of this.byPath.values()) {
       for (const t of list) {
         t.project = projectOf(t, projects, folder, this.dailyArea());
+        t.projectNote = t.link ?? (this.isInDailyFolder(t) ? null : t.path.split("/").pop()!.replace(/\.md$/, ""));
         this.tasks.push(t);
       }
     }

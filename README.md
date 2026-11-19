@@ -12,7 +12,7 @@ Your tasks stay where they are: ordinary Tasks lines in your notes. Now & Next i
 - **Plan by dragging.** Drag a task onto a day to schedule it (it gets a `⏳` scheduled date). Drag it onto a tab to take it off its day again.
 - **Areas.** Each subfolder of your areas folder gets a tab, along with any task tagged with that folder's name (for example `#health`). Add a folder and a new tab appears.
 - **Today in the sidebar.** A compact Today view sits in the left sidebar next to Files, Search and Bookmarks. The ribbon icon opens the full planner.
-- **Details.** Plain bullets indented under a task show in small text under it. Indented checkbox tasks are shown as tasks in their own right.
+- **Project and area on each task.** Cards read `Project / Area – task`, faintly. The project is the first `[[link]]` in the task, or else the note the task is in (daily notes don't count). The area is left out inside its own tab. Plain bullets under a task stay in the note and are not shown on cards.
 
 Ticking a task goes through the Tasks plugin, so done dates and repeating tasks behave exactly as they do in Tasks itself.
 
