@@ -41,11 +41,11 @@ const SECTIONS: [string, [string, string][]][] = [
     ["[for:: draft]", "On a task: counts it toward that milestone, whatever its tags. [for:: none] keeps it out"],
     ["◆ draft", "The milestone's due day, in Plan and Month"],
     ["Milestones strip", "Above the days in Plan: date, days left, done of total, hours left from estimates, tasks not on a day"],
-    ["Goals view", "A timeline (Gantt) of the open milestones, then a card for each with bars by area"],
+    ["Goals view", "A timeline (Gantt) of the open milestones; finished ones fold away under it"],
     ["Gantt bar", "From the first task's day to the milestone's ◆ date; the fill is done of total. A goal with no date fades at its end"],
     ["● ○ on the Gantt", "A task on that day: filled once done (on its ✅ day), hollow while open"],
     ["▸ name on the Gantt", "Unfolds a row per task; tasks with no day say so. Drag a task onto a row to count it toward that milestone"],
-    ["Drag onto a milestone card", "Count the task toward it; its day stays the same"],
+    ["Drag onto a milestone row", "Count the task toward it; its day stays the same"],
     ["Drag onto Not toward a milestone", "Take the task out of its milestone"],
   ]],
   ["On a task card", [
