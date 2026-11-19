@@ -236,3 +236,10 @@
 /* drag to reorder: a line above the card you drop on */
 .nn-card.is-insert-before { box-shadow: 0 -3px 0 0 var(--interactive-accent); }
 .nn-side-note .nn-over-btn { margin-left: var(--size-4-1); }
+
+/* drop targets: a faint tint instead of a dashed outline */
+.nn-root .is-drop-target,
+.nn-root .nn-day.is-drop-target, .nn-root .nn-month-cell.is-drop-target, .nn-root .nn-tab.is-drop-target,
+.nn-root .nn-side-section.is-drop-target, .nn-root .nn-matrix-box.is-drop-target, .nn-root .nn-later.is-drop-target {
+  outline: none; background-color: var(--background-modifier-hover); border-radius: var(--radius-m);
+}
