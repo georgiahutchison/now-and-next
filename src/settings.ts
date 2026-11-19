@@ -3,7 +3,7 @@ import type NowAndNextPlugin from "./main";
 import type { Energy } from "./tasks";
 import type { SortMode } from "./queries";
 
-export type Zoom = "focus" | "day" | "three" | "week" | "month" | "matrix";
+export type Zoom = "focus" | "day" | "three" | "week" | "month" | "matrix" | "habits";
 
 export type SupportKey =
   | "focus" | "dailyCap" | "carryOver" | "capture" | "doneList" | "energy"
@@ -123,7 +123,7 @@ export class NowAndNextSettingTab extends PluginSettingTab {
       .addToggle((t) => t.setValue(s.showWeekend).onChange(async (v) => { s.showWeekend = v; await save(); }));
 
     new Setting(containerEl).setName("Open at")
-      .addDropdown((d) => d.addOptions({ matrix: "Triage", focus: "Focus", day: "Plan: 1 day", three: "Plan: 3 days", week: "Plan: 7 days", month: "Plan: Month" }).setValue(s.defaultZoom)
+      .addDropdown((d) => d.addOptions({ matrix: "Triage", focus: "Focus", day: "Plan: 1 day", three: "Plan: 3 days", week: "Plan: 7 days", month: "Plan: Month", habits: "Habits" }).setValue(s.defaultZoom)
         .onChange(async (v) => { s.defaultZoom = v as Zoom; await save(); }));
 
     new Setting(containerEl).setName("Supports").setHeading();

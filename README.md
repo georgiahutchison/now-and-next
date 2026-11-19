@@ -6,7 +6,8 @@ Your tasks stay where they are: ordinary Tasks lines in your notes. Now & Next i
 
 ## What it does
 
-- **Views: Triage, Focus and Plan.** Plan shows your days; next to the date you choose how many: 1 (one day), 3 (yesterday, today and tomorrow, in full), 7 (the week) or Month. Plan at 7 is the default. `Cmd/Ctrl` `+` and `-` step between the spans.
+- **Habits.** A view of your repeating tasks over the last two weeks, with a dot on each day one was done. Gaps stay blank: no streaks, counts or scores. It reads the ✅ dates the Tasks plugin already writes.
+- **Views: Triage, Focus, Plan and Habits.** Plan shows your days; next to the date you choose how many: 1 (one day), 3 (yesterday, today and tomorrow, in full), 7 (the week) or Month. Plan at 7 is the default. `Cmd/Ctrl` `+` and `-` step between the spans.
 - **Triage.** An Areas row under the boxes shows all areas or one. Undated tasks sit in four boxes by importance (🔺 or ⏫) and urgency (a deadline within 7 days, or `#urgent`): Do, Plan, Quick, Not now. Dragging a task between boxes sets or clears ⏫ and `#urgent`; deadlines are left as they are.
 - **Later.** A panel at the base, closed by default, for tasks tagged `#later` or with a future `🛫` start date (any date after today; "Defer to next month" sets the 1st). They stay out of the area tabs until then.
 - **Plan by dragging.** Drag a task onto a day to schedule it (it gets a `⏳` scheduled date). Drag it onto a tab to take it off its day again.

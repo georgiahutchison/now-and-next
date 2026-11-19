@@ -1,5 +1,6 @@
 import { ItemView, Scope, WorkspaceLeaf, setIcon } from "obsidian";
 import { addDays, localToday, mondayOf, formatMinutes, tagFor, ENERGY_EMOJI } from "../tasks";
+import { habits, lastDays } from "../habits";
 import { VTask, planDate } from "../store";
 import { applyOrder, placeBefore, moveExtrasOn } from "../order";
 import {
@@ -80,6 +81,7 @@ export class PlannerView extends ItemView {
 
     this.renderHeader(root);
     if (this.zoom === "focus") { this.renderFocus(root); return; }
+    if (this.zoom === "habits") { this.renderHabits(root); return; }
     const tasks = this.plugin.store.tasks;
     const today = localToday();
 
@@ -159,6 +161,7 @@ export class PlannerView extends ItemView {
       ["matrix", "Triage", this.zoom === "matrix"],
       ["focus", "Focus", this.zoom === "focus"],
       [this.planSpan, "Plan", isDated(this.zoom)],
+      ["habits", "Habits", this.zoom === "habits"],
     ];
     for (const [z, label, active] of views) {
       if (z === "focus" && !this.plugin.on("focus")) continue;
@@ -194,6 +197,7 @@ export class PlannerView extends ItemView {
     }
     if (this.zoom === "focus") return "Today";
     if (this.zoom === "matrix") return "Triage";
+    if (this.zoom === "habits") return "Habits";
     const mon = mondayOf(this.anchor);
     const last = addDays(mon, this.plugin.settings.showWeekend ? 6 : 4);
     const f = (d: string) => new Date(d + "T00:00:00").toLocaleDateString(undefined, { day: "numeric", month: "short" });
@@ -456,6 +460,38 @@ export class PlannerView extends ItemView {
         if (e.dataTransfer) e.dataTransfer.effectAllowed = "link";
       });
       dropZone(b, this.plugin, (t) => this.plugin.actions.energy(t, level));
+    }
+  }
+
+  /** Repeating tasks with a dot on each of the last 14 days they were done. Gaps stay blank. */
+  private renderHabits(root: HTMLElement) {
+    const today = localToday();
+    const rows = habits(this.plugin.store.tasks, today);
+    const days = lastDays(today, 14);
+    const body = root.createDiv({ cls: "nn-body nn-habits" });
+    body.createDiv({ cls: "nn-panel-hint", text: "Your repeating tasks over the last two weeks. A dot marks a day it was done." });
+    if (!rows.length) { body.createDiv({ cls: "nn-empty", text: "No repeating tasks running yet. Start one from Routines." }); return; }
+    const table = body.createEl("table", { cls: "nn-habit-table" });
+    const head = table.createEl("tr");
+    head.createEl("th", { cls: "nn-habit-name" });
+    for (const d of days) {
+      const dt = new Date(d + "T00:00:00");
+      const th = head.createEl("th", { cls: "nn-habit-day" });
+      if (d === today) th.addClass("is-today");
+      th.createDiv({ text: dt.toLocaleDateString(undefined, { weekday: "narrow" }) });
+      th.createDiv({ cls: "nn-habit-num", text: String(dt.getDate()) });
+    }
+    for (const h of rows) {
+      const tr = table.createEl("tr");
+      const name = tr.createEl("td", { cls: "nn-habit-name" });
+      const link = name.createSpan({ cls: "nn-habit-link", text: h.name });
+      if (h.open) { const t = h.open; link.addEventListener("click", () => void this.plugin.actions.open(t)); }
+      name.createSpan({ cls: "nn-habit-rule", text: h.rule });
+      for (const d of days) {
+        const td = tr.createEl("td", { cls: "nn-habit-cell" });
+        if (d === today) td.addClass("is-today");
+        if (h.days.has(d)) td.createSpan({ cls: "nn-habit-dot", attr: { "aria-label": `Done ${d}` } });
+      }
     }
   }
 

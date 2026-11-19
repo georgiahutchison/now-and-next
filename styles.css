@@ -441,3 +441,15 @@
 .nn-root .nn-day-head button.nn-over-btn:hover { color: var(--text-normal); }
 .nn-day.is-over .nn-day-meta > span:first-child { color: var(--text-warning); }
 .nn-events { margin: var(--size-4-2) 0 var(--size-4-2); }
+
+/* ---- habits: dots, no streaks ---- */
+.nn-habits { display: flex; flex-direction: column; gap: var(--size-4-3); overflow-x: auto; }
+.nn-habit-table { border-collapse: collapse; font-size: var(--font-ui-small); }
+.nn-habit-table th, .nn-habit-table td { padding: 6px 0; text-align: center; border-bottom: 1px solid var(--background-modifier-border); }
+.nn-habit-table th.nn-habit-name, .nn-habit-table td.nn-habit-name { text-align: left; padding-right: var(--size-4-4); min-width: 12em; }
+.nn-habit-day { width: 2.2em; font-weight: normal; color: var(--text-faint); font-size: var(--font-ui-smaller); line-height: 1.3; }
+.nn-habit-day.is-today { color: var(--text-accent); }
+.nn-habit-cell.is-today { background: var(--background-modifier-hover); }
+.nn-habit-link { cursor: var(--cursor); color: var(--text-normal); font-family: var(--font-text); }
+.nn-habit-rule { margin-left: var(--size-4-2); color: var(--text-faint); font-size: var(--font-ui-smaller); }
+.nn-habit-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--text-muted); }
