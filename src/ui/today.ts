@@ -44,7 +44,7 @@ export class TodayView extends ItemView {
     if (this.plugin.on("focus")) b("target", "Focus", () => this.plugin.openPlanner({ focus: true }));
     b("calendar-range", "Week", () => this.plugin.openPlanner({}));
     b("info", "Key", () => this.plugin.openKey());
-    b("refresh-cw", "Reload", () => this.plugin.reloadApp());
+    b("refresh-cw", "Reload", () => void this.plugin.reloadApp());
 
     if (this.plugin.on("capture")) captureBox(this.plugin, root, { lines: 2 });
 

@@ -35,6 +35,7 @@ export default class NowAndNextPlugin extends Plugin {
     this.addCommand({ id: "add-plugin-idea", name: "Add a plugin idea", callback: () => new IdeaModal(this).open() });
     this.addCommand({ id: "stop-timer", name: "Stop timer", callback: () => this.timer.stop() });
     this.addCommand({ id: "show-key", name: "Show the emoji key", callback: () => this.openKey() });
+    this.addCommand({ id: "refresh", name: "Refresh Now & Next", callback: () => void this.reloadApp() });
 
     // Keep the areas folder setting pointing at the folder if it is renamed or moved.
     this.registerEvent(this.app.vault.on("rename", async (f, oldPath) => {
@@ -87,6 +88,9 @@ export default class NowAndNextPlugin extends Plugin {
 
   /** Put the Today view in the left sidebar, next to Files / Search / Bookmarks. */
   async ensureSidebar(reveal: boolean) {
+    // While Reload is redrawing the existing views, don't add a second sidebar panel.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if ((window as any).__nowAndNextReloading) return;
     const { workspace } = this.app;
     let leaf = workspace.getLeavesOfType(TODAY_VIEW)[0];
     if (!leaf) {
@@ -102,9 +106,27 @@ export default class NowAndNextPlugin extends Plugin {
   openKey() { new KeyModal(this.app).open(); }
 
   /** Reload Obsidian (same as the "Reload app without saving" command). */
-  reloadApp() {
+  /**
+   * Refresh Now & Next only: reload the plugin (picking up a new build), then redraw the
+   * sidebar panel and planner page in place. The rest of Obsidian is left alone.
+   */
+  async reloadApp() {
+    const { workspace } = this.app;
+    const id = this.manifest.id;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (this.app as any).commands.executeCommandById("app:reload");
+    const plugins = (this.app as any).plugins;
+    const leaves = [PLANNER_VIEW, TODAY_VIEW].flatMap((type) => workspace.getLeavesOfType(type).map((leaf) => ({ leaf, type })));
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (window as any).__nowAndNextReloading = true;
+    try {
+      await plugins.disablePlugin(id);
+      await plugins.enablePlugin(id);
+      for (const { leaf, type } of leaves) await leaf.setViewState({ type, active: false });
+    } finally {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      delete (window as any).__nowAndNextReloading;
+    }
+    new Notice("Now & Next refreshed", 1500);
   }
 
   // ---------- daily note + capture ----------

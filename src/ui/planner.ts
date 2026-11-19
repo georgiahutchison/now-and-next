@@ -133,7 +133,7 @@ export class PlannerView extends ItemView {
 
     const tools = h.createDiv({ cls: "nn-tools" });
     textBtn(tools, "info", "Key", () => this.plugin.openKey());
-    textBtn(tools, "refresh-cw", "Reload", () => this.plugin.reloadApp());
+    textBtn(tools, "refresh-cw", "Reload", () => void this.plugin.reloadApp());
   }
 
   private title(): string {
