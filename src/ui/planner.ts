@@ -232,7 +232,7 @@ export class PlannerView extends ItemView {
       const meta = head.createDiv({ cls: "nn-day-meta" });
       if (over) {
         col.addClass("is-over");
-        meta.createSpan({ text: `${open.length}/${s.dailyCap}` });
+        meta.createSpan({ text: `${open.length} of ${s.dailyCap} ·` });
         const btn = meta.createEl("button", { cls: "nn-over-btn", text: "Move extras on" });
         btn.addEventListener("click", () => void moveExtrasOn(this.plugin, day, open));
       }

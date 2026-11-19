@@ -429,3 +429,15 @@
   z-index: 1; background: var(--background-primary); padding-left: 2px; border-radius: 0;
   box-shadow: -12px 0 8px -2px var(--background-primary);
 }
+
+/* day header: date, then quiet one-line notes (cycle, cap) in one size and colour; "Move extras on" is a text link */
+.nn-day-head { gap: 2px; }
+.nn-day-head .nn-cycle, .nn-day-head .nn-day-meta { font-size: var(--font-ui-smaller); color: var(--text-faint); line-height: 1.4; }
+.nn-day-head .nn-day-meta { gap: var(--size-4-1); }
+.nn-root .nn-day-head button.nn-over-btn {
+  height: auto; min-height: 0; padding: 0; border-radius: 0; background: none; box-shadow: none;
+  font-size: inherit; line-height: inherit; color: var(--text-muted); text-decoration: underline; text-underline-offset: 2px;
+}
+.nn-root .nn-day-head button.nn-over-btn:hover { color: var(--text-normal); }
+.nn-day.is-over .nn-day-meta > span:first-child { color: var(--text-warning); }
+.nn-events { margin: var(--size-4-2) 0 var(--size-4-2); }
