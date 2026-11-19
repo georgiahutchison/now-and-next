@@ -1,4 +1,15 @@
-import { App, ButtonComponent, Modal, Setting } from "obsidian";
+import { App, ButtonComponent, FuzzySuggestModal, Modal, Setting } from "obsidian";
+
+/** Pick one item from a list by typing part of its name. */
+export class PickModal<T> extends FuzzySuggestModal<T> {
+  constructor(app: App, private items: T[], private label: (x: T) => string, private onPick: (x: T) => unknown, placeholder: string) {
+    super(app);
+    this.setPlaceholder(placeholder);
+  }
+  getItems() { return this.items; }
+  getItemText(x: T) { return this.label(x); }
+  onChooseItem(x: T) { void this.onPick(x); }
+}
 
 interface TextPromptOpts {
   title: string;

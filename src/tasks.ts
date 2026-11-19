@@ -37,6 +37,11 @@ const EST_RE = /\[est::\s*([^\]]*)\]/u;
 /** [before:: Event], [on:: Event] or [after:: Event]: the task sits the day before, the day of, or the day after that calendar event. */
 const EVENT_RE = /\[(before|after|on)::\s*([^\]]+?)\s*\]/u;
 const BLOCK_ID_RE = /\s\^[A-Za-z0-9-]+\s*$/u;
+/** [for:: id] on a task: it counts toward the milestone with that 🆔. [for:: none] keeps it out of every milestone. */
+const FOR_RE = /\[for::\s*([^\]]*?)\s*\]/u;
+/** [from:: #tag Area] on a milestone: the tags and areas whose tasks count toward it. */
+const FROM_RE = /\[from::\s*([^\]]*?)\s*\]/u;
+const ID_RE = /🆔\uFE0F? *([A-Za-z0-9_-]+)/u;
 
 export interface ParsedTask {
   indent: string;
@@ -59,6 +64,12 @@ export interface ParsedTask {
   eventLink?: { kind: EventKind; title: string };
   /** First [[wikilink]] in the task, if any (the target, without alias or heading). */
   link?: string;
+  /** Tasks' 🆔 field: a milestone's short name. */
+  id?: string;
+  /** [for:: id]: the milestone this task counts toward. */
+  forId?: string;
+  /** [from:: …] on a milestone: tags (without '#') and areas or folders whose tasks count toward it. */
+  from?: { tags: string[]; places: string[] };
 }
 
 export type EventKind = "before" | "on" | "after";
@@ -92,7 +103,15 @@ export function parseTaskLine(line: string): ParsedTask | null {
     if (min !== null) t.estimateMin = min;
   }
 
-  for (const tm of body.matchAll(TAG_RE)) t.tags.push(tm[2]);
+  const idm = ID_RE.exec(body);
+  if (idm) t.id = idm[1];
+  const fm = FOR_RE.exec(body);
+  if (fm && fm[1]) t.forId = fm[1];
+  const frm = FROM_RE.exec(body);
+  if (frm) t.from = parseFrom(frm[1]);
+
+  // Tags inside [from:: …] name what feeds a milestone; they are not the milestone's own tags.
+  for (const tm of body.replace(FROM_RE, "").matchAll(TAG_RE)) t.tags.push(tm[2]);
   const energyTag = t.tags.find((x) => x.toLowerCase().startsWith("energy/"));
   if (energyTag) {
     const e = energyTag.split("/")[1].toLowerCase();
@@ -106,9 +125,17 @@ export function parseTaskLine(line: string): ParsedTask | null {
   return t;
 }
 
+/** "#4-Method #5-Results, 2 Areas/uni" -> tags ["4-Method", "5-Results"], places ["2 Areas/uni"]. */
+export function parseFrom(raw: string): { tags: string[]; places: string[] } {
+  const tags = [...raw.matchAll(TAG_RE)].map((m) => m[2]);
+  const places = raw.replace(TAG_RE, "$1").split(",").map((x) => x.trim()).filter(Boolean);
+  return { tags, places };
+}
+
 export function displayText(body: string): string {
   let s = body;
   s = s.replace(BLOCK_ID_RE, "");
+  s = s.replace(new RegExp(FOR_RE.source, "gu"), "").replace(new RegExp(FROM_RE.source, "gu"), "");
   s = s.replace(EST_RE, "");
   s = s.replace(new RegExp(EVENT_RE.source, "gu"), "");
   s = s.replace(/🔁️? *[^📅⏳🛫➕✅❌🔺⏫🔼🔽⏬🆔⛔🏁#^]+/gu, "");
@@ -207,6 +234,19 @@ export function setEventLink(line: string, link: { kind: EventKind; title: strin
   return tidy(out);
 }
 
+/** Count the task toward a milestone ([for:: id]), keep it out of every milestone ("none"), or clear the field (null). */
+export function setFor(line: string, id: string | null): string {
+  let out = line.replace(/ ?\[for::[^\]]*\]/gu, "");
+  if (id && id.trim()) out = insertBefore(out, FIELD_EMOJI, `[for:: ${id.trim()}]`);
+  return tidy(out);
+}
+
+/** Give a task a Tasks 🆔 (replacing any it has). */
+export function setId(line: string, id: string): string {
+  const out = line.replace(/ ?🆔\uFE0F? *[A-Za-z0-9_-]+/gu, "");
+  return tidy(appendToken(out, `🆔 ${id}`));
+}
+
 /** Insert a token before the first of the given emojis in the body, or at the end. */
 function insertBefore(line: string, emojis: string[], token: string): string {
   const m = TASK_RE.exec(line);
@@ -224,7 +264,7 @@ function insertBefore(line: string, emojis: string[], token: string): string {
 }
 
 // Everything in a task line that is not its wording: kept in order when the wording changes.
-const KEEP_RE = /\[est::[^\]]*\]|\[(?:before|after|on)::[^\]]*\]|[🔺⏫🔼🔽⏬]\uFE0F?|(?:📅|⏳|🛫|➕|✅|❌)\uFE0F? *\d{4}-\d{2}-\d{2}|🔁\uFE0F? *[^📅⏳🛫➕✅❌🔺⏫🔼🔽⏬🆔⛔🏁#^]+|(?:🆔|⛔|🏁)\uFE0F? *\S+|(?:^|\s)#[\p{L}\p{N}_/-]+/gu;
+const KEEP_RE = /\[est::[^\]]*\]|\[(?:for|from)::[^\]]*\]|\[(?:before|after|on)::[^\]]*\]|[🔺⏫🔼🔽⏬]\uFE0F?|(?:📅|⏳|🛫|➕|✅|❌)\uFE0F? *\d{4}-\d{2}-\d{2}|🔁\uFE0F? *[^📅⏳🛫➕✅❌🔺⏫🔼🔽⏬🆔⛔🏁#^]+|(?:🆔|⛔|🏁)\uFE0F? *\S+|(?:^|\s)#[\p{L}\p{N}_/-]+/gu;
 
 /** Replace a task's wording, keeping its status, fields, tags and block id. */
 export function setText(line: string, text: string): string {
@@ -245,10 +285,14 @@ export function tagFor(name: string): string {
 /** Remove the given tags (exact or with a /sub-part), leaving everything else. */
 export function removeTags(line: string, tags: string[]): string {
   const set = tags.map((x) => tagFor(x).toLowerCase());
-  const out = line.replace(/(^|\s)#([\p{L}\p{N}_/-]+)/gu, (all, sp, tg) => {
+  // Tags inside [from:: …] belong to the milestone's list, so they stay.
+  const from = FROM_RE.exec(line)?.[0];
+  if (from) line = line.replace(from, "\u0000FROM\u0000");
+  let out = line.replace(/(^|\s)#([\p{L}\p{N}_/-]+)/gu, (all, sp, tg) => {
     const l = String(tg).toLowerCase();
     return set.some((x) => l === x || l.startsWith(x + "/")) ? "" : all;
   });
+  if (from) out = out.replace("\u0000FROM\u0000", from);
   return tidy(out);
 }
 

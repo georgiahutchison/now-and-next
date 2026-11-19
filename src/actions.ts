@@ -1,12 +1,13 @@
 import { App, Menu, Notice, TFile } from "obsidian";
 import {
-  setDate, setPriority, setEnergy, setEstimate, setRecurrence, setEventLink, setStatus, newTaskLine, addDays, localToday, addTag, setText, removeTags,
+  setDate, setPriority, setEnergy, setEstimate, setRecurrence, setEventLink, setStatus, newTaskLine, addDays, localToday, addTag, setText, removeTags, setFor, setId,
   Priority, Energy, EventKind, parseDuration, PRIORITY_EMOJI, ENERGY_EMOJI,
 } from "./tasks";
 import { VTask, editTask, insertAfter, isWaiting, planDate } from "./store";
 import { isLater } from "./queries";
 import type NowAndNextPlugin from "./main";
-import { DatePromptModal, TextPromptModal } from "./ui/modals";
+import { DatePromptModal, PickModal, TextPromptModal } from "./ui/modals";
+import { Goal, goals, goalOf, isMilestone, isDoneStatus, makeId, matchesFrom, NO_MILESTONE } from "./goals";
 
 interface TasksApi {
   executeToggleTaskDoneCommand(line: string, path: string): string;
@@ -105,6 +106,34 @@ export class Actions {
       cta: "Save",
       onSubmit: (v) => this.eventLink(t, { kind, title: v.trim() }),
     }).open();
+  }
+
+  /** Every milestone and goal with the tasks that count toward it. */
+  goals(): Goal<VTask>[] { return goals(this.plugin.store.tasks); }
+
+  /** Count the task toward a milestone ([for:: id]). A milestone without a 🆔 gets one first. Its day is unchanged. */
+  async toMilestone(t: VTask, g: Goal<VTask>) {
+    if (isMilestone(t)) return;
+    let id = g.id;
+    if (!id) {
+      id = makeId(g.task.text, this.plugin.store.tasks.map((x) => x.id ?? "").filter(Boolean));
+      if (!(await editTask(this.app, g.task, (l) => setId(l, id!)))) return;
+    }
+    const fresh = this.plugin.store.get(t.key) ?? t;
+    await editTask(this.app, fresh, (l) => setFor(l, id!));
+  }
+
+  /** Take the task out of its milestone. If a milestone's [from:: …] list would still pick it up, it gets [for:: none]. */
+  async fromMilestone(t: VTask) {
+    const stillMatched = this.goals().some((g) => matchesFrom(t, g.task.from));
+    await editTask(this.app, t, (l) => setFor(l, stillMatched ? NO_MILESTONE : null));
+  }
+
+  promptMilestone(t: VTask) {
+    const list = this.goals().filter((g) => !isDoneStatus(g.task.status));
+    if (!list.length) { new Notice("No milestones yet. Tag a task #milestone to make one."); return; }
+    new PickModal(this.app, list, (g) => (g.id && g.id !== g.task.text ? `${g.id}: ${g.task.text}` : g.task.text),
+      (g) => this.toMilestone(t, g), "Toward which milestone?").open();
   }
 
   async repeat(t: VTask, rule: string | null) { await editTask(this.app, t, (l) => setRecurrence(l, rule)); }
@@ -227,6 +256,11 @@ export class Actions {
     m.addItem((i) => i.setTitle("Day of an event…").setIcon("calendar-check").setChecked(t.eventLink?.kind === "on").onClick(() => this.promptEventLink(t, "on")));
     m.addItem((i) => i.setTitle("Day after an event…").setIcon("calendar-plus").setChecked(t.eventLink?.kind === "after").onClick(() => this.promptEventLink(t, "after")));
     if (t.eventLink) m.addItem((i) => i.setTitle("Remove event link").setIcon("unlink").onClick(() => this.eventLink(t, null)));
+    if (!isMilestone(t)) {
+      const g = goalOf(t, this.goals());
+      m.addItem((i) => i.setTitle(g ? `Toward a milestone: ${g.name}…` : "Toward a milestone…").setIcon("flag").setChecked(!!g).onClick(() => this.promptMilestone(t)));
+      if (g) m.addItem((i) => i.setTitle("Remove from milestone").setIcon("flag-off").onClick(() => this.fromMilestone(t)));
+    }
     if (t.recurrence && !planDate(t)) m.addItem((i) => i.setTitle("Start routine…").setIcon("repeat").onClick(() => this.promptStart(t)));
     m.addSeparator();
     const rules: [string | null, string][] = [

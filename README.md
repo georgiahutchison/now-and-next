@@ -7,7 +7,8 @@ Your tasks stay where they are: ordinary Tasks lines in your notes. Now & Next i
 ## What it does
 
 - **Habits.** A view of your repeating tasks across a month (from the Monday before the 1st to the Sunday after the last day), with a dot on each day one was done. Arrows move between months. Gaps stay blank: no streaks, counts or scores. It reads the ✅ dates the Tasks plugin already writes.
-- **Views: Focus, Triage, Plan and Habits.** Plan shows your days; next to the date you choose how many: 1 (one day), 3 (yesterday, today and tomorrow, in full), 7 (the week) or Month. Plan at 7 is the default. `Cmd/Ctrl` `+` and `-` step between the spans.
+- **Goals and milestones.** A task tagged `#milestone` is a milestone if it has a `📅` date, and a goal if it has none (a goal is done once its tasks are done). In Plan, a foldable strip above the days gives each open milestone one line: name, date, days left, a bar, done of total, hours left from `[est::]`, and how many of its tasks have no day yet. The milestone shows as "◆ name" on its due day in Plan and Month. The Goals view has a card for each, with bars by area. Drag a task onto a card to count it toward that milestone (its day stays the same), or onto "Not toward a milestone" to take it out; the task menu does the same with "Toward a milestone…" and "Remove from milestone". See Task format for the fields.
+- **Views: Focus, Triage, Plan, Goals and Habits.** Plan shows your days; next to the date you choose how many: 1 (one day), 3 (yesterday, today and tomorrow, in full), 7 (the week) or Month. Plan at 7 is the default. `Cmd/Ctrl` `+` and `-` step between the spans.
 - **Triage.** An Areas row under the boxes shows all areas or one. Undated tasks sit in four boxes by importance (🔺 or ⏫) and urgency (a deadline within 7 days, or `#urgent`): Do, Plan, Quick, Not now. Dragging a task between boxes sets or clears ⏫ and `#urgent`; deadlines are left as they are.
 - **Later.** A panel at the base, closed by default, for tasks tagged `#later` or with a future `🛫` start date (any date after today; "Defer to next month" sets the 1st). They stay out of the area tabs until then.
 - **Plan by dragging.** Drag a task onto a day to schedule it (it gets a `⏳` scheduled date). Within each day, tasks sort by priority (🔺 at the top); your drag order holds among tasks of the same priority. Drag it onto a tab to take it off its day again.
@@ -55,6 +56,10 @@ Now & Next reads and writes the Tasks plugin's emoji format. Everything it adds 
 | `[est:: 30m]` | Time estimate (`30m`, `1h`, `1h30m`). It goes before the emoji fields so Tasks still reads them. |
 | `[w]` | Waiting on someone. |
 | `[before:: Event]`, `[on:: Event]`, `[after:: Event]` | Ties the task to a calendar event: it sits on the day before (prep), the day of, or the day after (follow-up) the event's next occurrence, and moves when the event moves. Set it from the task menu. On a one-off task a scheduled ⏳ date overrides it. On a repeating task the ⏳ date stays and anchors each copy to the nearest occurrence (within 10 days), for example orders on the 🐝 pay day that sometimes moves. The Tasks plugin itself does not see the shifted date. |
+| `#milestone` | A milestone (with `📅`) or a goal (without). |
+| `🆔 draft` | The milestone's short name (the Tasks plugin's id field). Dragging a task onto a milestone without one adds one made from its first two words. |
+| `[from:: #4-Method #5-Results]` | On a milestone: the tags whose tasks count toward it. Areas or folders can follow after commas: `[from:: #uni, health, 2 Areas/work]`. A tag shared by two milestones feeds the open one with the nearest date. |
+| `[for:: draft]` | On a task: counts it toward that milestone, whatever its tags. `[for:: none]` keeps it out of every milestone. |
 
 New tasks go into today's daily note, using the folder and date format from Obsidian's Daily notes settings. A task captured in a daily note with an area tag shows under that area; an untagged one shows under the daily notes' own tab, ready to be planned or sorted.
 
@@ -122,10 +127,10 @@ Open planner · Show today in sidebar · Focus mode · Add task to today's daily
 ```bash
 npm install
 npm run build                # type-check and bundle to main.js
-node --test test/*.test.ts   # task-line and calendar parser tests (Node 23.6 or later)
+node --test test/*.test.ts   # task-line, calendar, habit and milestone tests (Node 23.6 or later)
 ```
 
-The task-line parser in `src/tasks.ts` and the calendar parser in `src/calendar.ts` have no Obsidian imports, so they can be tested with plain Node.
+The task-line parser in `src/tasks.ts`, the calendar parser in `src/calendar.ts`, and the habit and milestone counts in `src/habits.ts` and `src/goals.ts` have no Obsidian imports, so they can be tested with plain Node.
 
 ## Licence
 

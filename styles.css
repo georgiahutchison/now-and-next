@@ -471,3 +471,28 @@
 .nn-key { table-layout: fixed; }
 .nn-key td.nn-key-sym { width: 15em; white-space: normal; overflow-wrap: anywhere; }
 .nn-key + .nn-key-h, .nn-key-h { margin-top: var(--size-4-4); }
+
+/* ---------- goals and milestones ---------- */
+.nn-goal-strip { font-size: var(--font-ui-small); margin-bottom: var(--size-4-2); }
+.nn-goal-strip > summary { cursor: var(--cursor); color: var(--text-muted); padding: var(--size-4-1) 0; }
+.nn-goal-row { display: flex; align-items: center; gap: var(--size-4-3); padding: 2px 0; cursor: var(--cursor); color: var(--text-muted); white-space: nowrap; overflow: hidden; }
+.nn-goal-row:hover { color: var(--text-normal); }
+.nn-goal-name { color: var(--text-normal); font-weight: var(--font-medium); }
+.nn-goal-when, .nn-goal-nums { color: var(--text-faint); font-size: var(--font-ui-smaller); }
+.nn-goal-nums { overflow: hidden; text-overflow: ellipsis; }
+.nn-goal-bar { flex: 0 0 80px; height: 4px; border-radius: 2px; background: var(--background-modifier-border); overflow: hidden; }
+.nn-goal-fill { height: 100%; background: var(--text-muted); }
+.nn-milestone-mark { font-size: var(--font-ui-smaller); color: var(--text-accent); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: var(--cursor); }
+.nn-goals { display: flex; flex-direction: column; gap: var(--size-4-3); }
+.nn-goal-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: var(--size-4-3); }
+.nn-goal-card { display: flex; flex-direction: column; gap: var(--size-4-2); padding: var(--size-4-3); border: 1px solid var(--background-modifier-border); border-radius: var(--radius-m); background: var(--background-primary); }
+.nn-goal-card.is-finished { opacity: 0.6; }
+.nn-goal-card.is-drop-target, .nn-goal-loose.is-drop-target { outline: 2px dashed var(--interactive-accent); outline-offset: -2px; }
+.nn-goal-head { display: flex; justify-content: space-between; align-items: baseline; gap: var(--size-4-2); }
+.nn-goal-head .nn-goal-name { cursor: var(--cursor); }
+.nn-goal-text { font-size: var(--font-ui-small); color: var(--text-muted); }
+.nn-goal-card > .nn-goal-bar { flex: none; width: 100%; height: 6px; }
+.nn-goal-areas { display: flex; flex-direction: column; gap: 4px; }
+.nn-goal-area { display: grid; grid-template-columns: minmax(0, 1fr) 80px 4.5em; align-items: center; gap: var(--size-4-2); font-size: var(--font-ui-smaller); color: var(--text-muted); }
+.nn-goal-area-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nn-goal-area-n { text-align: right; color: var(--text-faint); }

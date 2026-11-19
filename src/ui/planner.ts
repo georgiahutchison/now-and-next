@@ -1,18 +1,19 @@
 import { ItemView, Scope, WorkspaceLeaf, setIcon } from "obsidian";
 import { addDays, localToday, mondayOf, formatMinutes, tagFor, ENERGY_EMOJI, PRIORITY_RANK } from "../tasks";
 import { habits, monthSpan } from "../habits";
+import { Goal, goals, numbers, byArea, isMilestone, isOpenStatus, daysLeftLabel, GoalNumbers } from "../goals";
 import { VTask, planDate } from "../store";
 import { applyOrder, placeBefore, moveExtrasOn } from "../order";
 import {
   openOn, doneOn, overdue, waiting, inProject, inbox, estimateTotal, hm, EnergyFilter, sortTasks, SORT_LABELS, SortMode,
   later, routines, isImportant, isUrgent, matrixTasks,
 } from "../queries";
-import { renderList, renderTask, dropZone, captureBox, carryOverTray, checkInCard, phasePrompt, AREA_DRAG_TYPE, ENERGY_DRAG_TYPE } from "./render";
+import { renderList, renderTask, dropZone, captureBox, carryOverTray, checkInCard, phasePrompt, shortDate, AREA_DRAG_TYPE, ENERGY_DRAG_TYPE } from "./render";
 import type NowAndNextPlugin from "../main";
 import type { Zoom } from "../settings";
 
 export const PLANNER_VIEW = "now-and-next-planner";
-// The view switcher: Focus, Triage, Plan, Habits. Plan's span (1, 3, 7 days or Month) sits by the date;
+// The view switcher: Focus, Triage, Plan, Goals, Habits. Plan's span (1, 3, 7 days or Month) sits by the date;
 // Cmd +/- steps through the spans.
 const ZOOMS: Zoom[] = ["day", "three", "week", "month"];
 const SPANS: [Zoom, string, string][] = [["day", "1", "One day"], ["three", "3", "Yesterday, today and tomorrow"], ["week", "7", "Week"], ["month", "Month", "Month"]];
@@ -82,6 +83,7 @@ export class PlannerView extends ItemView {
     this.renderHeader(root);
     if (this.zoom === "focus") { this.renderFocus(root); return; }
     if (this.zoom === "habits") { this.renderHabits(root); return; }
+    if (this.zoom === "goals") { this.renderGoals(root); return; }
     const tasks = this.plugin.store.tasks;
     const today = localToday();
 
@@ -106,6 +108,8 @@ export class PlannerView extends ItemView {
     if (failed.length && isDated(this.zoom)) {
       top.createDiv({ cls: "nn-cal-note", text: `Couldn't reach ${failed.join(", ")}. Showing the last copy fetched.` });
     }
+
+    if (isDated(this.zoom)) this.renderGoalStrip(root);
 
     const body = root.createDiv({ cls: "nn-body" });
     if (this.zoom === "day") this.renderDay(body, this.anchor);
@@ -161,6 +165,7 @@ export class PlannerView extends ItemView {
       ["focus", "Focus", this.zoom === "focus"],
       ["matrix", "Triage", this.zoom === "matrix"],
       [this.planSpan, "Plan", isDated(this.zoom)],
+      ["goals", "Goals", this.zoom === "goals"],
       ["habits", "Habits", this.zoom === "habits"],
     ];
     for (const [z, label, active] of views) {
@@ -198,6 +203,7 @@ export class PlannerView extends ItemView {
     if (this.zoom === "focus") return "Today";
     if (this.zoom === "matrix") return "Triage";
     if (this.zoom === "habits") return "Habits";
+    if (this.zoom === "goals") return "Goals";
     const mon = mondayOf(this.anchor);
     const last = addDays(mon, this.plugin.settings.showWeekend ? 6 : 4);
     const f = (d: string) => new Date(d + "T00:00:00").toLocaleDateString(undefined, { day: "numeric", month: "short" });
@@ -223,6 +229,10 @@ export class PlannerView extends ItemView {
     const isStrip = !wide && pastAsStrip && day < today;
     const cyc = isStrip ? null : this.plugin.calendars.cycleOn(day);
     if (cyc) head.createDiv({ cls: `nn-cycle nn-cycle-${cyc.phase}`, text: `Cycle day ${cyc.day} · ${cyc.phase}` });
+    for (const g of this.dueOn(day)) {
+      const mk = head.createDiv({ cls: "nn-milestone-mark", text: `◆ ${g.name}`, attr: { "aria-label": g.task.text } });
+      mk.addEventListener("click", (e) => { e.stopPropagation(); this.setView("goals"); });
+    }
 
     let open = openOn(tasks, day, this.filter);
     // With carry-over off, unfinished tasks from past days sit on today.
@@ -331,6 +341,7 @@ export class PlannerView extends ItemView {
         if (this.plugin.settings.cycle && dayEvents.some((e) => this.plugin.calendars.isCycleMarker(e))) {
           cell.querySelector(".nn-month-num")?.appendText(` ${this.plugin.settings.cycleMarker}`);
         }
+        for (const g of this.dueOn(day)) cell.createDiv({ cls: "nn-milestone-mark", text: `◆ ${g.name}`, attr: { "aria-label": g.task.text } });
         if (nEvents) cell.createDiv({ cls: "nn-month-events", text: `${nEvents} ${nEvents === 1 ? "event" : "events"}` });
         const open = openOn(tasks, day, this.filter);
         for (const t of open.slice(0, 3)) {
@@ -463,6 +474,129 @@ export class PlannerView extends ItemView {
       });
       dropZone(b, this.plugin, (t) => this.plugin.actions.energy(t, level));
     }
+  }
+
+  // ---------- goals and milestones ----------
+
+  private goalList(): Goal<VTask>[] { return goals(this.plugin.store.tasks); }
+  private nums(g: Goal<VTask>): GoalNumbers { return numbers(g, localToday(), (t) => !!planDate(t)); }
+
+  /** Open milestones whose 📅 date is this day. */
+  private dueOn(day: string): Goal<VTask>[] {
+    return this.goalList().filter((g) => g.due === day && isOpenStatus(g.task.status));
+  }
+
+  /** A thin bar: done of total. */
+  private bar(parent: HTMLElement, done: number, total: number) {
+    const b = parent.createDiv({ cls: "nn-goal-bar", attr: { "aria-label": `${done} of ${total} done` } });
+    b.createDiv({ cls: "nn-goal-fill" }).style.width = total ? `${Math.round((done / total) * 100)}%` : "0%";
+  }
+
+  /** "5 of 12 done · 9h left · 3 not on a day" */
+  private numberText(n: GoalNumbers): string {
+    const parts = [`${n.done} of ${n.total} done`];
+    if (n.open) {
+      let h = n.minutesLeft ? `${formatMinutes(n.minutesLeft)} left` : "";
+      if (n.unestimated) h += `${h ? " + " : ""}${n.unestimated} without an estimate`;
+      if (h) parts.push(h);
+    }
+    if (n.notOnADay) parts.push(`${n.notOnADay} not on a day`);
+    return parts.join(" · ");
+  }
+
+  /** One line per open milestone, above the days in Plan. Folds; the fold is remembered. */
+  private renderGoalStrip(root: HTMLElement) {
+    const list = this.goalList().filter((g) => !this.nums(g).finished);
+    if (!list.length) return;
+    const det = root.createEl("details", { cls: "nn-goal-strip" });
+    det.open = this.plugin.settings.goalStripOpen;
+    det.addEventListener("toggle", () => { this.plugin.settings.goalStripOpen = det.open; void this.plugin.saveData(this.plugin.settings); });
+    const sum = det.createEl("summary");
+    sum.createSpan({ text: "Milestones" });
+    sum.createSpan({ cls: "nn-tab-count", text: ` ${list.length}` });
+    for (const g of list) {
+      const n = this.nums(g);
+      const row = det.createDiv({ cls: "nn-goal-row" });
+      row.setAttr("aria-label", g.task.text);
+      row.createSpan({ cls: "nn-goal-name", text: `◆ ${g.name}` });
+      row.createSpan({ cls: "nn-goal-when", text: g.due ? `${shortDate(g.due)} · ${daysLeftLabel(n.daysLeft!)}` : "No date" });
+      this.bar(row, n.done, n.total);
+      row.createSpan({ cls: "nn-goal-nums", text: this.numberText(n) });
+      row.addEventListener("click", () => this.setView("goals"));
+    }
+  }
+
+  /** Full cards for each milestone and goal, bars by area, and a place for tasks not toward any. */
+  private renderGoals(root: HTMLElement) {
+    const all = this.goalList();
+    const body = root.createDiv({ cls: "nn-body nn-goals" });
+    body.createDiv({ cls: "nn-panel-hint", text: "A task tagged #milestone is a milestone if it has a 📅 date, a goal if not. Drag a task onto a card to count it toward that milestone; its day stays the same." });
+    if (!all.length) {
+      body.createDiv({ cls: "nn-empty", text: "No milestones yet. Tag a task #milestone, give it a short name with 🆔 (for example 🆔 draft), and list what feeds it with [from:: #tag Area]." });
+      return;
+    }
+    const open = all.filter((g) => !this.nums(g).finished);
+    const finished = all.filter((g) => this.nums(g).finished);
+    const grid = body.createDiv({ cls: "nn-goal-grid" });
+    for (const g of open) this.goalCard(grid, g);
+    if (finished.length) {
+      const det = body.createEl("details", { cls: "nn-later" });
+      const sum = det.createEl("summary");
+      sum.createSpan({ text: "Finished" });
+      sum.createSpan({ cls: "nn-tab-count", text: ` ${finished.length}` });
+      const fg = det.createDiv({ cls: "nn-goal-grid" });
+      for (const g of finished) this.goalCard(fg, g);
+    }
+
+    // Open tasks that count toward no milestone. Listed only when unfolded, as there may be many.
+    const attached = new Set(all.flatMap((g) => g.members.map((t) => t.key)));
+    const loose = this.plugin.store.tasks.filter((t) => isOpenStatus(t.status) && !isMilestone(t) && !attached.has(t.key));
+    const det = body.createEl("details", { cls: "nn-later nn-goal-loose" });
+    const sum = det.createEl("summary");
+    sum.createSpan({ text: "Not toward a milestone" });
+    if (loose.length) sum.createSpan({ cls: "nn-tab-count", text: ` ${loose.length}` });
+    det.createDiv({ cls: "nn-panel-hint", text: "Drop a task here to take it out of its milestone." });
+    const inner = det.createDiv({ cls: "nn-panel-list" });
+    det.addEventListener("toggle", () => {
+      if (det.open && !inner.childElementCount) renderList(this.plugin, inner, sortTasks(loose, this.plugin.settings.sortBy), "Nothing here.", { showDate: true });
+    });
+    dropZone(det, this.plugin, (t) => this.plugin.actions.fromMilestone(t));
+  }
+
+  private goalCard(parent: HTMLElement, g: Goal<VTask>) {
+    const n = this.nums(g);
+    const card = parent.createDiv({ cls: "nn-goal-card" });
+    if (n.finished) card.addClass("is-finished");
+    const head = card.createDiv({ cls: "nn-goal-head" });
+    const name = head.createSpan({ cls: "nn-goal-name", text: `◆ ${g.name}` });
+    name.addEventListener("click", () => void this.plugin.actions.open(g.task));
+    head.createSpan({ cls: "nn-goal-when", text: g.due ? `${shortDate(g.due)} · ${n.finished ? "done" : daysLeftLabel(n.daysLeft!)}` : n.finished ? "Goal · done" : "Goal · no date" });
+    if (g.id) card.createDiv({ cls: "nn-goal-text", text: g.task.text });
+    this.bar(card, n.done, n.total);
+    card.createDiv({ cls: "nn-goal-nums", text: this.numberText(n) });
+    const areas = byArea(g);
+    if (areas.length > 1) {
+      const t = card.createDiv({ cls: "nn-goal-areas" });
+      for (const a of areas) {
+        const r = t.createDiv({ cls: "nn-goal-area" });
+        r.createSpan({ cls: "nn-goal-area-name", text: a.area ? cap(a.area) : "No area" });
+        this.bar(r, a.done, a.total);
+        r.createSpan({ cls: "nn-goal-area-n", text: `${a.done} of ${a.total}` });
+      }
+    }
+    const openTasks = g.members.filter((t) => isOpenStatus(t.status));
+    if (openTasks.length) {
+      const det = card.createEl("details", { cls: "nn-group" });
+      const sum = det.createEl("summary");
+      sum.createSpan({ text: "Open tasks" });
+      sum.createSpan({ cls: "nn-tab-count", text: ` ${openTasks.length}` });
+      const list = det.createDiv({ cls: "nn-group-list" });
+      det.addEventListener("toggle", () => {
+        if (det.open && !list.childElementCount) renderList(this.plugin, list, sortTasks(openTasks, "due"), "", { showDate: true });
+      });
+    }
+    if (!g.task.from && !g.members.length) card.createDiv({ cls: "nn-panel-hint", text: "Add [from:: #tag Area] to this line, or drag tasks here." });
+    dropZone(card, this.plugin, (t) => this.plugin.actions.toMilestone(t, g));
   }
 
   /** Repeating tasks across a month (plus the odd days either side), with a dot on each day one was done. Gaps stay blank. */

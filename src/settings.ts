@@ -3,7 +3,7 @@ import type NowAndNextPlugin from "./main";
 import type { Energy } from "./tasks";
 import type { SortMode } from "./queries";
 
-export type Zoom = "focus" | "day" | "three" | "week" | "month" | "matrix" | "habits";
+export type Zoom = "focus" | "day" | "three" | "week" | "month" | "matrix" | "goals" | "habits";
 
 export type SupportKey =
   | "focus" | "dailyCap" | "carryOver" | "capture" | "doneList" | "energy"
@@ -52,6 +52,8 @@ export interface NowAndNextSettings {
   goTo: string[];
   readingNote: string;
   lastCheckIn: { date: string; level: "low" | "mid" | "high" | "skip" } | null;
+  /** The milestone strip above the days in Plan is unfolded. */
+  goalStripOpen: boolean;
 }
 
 export interface CalendarLink { name: string; url: string }
@@ -80,6 +82,7 @@ export const DEFAULT_SETTINGS: NowAndNextSettings = {
   goTo: [],
   readingNote: "",
   lastCheckIn: null,
+  goalStripOpen: true,
 };
 
 export class NowAndNextSettingTab extends PluginSettingTab {
@@ -132,7 +135,7 @@ export class NowAndNextSettingTab extends PluginSettingTab {
       .addToggle((t) => t.setValue(s.showWeekend).onChange(async (v) => { s.showWeekend = v; await save(); }));
 
     new Setting(containerEl).setName("Open at")
-      .addDropdown((d) => d.addOptions({ focus: "Focus", matrix: "Triage", day: "Plan: 1 day", three: "Plan: 3 days", week: "Plan: 7 days", month: "Plan: Month", habits: "Habits" }).setValue(s.defaultZoom)
+      .addDropdown((d) => d.addOptions({ focus: "Focus", matrix: "Triage", day: "Plan: 1 day", three: "Plan: 3 days", week: "Plan: 7 days", month: "Plan: Month", goals: "Goals", habits: "Habits" }).setValue(s.defaultZoom)
         .onChange(async (v) => { s.defaultZoom = v as Zoom; await save(); }));
 
     new Setting(containerEl).setName("Supports").setHeading();
