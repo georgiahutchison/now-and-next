@@ -431,7 +431,7 @@ export class PlannerView extends ItemView {
     if (!this.plugin.on("energy")) return;
     const s = this.plugin.settings;
     const seg = bar.createDiv({ cls: "nn-seg nn-energy-filter nn-spoons" });
-    seg.createSpan({ cls: "nn-seg-label", text: "Spoons" });
+    seg.createSpan({ cls: "nn-seg-label", text: "Energy" });
     const opts: [EnergyFilter, string, string][] = [
       ["all", "Any", "Any energy"], ["low", ENERGY_EMOJI.low, "Low energy"], ["mid", ENERGY_EMOJI.mid, "Medium energy"], ["high", ENERGY_EMOJI.high, "High energy"],
     ];
@@ -454,19 +454,12 @@ export class PlannerView extends ItemView {
     const today = localToday();
     const store = this.plugin.store;
     const every = matrixTasks(store.tasks, this.filter);
-    // Areas row: All, Diary (no area), then each area. Choosing one filters all four boxes.
+    // Areas row (under the boxes): All, Diary (no area), then each area. Choosing one filters all four boxes.
     const inArea = (t: VTask, key: string) => !key || (key === "diary" ? !t.project : t.project === key);
     const keys: [string, string][] = [["", "All"]];
     if (store.dailyArea() === null) keys.push(["diary", "Diary"]);
     for (const p of store.projects()) keys.push([p, cap(p)]);
     if (!keys.some(([k]) => k === this.triageArea)) this.triageArea = "";
-    const bar = body.createDiv({ cls: "nn-tabs nn-triage-areas" });
-    bar.createSpan({ cls: "nn-tabs-label", text: "Areas" });
-    for (const [key, label] of keys) {
-      const n = every.filter((t) => inArea(t, key)).length;
-      this.areaTab(bar, key, label, key ? n : 0, key === this.triageArea, () => { this.triageArea = key; this.render(); });
-    }
-    this.spoons(bar);
     const all = every.filter((t) => inArea(t, this.triageArea));
     const grid = body.createDiv({ cls: "nn-matrix" });
     const boxes: { title: string; hint: string; imp: boolean; urg: boolean }[] = [
@@ -509,6 +502,15 @@ export class PlannerView extends ItemView {
       });
     }
     body.createDiv({ cls: "nn-panel-hint", text: "Important: 🔺 ⏫ · Urgent: deadline within 7 days or #urgent" });
+    // Areas and energy sit under the main view, as in Plan.
+    const panel = body.createDiv({ cls: "nn-panel nn-triage-panel" });
+    const bar = panel.createDiv({ cls: "nn-tabs" });
+    bar.createSpan({ cls: "nn-tabs-label", text: "Areas" });
+    for (const [key, label] of keys) {
+      const n = every.filter((t) => inArea(t, key)).length;
+      this.areaTab(bar, key, label, key ? n : 0, key === this.triageArea, () => { this.triageArea = key; this.render(); });
+    }
+    this.spoons(bar);
   }
 
   // ---------- later (hidden by default) ----------

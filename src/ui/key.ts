@@ -49,7 +49,7 @@ const SECTIONS: [string, [string, string][]][] = [
     ["Day name", "Opens that day"],
     ["6/5 · Move extras on", "More tasks than your daily cap; moves the extras to the next working day with room"],
     ["Start (Routines)", "Gives an undated repeating task its next date"],
-    ["Areas and Spoons row", "Click to show one area or energy level; in Triage, All shows every area"],
+    ["Areas and Energy row", "Under the main view. Click to show one area or energy level; in Triage, All shows every area"],
     ["Faint time and title", "A calendar event from your calendar links (read-only)"],
     ["1 · 3 · 7 · Month", "In Plan: one day, yesterday to tomorrow, a week, or a month"],
     ["Cmd/Ctrl + and -", "In Plan: step between 1, 3, 7 days and Month"],

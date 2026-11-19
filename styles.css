@@ -404,4 +404,4 @@
 /* ---- Spoons at the end of the Areas row; Areas row above the Triage boxes ---- */
 .nn-tabs { align-items: center; }
 .nn-tabs .nn-spoons { margin-left: auto; }
-.nn-triage-areas { margin-bottom: var(--size-4-3); }
+.nn-triage-panel { margin-top: var(--size-4-4); }
