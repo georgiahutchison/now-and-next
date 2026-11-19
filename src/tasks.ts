@@ -4,7 +4,7 @@
 export type Priority = "highest" | "high" | "medium" | "none" | "low" | "lowest";
 export type Energy = "low" | "mid" | "high";
 /** Shown in the planner only; notes keep the #energy/… tag. */
-export const ENERGY_EMOJI: Record<Energy, string> = { low: "🪫", mid: "🔋", high: "⚡" };
+export const ENERGY_EMOJI: Record<Energy, string> = { low: "🥄", mid: "🥄🥄", high: "🥄🥄🥄" };
 
 export const PRIORITY_EMOJI: Record<Exclude<Priority, "none">, string> = {
   highest: "🔺",

@@ -29,7 +29,7 @@ Each support can be switched on or off in **Settings → Now & Next → Supports
 | Carry-over tray | Unfinished tasks from past days wait in a "Carry over?" tray: move each to today, tomorrow or another day, put it back in its list, or let it go. With this off, they show on today instead. |
 | Quick capture | A capture box that drops a thought into today's daily note as a task, so ideas get parked without a context switch. |
 | Done list | Each day shows what you finished, not only what's left. |
-| Energy tags | Tag tasks `#energy/low`, `#energy/mid` or `#energy/high` (shown as 🪫, 🔋 and ⚡), then filter the planner to what fits how you feel right now. |
+| Energy tags | Tag tasks `#energy/low`, `#energy/mid` or `#energy/high` (shown as spoons: 🥄, 🥄🥄 and 🥄🥄🥄), then filter the planner to what fits how you feel right now. |
 | Task timer | Start a countdown on a task. It shows in the status bar and chimes at the end. |
 | Time estimates | Add an estimate such as `[est:: 30m]`. Each day totals its estimates against your working hours, so overload shows before it happens. |
 | First tiny step | A task with no sub-tasks that has sat for a while gets a "first step?" prompt. Your answer is added as an indented task under it. |
