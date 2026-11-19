@@ -423,3 +423,9 @@
 .nn-checkin-sub { color: var(--text-muted); }
 .nn-checkin-list { display: flex; flex-wrap: wrap; gap: var(--size-4-1); }
 .nn-checkin-read { display: flex; flex-wrap: wrap; align-items: center; gap: var(--size-4-1); }
+
+/* hover × and … sit on a solid patch of the card colour, fading in from the left, so they never overlap text or chips */
+.nn-root .nn-card > .nn-task-line > .nn-actions {
+  z-index: 1; background: var(--background-primary); padding-left: 2px; border-radius: 0;
+  box-shadow: -12px 0 8px -2px var(--background-primary);
+}

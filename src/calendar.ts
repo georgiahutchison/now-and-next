@@ -115,3 +115,9 @@ export function cycleDay(day: string, start: string, next: string | null): Cycle
   const phase: CyclePhase = n <= 5 ? "period" : Math.abs(n - ovulation) <= 1 ? "ovulation" : n < ovulation ? "follicular" : "luteal";
   return { day: n, phase, length };
 }
+
+/** Days until the luteal phase starts (the day after the ovulation window), or null once it has started. */
+export function lutealStartsIn(c: CycleDay): number | null {
+  const firstLuteal = c.length - 14 + 2;
+  return c.day < firstLuteal ? firstLuteal - c.day : null;
+}

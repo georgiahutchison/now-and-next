@@ -43,6 +43,8 @@ export interface NowAndNextSettings {
   /** Cycle day and phase from calendar events titled with the marker (day 1). */
   cycle: boolean;
   cycleMarker: string;
+  /** A short prompt for today's phase: social plans, urgent things before luteal, low-spoon things in luteal. */
+  cyclePrompts: boolean;
   /** Daily "How much energy today?" question; go-to projects and a reading place for low days. */
   checkIn: boolean;
   goTo: string[];
@@ -70,6 +72,7 @@ export const DEFAULT_SETTINGS: NowAndNextSettings = {
   calendars: [],
   cycle: true,
   cycleMarker: "🩸",
+  cyclePrompts: true,
   checkIn: true,
   goTo: [],
   readingNote: "",
@@ -157,6 +160,9 @@ export class NowAndNextSettingTab extends PluginSettingTab {
       .addToggle((t) => t.setValue(s.cycle).onChange(async (v) => { s.cycle = v; await save(); }));
     new Setting(containerEl).setName("Day 1 marker")
       .addText((t) => t.setValue(s.cycleMarker).onChange(async (v) => { s.cycleMarker = v.trim(); await save(); }));
+    new Setting(containerEl).setName("Phase prompts")
+      .setDesc("Under the check-in: social plans in the follicular and ovulation phases, urgent things in the 5 days before luteal, go-to projects in luteal.")
+      .addToggle((t) => t.setValue(s.cyclePrompts).onChange(async (v) => { s.cyclePrompts = v; await save(); }));
 
     new Setting(containerEl).setName("Daily check-in").setHeading();
     new Setting(containerEl).setName("Ask how much energy I have")

@@ -6,7 +6,7 @@ import {
   openOn, doneOn, overdue, waiting, inProject, inbox, estimateTotal, hm, EnergyFilter, sortTasks, SORT_LABELS, SortMode,
   later, routines, isImportant, isUrgent, matrixTasks,
 } from "../queries";
-import { renderList, renderTask, dropZone, captureBox, carryOverTray, checkInCard, AREA_DRAG_TYPE, ENERGY_DRAG_TYPE } from "./render";
+import { renderList, renderTask, dropZone, captureBox, carryOverTray, checkInCard, phasePrompt, AREA_DRAG_TYPE, ENERGY_DRAG_TYPE } from "./render";
 import type NowAndNextPlugin from "../main";
 import type { Zoom } from "../settings";
 
@@ -85,6 +85,7 @@ export class PlannerView extends ItemView {
 
     const top = root.createDiv({ cls: "nn-top" });
     checkInCard(this.plugin, top);
+    phasePrompt(this.plugin, top);
     if (this.filter !== "all") {
       const f = top.createDiv({ cls: "nn-filter-note" });
       f.createSpan({ text: `Showing ${({ low: "low", mid: "medium", high: "high" } as const)[this.filter]}-energy tasks only. ` });

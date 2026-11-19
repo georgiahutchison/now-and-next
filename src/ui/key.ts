@@ -53,6 +53,7 @@ const SECTIONS: [string, [string, string][]][] = [
     ["How much energy today?", "Daily check-in. On a 🥄 day it lists your go-to projects and a reading place"],
     ["Cycle day 3 · period", "Cycle day and phase, counted from 🩸 day-1 events in your calendar"],
     ["Phases", "Period: days 1 to 5. Ovulation: about 14 days before the next day 1. Follicular before it, luteal after"],
+    ["Phase prompt", "Under the check-in: social plans (follicular, ovulation), urgent things (5 days before luteal), go-to projects (luteal)"],
     ["Faint time and title", "A calendar event from your calendar links (read-only)"],
     ["1 · 3 · 7 · Month", "In Plan: one day, yesterday to tomorrow, a week, or a month"],
     ["Cmd/Ctrl + and -", "In Plan: step between 1, 3, 7 days and Month"],

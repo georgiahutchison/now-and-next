@@ -1,7 +1,8 @@
+import { lutealStartsIn } from "../calendar";
 import { TFile, TFolder, normalizePath, setIcon } from "obsidian";
 import { formatMinutes, localToday, PRIORITY_EMOJI, ENERGY_EMOJI, addDays, type Energy } from "../tasks";
-import { VTask, isDone, isWaiting, planDate } from "../store";
-import { needsFirstStep } from "../queries";
+import { VTask, isDone, isOpen, isWaiting, planDate } from "../store";
+import { needsFirstStep, isLater, isUrgent, isImportant } from "../queries";
 import type NowAndNextPlugin from "../main";
 
 export const DRAG_TYPE = "text/x-now-and-next";
@@ -305,9 +306,15 @@ export function checkInCard(plugin: NowAndNextPlugin, parent: HTMLElement) {
   line.createSpan({ text: `Today: ${LEVELS.find(([l]) => l === answer)![1]}` });
   const change = line.createEl("button", { cls: "nn-checkin-change", text: "change" });
   change.addEventListener("click", () => void save(null));
-  if (answer !== "low" || (!s.goTo.length && !s.readingNote)) return;
+  if (answer === "low") goToList(plugin, box, "Go-to projects for a low day");
+}
+
+/** The go-to projects and the reading place, under a heading. */
+function goToList(plugin: NowAndNextPlugin, box: HTMLElement, heading: string) {
+  const s = plugin.settings;
+  if (!s.goTo.length && !s.readingNote) return;
   if (s.goTo.length) {
-    box.createDiv({ cls: "nn-checkin-sub", text: "Go-to projects for a low day" });
+    box.createDiv({ cls: "nn-checkin-sub", text: heading });
     const list = box.createDiv({ cls: "nn-checkin-list" });
     for (const g of s.goTo) {
       list.createEl("button", { cls: "nn-checkin-place", text: placeName(g) }).addEventListener("click", () => openPlace(plugin, g));
@@ -318,4 +325,45 @@ export function checkInCard(plugin: NowAndNextPlugin, parent: HTMLElement) {
     r.createSpan({ text: "Or switch to reading: " });
     r.createEl("button", { cls: "nn-checkin-place", text: placeName(s.readingNote) }).addEventListener("click", () => openPlace(plugin, s.readingNote));
   }
+}
+
+/** A few tasks as quiet links that open the task in its note. */
+function taskLinks(plugin: NowAndNextPlugin, box: HTMLElement, list: VTask[]) {
+  const ul = box.createDiv({ cls: "nn-phase-tasks" });
+  for (const t of list) {
+    const b = ul.createEl("button", { cls: "nn-checkin-place", text: t.text });
+    b.addEventListener("click", () => void plugin.actions.open(t));
+  }
+}
+
+/**
+ * One prompt for today's cycle phase: social plans in the follicular and ovulation phases,
+ * urgent things in the 5 days before luteal, low-spoon go-to projects in luteal. Nothing on period days.
+ */
+export function phasePrompt(plugin: NowAndNextPlugin, parent: HTMLElement) {
+  const s = plugin.settings;
+  if (!s.cycle || !s.cyclePrompts) return;
+  const today = localToday();
+  const c = plugin.calendars.cycleOn(today);
+  if (!c || c.phase === "period") return;
+  const open = plugin.store.tasks.filter((t) => isOpen(t) && !isLater(t, today));
+  const box = parent.createDiv({ cls: "nn-checkin nn-phase" });
+  if (c.phase === "luteal") {
+    box.createDiv({ cls: "nn-checkin-line", text: "Luteal phase: a good time for low-spoon things." });
+    const low = s.lastCheckIn?.date === today && s.lastCheckIn.level === "low";
+    if (!low) goToList(plugin, box, "Go-to projects");
+    return;
+  }
+  const until = lutealStartsIn(c);
+  if (until !== null && until <= 5) {
+    const urgent = open.filter((t) => isUrgent(t, today) || isImportant(t))
+      .sort((a, b) => (a.due ?? "9999").localeCompare(b.due ?? "9999")).slice(0, 3);
+    box.createDiv({ cls: "nn-checkin-line", text: `Luteal phase starts ${shortDate(addDays(today, until))}.` + (urgent.length ? " Worth getting these done first:" : "") });
+    if (urgent.length) taskLinks(plugin, box, urgent);
+    return;
+  }
+  const name = c.phase === "ovulation" ? "Ovulation" : "Follicular phase";
+  const social = open.filter((t) => t.project === "social" || t.tags.some((x) => x.toLowerCase() === "social")).slice(0, 3);
+  box.createDiv({ cls: "nn-checkin-line", text: `${name}: a good time for social plans.` });
+  if (social.length) taskLinks(plugin, box, social);
 }

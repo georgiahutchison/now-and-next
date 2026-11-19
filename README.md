@@ -77,6 +77,8 @@ Once a day the sidebar and planner ask "How much energy today?" (🥄, 🥄🥄,
 
 If one of your calendars marks day 1 of your period with an event titled 🩸 (the marker can be changed in settings), each date in Plan shows its cycle day and phase, such as "Cycle day 3 · period". Phases are counted from the last day 1 and the next one in the calendar: period on days 1 to 5, ovulation about 14 days before the next day 1 (one day either side), follicular before it, luteal after. With no next day 1 in the calendar, a 28-day cycle is assumed. Month view shows 🩸 on day 1. The 🩸 events themselves are not listed with the other events.
 
+A phase prompt sits under the daily check-in (Settings → Cycle → Phase prompts): in the follicular and ovulation phases it suggests social plans (tasks in the Social area or tagged `#social`); in the 5 days before luteal it lists up to three urgent or important tasks to get done first; in luteal it lists your go-to projects and reading place. Period days show nothing extra.
+
 ## Requirements
 
 - Obsidian 1.7.2 or later.

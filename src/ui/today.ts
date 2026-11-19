@@ -3,7 +3,7 @@ import { localToday } from "../tasks";
 import { planDate } from "../store";
 import { applyOrder, placeBefore, moveExtrasOn } from "../order";
 import { openOn, doneOn, overdue, waiting } from "../queries";
-import { renderList, captureBox, dropZone, checkInCard } from "./render";
+import { renderList, captureBox, dropZone, checkInCard, phasePrompt } from "./render";
 import type NowAndNextPlugin from "../main";
 
 export const TODAY_VIEW = "now-and-next-today";
@@ -36,6 +36,7 @@ export class TodayView extends ItemView {
     head.createDiv({ cls: "nn-side-title", text: new Date().toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long" }) });
 
     checkInCard(this.plugin, root);
+    phasePrompt(this.plugin, root);
     if (this.plugin.on("capture")) captureBox(this.plugin, root, { lines: 2, fixed: true });
 
     if (f !== "all") {

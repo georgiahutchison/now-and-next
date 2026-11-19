@@ -2,7 +2,7 @@
 process.env.TZ = "Australia/Sydney";
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { expandEvents, nextDay, cycleDay } from "../src/calendar.ts";
+import { expandEvents, nextDay, cycleDay, lutealStartsIn } from "../src/calendar.ts";
 
 const SYDNEY = `BEGIN:VTIMEZONE
 TZID:Australia/Sydney
@@ -152,4 +152,12 @@ test("cycle: a longer cycle moves ovulation later; no next day 1 assumes 28 days
   assert.equal(cycleDay("2026-01-10", "2026-01-01", null)!.length, 28);
   assert.equal(cycleDay("2026-03-01", "2026-01-01", null), null);  // more than 45 days on
   assert.equal(cycleDay("2025-12-31", "2026-01-01", null), null);  // before day 1
+});
+
+test("days until luteal: counts down to the day after the ovulation window, then null", () => {
+  const at = (d: string) => lutealStartsIn(cycleDay(d, "2026-10-28", "2026-11-25")!);
+  assert.equal(at("2026-11-06"), 6);   // day 10; luteal starts day 16 (12 Nov)
+  assert.equal(at("2026-11-07"), 5);   // first day of the 5-day lead-up
+  assert.equal(at("2026-11-11"), 1);
+  assert.equal(at("2026-11-12"), null); // luteal
 });
