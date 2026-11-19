@@ -608,7 +608,8 @@ export class PlannerView extends ItemView {
 
   private renderFocus(root: HTMLElement) {
     const today = localToday();
-    const all = openOn(this.plugin.store.tasks, today, this.filter);
+    // A first step comes just before the task it belongs to, so it is the one shown as Now.
+    const all = stepsFirst(openOn(this.plugin.store.tasks, today, this.filter));
     const queue = [...all.filter((t) => !this.skipped.includes(t.key)), ...all.filter((t) => this.skipped.includes(t.key))];
     const wrap = root.createDiv({ cls: "nn-focus" });
 
@@ -659,4 +660,16 @@ function textBtn(parent: HTMLElement, icon: string, label: string, fn: () => unk
 function cap(s: string) { return s.charAt(0).toUpperCase() + s.slice(1); }
 function toStr(d: Date) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+/** Put each sub-task straight before its parent when both are in the list; everything else keeps its order. */
+function stepsFirst(list: VTask[]): VTask[] {
+  const out = [...list];
+  for (const t of list) {
+    if (!t.parent) continue;
+    const pi = out.indexOf(t.parent);
+    const ci = out.indexOf(t);
+    if (pi >= 0 && ci > pi) { out.splice(ci, 1); out.splice(pi, 0, t); }
+  }
+  return out;
 }

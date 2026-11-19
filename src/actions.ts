@@ -155,9 +155,13 @@ export class Actions {
     new DatePromptModal(this.app, t.due ?? localToday(), (d) => this.deadline(t, d), "Set a deadline", "Save").open();
   }
 
+  /** Add a sub-task under the task. It takes the task's day (today if that day has passed), so it shows up where the task is. */
   async addSubtask(t: VTask, text: string) {
     const indent = t.indent + "\t";
-    await insertAfter(this.app, t, [newTaskLine(text, { indent })]);
+    const day = planDate(t);
+    const today = localToday();
+    const scheduled = day ? (day < today ? today : day) : undefined;
+    if (await insertAfter(this.app, t, [newTaskLine(text, { indent, scheduled })])) new Notice("First step added", 1500);
   }
 
   async open(t: VTask) {
