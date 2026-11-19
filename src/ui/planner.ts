@@ -12,7 +12,7 @@ import type NowAndNextPlugin from "../main";
 import type { Zoom } from "../settings";
 
 export const PLANNER_VIEW = "now-and-next-planner";
-// The view switcher: Triage, Focus, Plan. Plan's span (1, 3, 7 days or Month) sits by the date;
+// The view switcher: Focus, Triage, Plan, Habits. Plan's span (1, 3, 7 days or Month) sits by the date;
 // Cmd +/- steps through the spans.
 const ZOOMS: Zoom[] = ["day", "three", "week", "month"];
 const SPANS: [Zoom, string, string][] = [["day", "1", "One day"], ["three", "3", "Yesterday, today and tomorrow"], ["week", "7", "Week"], ["month", "Month", "Month"]];
@@ -158,8 +158,8 @@ export class PlannerView extends ItemView {
     const zoom = row1.createDiv({ cls: "nn-seg" });
     zoom.createSpan({ cls: "nn-seg-label", text: "View" });
     const views: [Zoom, string, boolean][] = [
-      ["matrix", "Triage", this.zoom === "matrix"],
       ["focus", "Focus", this.zoom === "focus"],
+      ["matrix", "Triage", this.zoom === "matrix"],
       [this.planSpan, "Plan", isDated(this.zoom)],
       ["habits", "Habits", this.zoom === "habits"],
     ];
