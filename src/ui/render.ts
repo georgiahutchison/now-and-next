@@ -170,7 +170,7 @@ export function captureBox(plugin: NowAndNextPlugin, parent: HTMLElement, opts: 
   if (opts.lines && opts.lines > 1) {
     // Looks like a new task: an empty checkbox beside the text area, as a prompt.
     host = parent.createDiv({ cls: "nn-capture-row" });
-    const box = host.createEl("input", { type: "checkbox", cls: "task-list-item-checkbox nn-capture-check" });
+    const box = host.createEl("input", { type: "checkbox", cls: "nn-capture-check" });
     box.disabled = true;
     box.tabIndex = -1;
   }

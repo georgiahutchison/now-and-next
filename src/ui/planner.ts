@@ -175,7 +175,7 @@ export class PlannerView extends ItemView {
     const head = col.createDiv({ cls: "nn-day-head" });
     const d = new Date(day + "T00:00:00");
     const name = head.createDiv({ cls: "nn-day-name" });
-    name.createSpan({ text: d.toLocaleDateString(undefined, { weekday: "short" }).toUpperCase() + " " });
+    name.createSpan({ text: d.toLocaleDateString(undefined, { weekday: "short" }) + " " });
     name.createSpan({ cls: "nn-day-num", text: String(d.getDate()) });
     if (!wide) name.addEventListener("click", () => { this.anchor = day; this.zoom = "day"; this.render(); });
 
@@ -425,7 +425,7 @@ export class PlannerView extends ItemView {
       return;
     }
     const [now, next] = queue;
-    wrap.createDiv({ cls: "nn-focus-label", text: "NOW" });
+    wrap.createDiv({ cls: "nn-focus-label", text: "Now" });
     const card = wrap.createDiv({ cls: "nn-focus-card" });
     card.createDiv({ cls: "nn-focus-text", text: now.text });
     const btns = card.createDiv({ cls: "nn-focus-btns" });
@@ -439,7 +439,7 @@ export class PlannerView extends ItemView {
     if (this.plugin.on("firstStep")) b("First step…", () => this.plugin.actions.promptFirstStep(now));
     b("Not now", () => { this.skipped.push(now.key); this.render(); });
     if (next) {
-      wrap.createDiv({ cls: "nn-focus-label", text: "NEXT" });
+      wrap.createDiv({ cls: "nn-focus-label", text: "Next" });
       wrap.createDiv({ cls: "nn-focus-next", text: next.text });
     }
     if (queue.length > 2) wrap.createDiv({ cls: "nn-focus-sub", text: `and ${queue.length - 2} more after that` });
