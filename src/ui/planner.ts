@@ -350,7 +350,7 @@ export class PlannerView extends ItemView {
         if (!bx.urg && hasTag) await this.plugin.actions.urgent(fresh, false);
       });
     }
-    body.createDiv({ cls: "nn-panel-hint", text: "Important: 🔺 or ⏫. Urgent: a deadline within 7 days, or #urgent. Drag between boxes to change either; deadlines are left as they are." });
+    body.createDiv({ cls: "nn-panel-hint", text: "Undated tasks. Important: 🔺 or ⏫. Urgent: a deadline within 7 days, or #urgent. Drag between boxes to change either; drag onto Week or Day later to give it a day." });
   }
 
   // ---------- later (hidden by default) ----------

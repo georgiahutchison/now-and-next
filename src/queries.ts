@@ -51,8 +51,9 @@ export function isImportant(t: VTask) { return t.priority === "highest" || t.pri
 export function isUrgent(t: VTask, today = localToday()) {
   return (!!t.due && t.due <= addDays(today, 7)) || t.tags.some((x) => x.toLowerCase() === "urgent");
 }
+/** Triage holds undated open tasks: the ones still to be sorted before they get a day. */
 export function matrixTasks(tasks: VTask[], f: EnergyFilter): VTask[] {
-  return tasks.filter((t) => isOpen(t) && !isLater(t) && energyOk(t, f));
+  return tasks.filter((t) => isOpen(t) && !planDate(t) && !isLater(t) && energyOk(t, f));
 }
 
 export function priorities(tasks: VTask[], f: EnergyFilter): VTask[] {
