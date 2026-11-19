@@ -182,3 +182,7 @@
 /* tab lists: cards flow in columns, so a tall card leaves no gap beside it */
 .nn-panel-list { columns: 2 260px; column-gap: var(--size-4-3); }
 .nn-panel-list > .nn-card { break-inside: avoid; margin-bottom: var(--size-4-2); }
+
+/* alignment: Obsidian's task checkbox carries its own offsets; reset them here */
+.nn-task .nn-task-line > input.nn-check.task-list-item-checkbox { position: static; top: auto; inset: auto; vertical-align: top; margin: calc((var(--nn-line) - var(--checkbox-size, 15px)) / 2) 0 0 0; }
+.nn-card > .nn-task-line > .nn-actions { top: var(--size-4-2); right: var(--size-4-2); }

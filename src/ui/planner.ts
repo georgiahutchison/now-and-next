@@ -1,5 +1,5 @@
 import { ItemView, Scope, WorkspaceLeaf, setIcon } from "obsidian";
-import { addDays, localToday, mondayOf, formatMinutes } from "../tasks";
+import { addDays, localToday, mondayOf, formatMinutes, tagFor } from "../tasks";
 import { VTask } from "../store";
 import {
   openOn, doneOn, overdue, waiting, priorities, inProject, inbox, estimateTotal, stats, hm, EnergyFilter, sortTasks, SORT_LABELS, SortMode,
@@ -287,7 +287,7 @@ export class PlannerView extends ItemView {
         await this.plugin.actions.schedule(t, null);
         if (projects.includes(key) && key !== store.dailyArea() && t.project !== key) {
           const fresh = this.plugin.store.get(t.key);
-          if (fresh) await this.plugin.actions.tag(fresh, key);
+          if (fresh) await this.plugin.actions.moveToArea(fresh, key);
         }
         if (key === "priorities" && t.priority !== "highest" && t.priority !== "high") {
           const fresh = this.plugin.store.get(t.key);
@@ -310,7 +310,7 @@ export class PlannerView extends ItemView {
     });
     hint.setText(this.tab === "priorities" ? "Undated tasks marked 🔺 or ⏫. Drag one onto a day to plan it."
       : this.tab === "diary" ? "Undated tasks from your daily notes that have no area yet. Drag one onto a day or an area."
-      : `Undated tasks in ${this.plugin.settings.projectsFolder}/${this.tab} or tagged #${this.tab}.`);
+      : `Undated tasks in ${this.plugin.settings.projectsFolder}/${this.tab} or tagged #${tagFor(this.tab)}.`);
     const list = panel.createDiv({ cls: "nn-panel-list" });
     renderList(this.plugin, list, sortTasks(lists[this.tab], this.plugin.settings.sortBy), "Nothing here.", { hideProject: this.tab });
     if (this.tab !== "priorities") captureBox(this.plugin, panel, { placeholder: `+ Add to ${cap(this.tab)}`, tag: this.projectTag() });
@@ -337,10 +337,6 @@ export class PlannerView extends ItemView {
     wrap.createDiv({ cls: "nn-focus-label", text: "NOW" });
     const card = wrap.createDiv({ cls: "nn-focus-card" });
     card.createDiv({ cls: "nn-focus-text", text: now.text });
-    if (now.children.length) {
-      const kids = card.createDiv({ cls: "nn-subtasks" });
-      for (const c of now.children) renderTask(this.plugin, kids, c, { nested: true });
-    }
     const btns = card.createDiv({ cls: "nn-focus-btns" });
     const b = (label: string, fn: () => unknown, cta = false) => {
       const el = btns.createEl("button", { text: label });

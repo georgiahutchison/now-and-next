@@ -1,5 +1,5 @@
 import { App, Events, Notice, TFile, TFolder, debounce, moment, normalizePath } from "obsidian";
-import { FileTask, parseFile, localToday, PRIORITY_RANK } from "./tasks";
+import { FileTask, parseFile, localToday, PRIORITY_RANK, tagFor } from "./tasks";
 import type NowAndNextPlugin from "./main";
 
 export interface VTask extends FileTask {
@@ -143,7 +143,7 @@ function projectOf(t: VTask, projects: string[], folder: string, dailyArea: stri
   let byTag: string | null = null;
   const tags = t.tags.map((x) => x.toLowerCase());
   for (const p of projects) {
-    const lp = p.toLowerCase();
+    const lp = tagFor(p).toLowerCase();
     if (tags.some((x) => x === lp || x.startsWith(lp + "/"))) { byTag = p; break; }
   }
   // Daily notes are where things get captured: an area tag there says where the task belongs.

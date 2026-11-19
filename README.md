@@ -11,7 +11,7 @@ Your tasks stay where they are: ordinary Tasks lines in your notes. Now & Next i
 - **Areas.** Each subfolder of your areas folder gets a tab, along with any task tagged with that folder's name (for example `#health`). Add a folder and a new tab appears.
 - **Priorities.** Undated tasks marked 🔺 or ⏫ wait in their own tab. Set priority from any task's menu.
 - **Today in the sidebar.** A compact Today view sits in the left sidebar next to Files, Search and Bookmarks. The ribbon icon opens the full planner.
-- **Sub-tasks.** Indented tasks show under their parent and can be ticked off on their own.
+- **Details.** Plain bullets indented under a task show in small text under it. Indented checkbox tasks are shown as tasks in their own right.
 - **Stats.** This week's percentage done, the average over the last four weeks, and a streak of weeks with at least one task done.
 
 Ticking a task goes through the Tasks plugin, so done dates and repeating tasks behave exactly as they do in Tasks itself.
@@ -31,7 +31,7 @@ Each support can be switched on or off in **Settings → Now & Next → Supports
 | Visible time | A bar showing how much of your working day is left. |
 | Task timer | Start a countdown on a task. It shows in the status bar and chimes at the end. |
 | Time estimates | Add an estimate such as `[est:: 30m]`. Each day totals its estimates against your working hours, so overload shows before it happens. |
-| First tiny step | A task with no sub-tasks that has sat for a while gets a quiet "first step?" prompt. Your answer becomes a sub-task. |
+| First tiny step | A task with no sub-tasks that has sat for a while gets a "first step?" prompt. Your answer is added as an indented task under it. |
 | Waiting-on status | Mark a task as waiting on someone (`[w]`). It leaves the day's list for a separate "Waiting on others" strip. |
 | Weekly review | A short guided review: what you finished, what to carry over or drop, and up to three priorities for next week. |
 | Calm view switch | Hides dates, emojis, counts and stats, leaving task text and checkboxes. |
@@ -43,7 +43,7 @@ Now & Next reads and writes the Tasks plugin's emoji format. Everything it adds 
 
 ```markdown
 - [ ] Book dentist [est:: 30m] ⏫ ⏳ 2026-11-24 📅 2026-11-28 #health #energy/low
-	- [ ] Find the clinic's number
+	- Ask about weekend appointments
 - [w] Hear back from the landlord
 ```
 
@@ -51,7 +51,7 @@ Now & Next reads and writes the Tasks plugin's emoji format. Everything it adds 
 |---|---|
 | `⏳ date` | The day the task sits on. A task with only a `📅` due date sits on its due date. |
 | `🔺 ⏫ 🔼 🔽 ⏬` | Priority, highest to lowest. |
-| `#<area>` | Puts the task in that area's tab. Tasks inside an area's folder belong there already. |
+| `#<area>` | Puts the task in that area's tab. Tasks inside an area's folder belong there already. Area names with spaces become hyphenated tags (`pro practice` → `#pro-practice`). Dropping a task on an area tab moves it there. |
 | `#energy/low`, `#energy/mid`, `#energy/high` | Energy needed. |
 | `[est:: 30m]` | Time estimate (`30m`, `1h`, `1h30m`). It goes before the emoji fields so Tasks still reads them. |
 | `[w]` | Waiting on someone. |

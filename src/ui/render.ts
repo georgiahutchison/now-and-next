@@ -100,26 +100,13 @@ export function renderTask(plugin: NowAndNextPlugin, parent: HTMLElement, t: VTa
   more.addEventListener("click", (e) => { e.stopPropagation(); a.menu(t, e); });
   row.addEventListener("contextmenu", (e) => { e.preventDefault(); a.menu(t, e); });
 
-  // Details and sub-tasks start at the same left edge as the task text.
-  const kidsShown = t.children.filter((c) => !(planDate(c) && planDate(c) !== planDate(t))); // others show on their own day
-  const body = (t.details.length && !calm) || kidsShown.length ? row.createDiv({ cls: "nn-task-body" }) : null;
+  // Details start at the same left edge as the task text.
+  const body = t.details.length && !calm ? row.createDiv({ cls: "nn-task-body" }) : null;
   if (body && t.details.length && !calm) {
     const ul = body.createEl("ul", { cls: "nn-details" });
     for (const d of t.details) ul.createEl("li", { text: d });
   }
 
-  if (body && kidsShown.length) {
-    // Long sub-task lists fold away so one task can't flood a column.
-    let host: HTMLElement = body;
-    if (kidsShown.length > 4) {
-      const det = body.createEl("details", { cls: "nn-subtasks-fold" });
-      const done = kidsShown.filter((c) => isDone(c)).length;
-      det.createEl("summary", { text: `${kidsShown.length} sub-tasks${done ? ` · ${done} done` : ""}` });
-      host = det;
-    }
-    const kids = host.createDiv({ cls: "nn-subtasks" });
-    for (const c of kidsShown) renderTask(plugin, kids, c, { nested: true, hideProject: opts.hideProject });
-  }
   return row;
 }
 

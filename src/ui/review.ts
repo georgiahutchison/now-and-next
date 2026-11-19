@@ -31,7 +31,7 @@ export function openWeeklyReview(plugin: NowAndNextPlugin) {
     {
       title: "Still open from this week",
       render: (el, rerender) => {
-        const left = store.tasks.filter((t) => isOpen(t) && !t.parent && (inWeek(planDate(t)) || (planDate(t) ?? "9999") < mon));
+        const left = store.tasks.filter((t) => isOpen(t) && (inWeek(planDate(t)) || (planDate(t) ?? "9999") < mon));
         if (!left.length) { el.createEl("p", { text: "Nothing left over." }); return; }
         el.createEl("p", { text: "For each: carry it to next week, put it back in its list, or let it go." });
         const all = el.createEl("button", { text: "All to next Monday" });
@@ -49,7 +49,7 @@ export function openWeeklyReview(plugin: NowAndNextPlugin) {
     {
       title: "Three priorities for next week",
       render: (el, rerender) => {
-        const pool = store.tasks.filter((t) => isOpen(t) && !t.parent && !planDate(t));
+        const pool = store.tasks.filter((t) => isOpen(t) && !planDate(t));
         el.createEl("p", { text: `Pick up to three. They get ⏫ and wait in Priorities. Picked: ${picked.size} of 3.` });
         if (!pool.length) { el.createEl("p", { text: "No undated tasks to choose from." }); return; }
         const list = el.createDiv({ cls: "nn-review-pick" });

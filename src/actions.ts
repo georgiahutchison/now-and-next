@@ -1,6 +1,6 @@
 import { App, Menu, Notice, TFile } from "obsidian";
 import {
-  setDate, setPriority, setEnergy, setEstimate, setStatus, newTaskLine, addDays, localToday, addTag, setText,
+  setDate, setPriority, setEnergy, setEstimate, setStatus, newTaskLine, addDays, localToday, addTag, setText, removeTags,
   Priority, Energy, parseDuration, PRIORITY_EMOJI,
 } from "./tasks";
 import { VTask, editTask, insertAfter, isWaiting, planDate } from "./store";
@@ -64,6 +64,12 @@ export class Actions {
   async estimate(t: VTask, min: number | null) { await editTask(this.app, t, (l) => setEstimate(l, min)); }
 
   async tag(t: VTask, tag: string) { await editTask(this.app, t, (l) => addTag(l, tag)); }
+
+  /** Move a task to an area: drop any other area tags, then add this one. */
+  async moveToArea(t: VTask, area: string) {
+    const others = this.plugin.store.projects().filter((p) => p !== area);
+    await editTask(this.app, t, (l) => addTag(removeTags(l, others), area));
+  }
 
   async waiting(t: VTask, on: boolean) { await editTask(this.app, t, (l) => setStatus(l, on ? "w" : " ")); }
 

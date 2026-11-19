@@ -8,8 +8,9 @@ export function energyOk(t: VTask, f: EnergyFilter) {
 }
 
 /** Top-level tasks only, unless a child has its own date (then it stands alone). */
-function standsAlone(t: VTask) {
-  return !t.parent || planDate(t) !== planDate(t.parent);
+// Sub-tasks are not nested in the planner: every task stands on its own.
+function standsAlone(_t: VTask) {
+  return true;
 }
 
 export function openOn(tasks: VTask[], day: string, f: EnergyFilter): VTask[] {
@@ -32,7 +33,7 @@ export function waiting(tasks: VTask[]): VTask[] {
 }
 
 function undatedOpen(t: VTask) {
-  return isOpen(t) && !planDate(t) && !t.parent;
+  return isOpen(t) && !planDate(t);
 }
 
 export function priorities(tasks: VTask[], f: EnergyFilter): VTask[] {

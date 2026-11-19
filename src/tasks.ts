@@ -204,8 +204,23 @@ export function setText(line: string, text: string): string {
   return tidy(`${m[1]}${m[2]} [${m[3]}] ${[text.trim(), ...kept].join(" ")}${block}`);
 }
 
+/** A folder name as a tag: spaces become hyphens ("pro practice" -> "pro-practice"). */
+export function tagFor(name: string): string {
+  return name.trim().replace(/^#/, "").replace(/\s+/g, "-");
+}
+
+/** Remove the given tags (exact or with a /sub-part), leaving everything else. */
+export function removeTags(line: string, tags: string[]): string {
+  const set = tags.map((x) => tagFor(x).toLowerCase());
+  const out = line.replace(/(^|\s)#([\p{L}\p{N}_/-]+)/gu, (all, sp, tg) => {
+    const l = String(tg).toLowerCase();
+    return set.some((x) => l === x || l.startsWith(x + "/")) ? "" : all;
+  });
+  return tidy(out);
+}
+
 export function addTag(line: string, tag: string): string {
-  const clean = tag.replace(/^#/, "");
+  const clean = tagFor(tag);
   const t = parseTaskLine(line);
   if (t && t.tags.some((x) => x.toLowerCase() === clean.toLowerCase())) return line;
   return tidy(appendToken(line, `#${clean}`));

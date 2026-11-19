@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   parseTaskLine, parseFile, setDate, setPriority, setEnergy, setEstimate, setStatus,
-  addTag, setText, newTaskLine, parseDuration, formatMinutes, addDays, mondayOf, weekday, daysBetween,
+  addTag, setText, tagFor, removeTags, newTaskLine, parseDuration, formatMinutes, addDays, mondayOf, weekday, daysBetween,
 } from "../src/tasks.ts";
 
 test("parses fields, tags, energy, estimate", () => {
@@ -108,4 +108,14 @@ test("setText changes the wording and keeps fields, tags and block id", () => {
     "- [ ] Ring the dentist [est:: 30m] ⏫ 🔁 every week ⏳ 2026-11-20 #health ^abc",
   );
   assert.equal(setText("\t- [x] buy #money milk ✅ 2026-11-19", "buy oat milk"), "\t- [x] buy oat milk #money ✅ 2026-11-19");
+});
+
+test("area names with spaces become hyphenated tags", () => {
+  assert.equal(tagFor("pro practice"), "pro-practice");
+  assert.equal(addTag("- [ ] write CV", "pro practice"), "- [ ] write CV #pro-practice");
+  assert.deepEqual(parseTaskLine("- [ ] write CV #pro-practice")!.tags, ["pro-practice"]);
+});
+
+test("removeTags drops area tags only", () => {
+  assert.equal(removeTags("- [ ] cv #health #energy/low #pro-practice", ["health", "pro practice"]), "- [ ] cv #energy/low");
 });
