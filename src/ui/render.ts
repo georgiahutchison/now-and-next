@@ -163,7 +163,7 @@ export function captureBox(plugin: NowAndNextPlugin, parent: HTMLElement, opts: 
   const input: HTMLInputElement | HTMLTextAreaElement = opts.lines && opts.lines > 1
     ? parent.createEl("textarea", { cls: "nn-capture nn-capture-multi", attr: { rows: String(opts.lines) } })
     : parent.createEl("input", { type: "text", cls: "nn-capture" });
-  input.placeholder = opts.placeholder ?? "Capture a thought… (Enter saves to today's note)";
+  input.placeholder = opts.placeholder ?? "Add task to today's daily note";
   input.addEventListener("keydown", async (e) => {
     if ((e as KeyboardEvent).key !== "Enter") return;
     e.preventDefault();

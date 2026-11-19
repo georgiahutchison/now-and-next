@@ -31,7 +31,7 @@ export default class NowAndNextPlugin extends Plugin {
     this.addCommand({ id: "open-planner", name: "Open planner", callback: () => this.openPlanner({}) });
     this.addCommand({ id: "show-sidebar", name: "Show today in sidebar", callback: () => this.ensureSidebar(true) });
     this.addCommand({ id: "focus-mode", name: "Focus mode", callback: () => { if (this.on("focus")) void this.openPlanner({ focus: true }); } });
-    this.addCommand({ id: "capture", name: "Capture a thought to today's note", callback: () => this.promptCapture() });
+    this.addCommand({ id: "capture", name: "Add task to today's daily note", callback: () => this.promptCapture() });
     this.addCommand({ id: "add-plugin-idea", name: "Add a plugin idea", callback: () => new IdeaModal(this).open() });
     this.addCommand({ id: "stop-timer", name: "Stop timer", callback: () => this.timer.stop() });
     this.addCommand({ id: "show-key", name: "Show the emoji key", callback: () => this.openKey() });
@@ -149,7 +149,7 @@ export default class NowAndNextPlugin extends Plugin {
 
   promptCapture() {
     new TextPromptModal(this.app, {
-      title: "Capture a thought",
+      title: "Add task to today's daily note",
       hint: "Goes into today's daily note as a task. Sort it later.",
       placeholder: "What's on your mind?",
       cta: "Save",

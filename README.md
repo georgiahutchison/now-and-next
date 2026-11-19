@@ -86,7 +86,7 @@ Now & Next is not yet in the community plugin list. To install it by hand:
 
 ## Commands
 
-Open planner · Show today in sidebar · Focus mode · Capture a thought to today's note · Add a plugin idea · Show the emoji key · Stop timer
+Open planner · Show today in sidebar · Focus mode · Add task to today's daily note · Add a plugin idea · Show the emoji key · Stop timer
 
 ## Development
 
