@@ -69,7 +69,8 @@ export function renderTask(plugin: NowAndNextPlugin, parent: HTMLElement, t: VTa
   });
 
   {
-    const chips = line.createSpan({ cls: "nn-chips" });
+    // Chips sit at the end of the text line, not on a line of their own.
+    const chips = text.createSpan({ cls: "nn-chips" });
     if (t.priority !== "none") {
       const c = chips.createSpan({ cls: "nn-chip nn-chip-priority", text: PRIORITY_EMOJI[t.priority as Exclude<typeof t.priority, "none">] });
       c.setAttr("aria-label", `Priority: ${t.priority}`);

@@ -34,11 +34,6 @@ export class TodayView extends ItemView {
 
     const head = root.createDiv({ cls: "nn-side-head" });
     head.createDiv({ cls: "nn-side-title", text: new Date().toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long" }) });
-    const btns = head.createDiv({ cls: "nn-side-btns" });
-    const openBtn = btns.createEl("button", { cls: "nn-text-btn" });
-    setIcon(openBtn.createSpan({ cls: "nn-btn-icon" }), "calendar-range");
-    openBtn.createSpan({ text: "Open planner" });
-    openBtn.addEventListener("click", () => void this.plugin.openPlanner({}));
 
     if (this.plugin.on("capture")) captureBox(this.plugin, root, { lines: 2 });
 
@@ -96,5 +91,12 @@ export class TodayView extends ItemView {
       d.createEl("summary", { text: `Done today (${done.length})` });
       renderList(this.plugin, d, done, "");
     }
+
+    // One way into the full planner, at the base of the panel.
+    const foot = root.createDiv({ cls: "nn-side-foot" });
+    const openBtn = foot.createEl("button", { cls: "nn-text-btn" });
+    setIcon(openBtn.createSpan({ cls: "nn-btn-icon" }), "calendar-range");
+    openBtn.createSpan({ text: "Open planner" });
+    openBtn.addEventListener("click", () => void this.plugin.openPlanner({}));
   }
 }

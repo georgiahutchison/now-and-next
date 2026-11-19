@@ -245,3 +245,11 @@
 }
 
 .nn-filter-note { display: flex; align-items: center; flex-wrap: wrap; gap: var(--size-4-2); font-size: var(--font-ui-small); color: var(--text-muted); }
+
+/* chips inline after the wording */
+.nn-task-text .nn-chips { display: inline-flex; flex-wrap: wrap; gap: 4px; margin-left: var(--size-4-2); vertical-align: 1px; grid-column: auto; grid-row: auto; }
+.nn-task-text .nn-chips:empty { display: none; }
+.nn-task-text .nn-chip { line-height: 1.5; }
+
+.nn-side-foot { margin-top: auto; padding-top: var(--size-4-4); border-top: 1px solid var(--background-modifier-border); }
+.nn-side { min-height: 100%; }
