@@ -27,8 +27,14 @@ export function isWaiting(t: VTask) { return t.status === WAITING; }
 /** Finds the day for a task tied to a calendar event; set by the plugin once calendars load. */
 let eventDayFor: (t: VTask) => string | undefined = () => undefined;
 export function setEventResolver(fn: (t: VTask) => string | undefined) { eventDayFor = fn; }
-/** The day a task sits on: its scheduled date, else the day from its event link, else its due date. */
-export function planDate(t: VTask): string | undefined { return t.scheduled ?? (t.eventLink ? eventDayFor(t) : undefined) ?? t.due; }
+/**
+ * The day a task sits on. A repeating task tied to an event follows that month's event (its own date is the anchor).
+ * Otherwise its scheduled date, else the day from its event link, else its due date.
+ */
+export function planDate(t: VTask): string | undefined {
+  if (t.eventLink && t.recurrence) return eventDayFor(t) ?? t.scheduled ?? t.due;
+  return t.scheduled ?? (t.eventLink ? eventDayFor(t) : undefined) ?? t.due;
+}
 export function byPriority(a: VTask, b: VTask) {
   return PRIORITY_RANK[a.priority] - PRIORITY_RANK[b.priority] || a.path.localeCompare(b.path) || a.line - b.line;
 }

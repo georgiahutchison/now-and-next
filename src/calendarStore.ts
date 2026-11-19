@@ -61,14 +61,14 @@ export class CalendarStore extends Events {
 
   private linkDays = new Map<string, string[]>();
 
-  /** Days (from yesterday, about a year ahead) on which an event with this title happens. Exact title first, else a title containing it. */
+  /** Days (from two weeks ago, about a year ahead) on which an event with this title happens. Exact title first, else a title containing it. */
   eventDays(title: string): string[] {
     const key = title.trim().toLowerCase();
     const hit = this.linkDays.get(key);
     if (hit) return hit;
     const exact: string[] = [];
     const partial: string[] = [];
-    const start = nextDay(localDay(), -1);
+    const start = nextDay(localDay(), -15);
     for (let i = 0, d = start; i < 400; i++, d = nextDay(d)) {
       const evs = this.eventsOn(d);
       if (evs.some((e) => e.title.trim().toLowerCase() === key)) exact.push(d);

@@ -122,17 +122,29 @@ export function lutealStartsIn(c: CycleDay): number | null {
   return c.day < firstLuteal ? firstLuteal - c.day : null;
 }
 
+const dayGap = (a: string, b: string) =>
+  Math.abs(Math.round((new Date(a + "T00:00:00").getTime() - new Date(b + "T00:00:00").getTime()) / 86_400_000));
+
 /**
- * The day a task tied to an event sits on: the day before the next occurrence (never earlier than today),
- * or the day after the latest occurrence from yesterday on. `eventDays` are the event's days, sorted.
+ * The day a task tied to an event sits on: the day before, the day of, or the day after an occurrence.
+ * With an `anchor` (a repeating task's own date) the occurrence nearest the anchor, within 10 days, is used,
+ * so each month's copy follows that month's event. Without one: before and on use the next occurrence
+ * (never earlier than today); after uses the latest occurrence from yesterday on. `eventDays` are sorted.
  */
-export function linkedDay(kind: "before" | "after", eventDays: string[], today: string): string | undefined {
-  if (kind === "before") {
-    const d = eventDays.find((x) => x >= today);
+export function linkedDay(kind: "before" | "on" | "after", eventDays: string[], today: string, anchor?: string): string | undefined {
+  let d: string | undefined;
+  if (anchor) {
+    const near = eventDays.filter((x) => dayGap(x, anchor) <= 10).sort((a, b) => dayGap(a, anchor) - dayGap(b, anchor));
+    d = near[0];
     if (!d) return undefined;
-    const prev = nextDay(d, -1);
-    return prev < today ? today : prev;
+    return kind === "before" ? nextDay(d, -1) : kind === "after" ? nextDay(d) : d;
   }
-  const d = eventDays.find((x) => x >= nextDay(today, -1));
-  return d ? nextDay(d) : undefined;
+  if (kind === "after") {
+    d = eventDays.find((x) => x >= nextDay(today, -1));
+    return d ? nextDay(d) : undefined;
+  }
+  d = eventDays.find((x) => x >= today);
+  if (!d) return undefined;
+  const day = kind === "before" ? nextDay(d, -1) : d;
+  return day < today ? today : day;
 }

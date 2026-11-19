@@ -25,7 +25,9 @@ export default class NowAndNextPlugin extends Plugin {
     this.actions = new Actions(this);
     this.timer = new Timer(this);
     this.calendars = new CalendarStore(this);
-    setEventResolver((t) => t.eventLink ? linkedDay(t.eventLink.kind, this.calendars.eventDays(t.eventLink.title), localToday()) : undefined);
+    setEventResolver((t) => t.eventLink
+      ? linkedDay(t.eventLink.kind, this.calendars.eventDays(t.eventLink.title), localToday(), t.recurrence ? (t.scheduled ?? t.due) : undefined)
+      : undefined);
 
     this.registerView(PLANNER_VIEW, (leaf) => new PlannerView(leaf, this));
     this.registerView(TODAY_VIEW, (leaf) => new TodayView(leaf, this));

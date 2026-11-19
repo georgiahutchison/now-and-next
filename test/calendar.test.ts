@@ -170,3 +170,12 @@ test("event links: the day before the next occurrence, the day after the latest 
   assert.equal(linkedDay("after", days, "2026-11-21"), "2026-11-27");
   assert.equal(linkedDay("before", days, "2027-01-01"), undefined);
 });
+
+test("event links: same day, and repeating copies anchored to the nearest occurrence", () => {
+  const bees = ["2026-11-15", "2026-12-14", "2027-01-15"]; // December's pay day moved to the 14th
+  assert.equal(linkedDay("on", bees, "2026-11-19"), "2026-12-14");
+  assert.equal(linkedDay("on", bees, "2026-11-19", "2026-12-15"), "2026-12-14"); // the 15th copy follows the moved pay day
+  assert.equal(linkedDay("on", bees, "2026-11-19", "2027-01-15"), "2027-01-15");
+  assert.equal(linkedDay("before", bees, "2026-11-19", "2026-12-15"), "2026-12-13");
+  assert.equal(linkedDay("on", bees, "2026-11-19", "2027-03-15"), undefined);     // no event near the anchor
+});

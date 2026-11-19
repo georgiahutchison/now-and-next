@@ -1,7 +1,7 @@
 import { App, Menu, Notice, TFile } from "obsidian";
 import {
   setDate, setPriority, setEnergy, setEstimate, setRecurrence, setEventLink, setStatus, newTaskLine, addDays, localToday, addTag, setText, removeTags,
-  Priority, Energy, parseDuration, PRIORITY_EMOJI, ENERGY_EMOJI,
+  Priority, Energy, EventKind, parseDuration, PRIORITY_EMOJI, ENERGY_EMOJI,
 } from "./tasks";
 import { VTask, editTask, insertAfter, isWaiting, planDate } from "./store";
 import { isLater } from "./queries";
@@ -91,13 +91,14 @@ export class Actions {
   async energy(t: VTask, e: Energy | null) { await editTask(this.app, t, (l) => setEnergy(l, e)); }
   async estimate(t: VTask, min: number | null) { await editTask(this.app, t, (l) => setEstimate(l, min)); }
   /** Tie the task to a calendar event; its own scheduled date is cleared so the event decides the day. */
-  async eventLink(t: VTask, link: { kind: "before" | "after"; title: string } | null) {
-    await editTask(this.app, t, (l) => setEventLink(link ? setDate(l, "scheduled", null) : l, link));
+  async eventLink(t: VTask, link: { kind: EventKind; title: string } | null) {
+    // A repeating task keeps its own date: it anchors each copy to that month's event.
+    await editTask(this.app, t, (l) => setEventLink(link && !t.recurrence ? setDate(l, "scheduled", null) : l, link));
   }
 
-  promptEventLink(t: VTask, kind: "before" | "after") {
+  promptEventLink(t: VTask, kind: EventKind) {
     new TextPromptModal(this.app, {
-      title: kind === "before" ? "Do this the day before an event" : "Do this the day after an event",
+      title: { before: "Do this the day before an event", on: "Do this on the day of an event", after: "Do this the day after an event" }[kind],
       hint: "The event's title as it appears in your calendar. The task follows the event if it moves.",
       placeholder: "Supervision meeting",
       value: t.eventLink?.title ?? "",
@@ -219,6 +220,7 @@ export class Actions {
     m.addItem((i) => i.setTitle(inLater ? "Back from Later" : "Move to Later").setIcon("archive").onClick(() => (inLater ? this.fromLater(t) : this.toLater(t))));
     m.addItem((i) => i.setTitle("Defer to next month").setIcon("calendar-arrow-up").onClick(() => this.deferToNextMonth(t)));
     m.addItem((i) => i.setTitle("Day before an event…").setIcon("calendar-minus").setChecked(t.eventLink?.kind === "before").onClick(() => this.promptEventLink(t, "before")));
+    m.addItem((i) => i.setTitle("Day of an event…").setIcon("calendar-check").setChecked(t.eventLink?.kind === "on").onClick(() => this.promptEventLink(t, "on")));
     m.addItem((i) => i.setTitle("Day after an event…").setIcon("calendar-plus").setChecked(t.eventLink?.kind === "after").onClick(() => this.promptEventLink(t, "after")));
     if (t.eventLink) m.addItem((i) => i.setTitle("Remove event link").setIcon("unlink").onClick(() => this.eventLink(t, null)));
     if (t.recurrence && !planDate(t)) m.addItem((i) => i.setTitle("Start routine…").setIcon("repeat").onClick(() => this.promptStart(t)));

@@ -34,8 +34,8 @@ const FIELD_EMOJI = ["📅", "⏳", "🛫", "➕", "✅", "❌", "🔺", "⏫", 
 const TASK_RE = /^(\s*)([-*+]|\d+[.)]) \[(.)\] ?(.*)$/u;
 const TAG_RE = /(^|\s)#([\p{L}\p{N}_/-]+)/gu;
 const EST_RE = /\[est::\s*([^\]]*)\]/u;
-/** [before:: Event] or [after:: Event]: the task sits the day before or after that calendar event. */
-const EVENT_RE = /\[(before|after)::\s*([^\]]+?)\s*\]/u;
+/** [before:: Event], [on:: Event] or [after:: Event]: the task sits the day before, the day of, or the day after that calendar event. */
+const EVENT_RE = /\[(before|after|on)::\s*([^\]]+?)\s*\]/u;
 const BLOCK_ID_RE = /\s\^[A-Za-z0-9-]+\s*$/u;
 
 export interface ParsedTask {
@@ -56,10 +56,12 @@ export interface ParsedTask {
   estimateMin?: number;
   energy?: Energy;
   /** Calendar event this task is tied to: the day before or the day after it. */
-  eventLink?: { kind: "before" | "after"; title: string };
+  eventLink?: { kind: EventKind; title: string };
   /** First [[wikilink]] in the task, if any (the target, without alias or heading). */
   link?: string;
 }
+
+export type EventKind = "before" | "on" | "after";
 
 export function isTaskLine(line: string): boolean {
   return TASK_RE.test(line);
@@ -82,7 +84,7 @@ export function parseTaskLine(line: string): ParsedTask | null {
   if (rm) t.recurrence = rm[1].trim();
 
   const ev = EVENT_RE.exec(body);
-  if (ev) t.eventLink = { kind: ev[1] as "before" | "after", title: ev[2] };
+  if (ev) t.eventLink = { kind: ev[1] as EventKind, title: ev[2] };
 
   const em = EST_RE.exec(body);
   if (em) {
@@ -199,8 +201,8 @@ export function setRecurrence(line: string, rule: string | null): string {
 }
 
 /** Tie a task to a calendar event (the day before or after it), or remove the tie. */
-export function setEventLink(line: string, link: { kind: "before" | "after"; title: string } | null): string {
-  let out = line.replace(/ ?\[(?:before|after)::[^\]]*\]/gu, "");
+export function setEventLink(line: string, link: { kind: EventKind; title: string } | null): string {
+  let out = line.replace(/ ?\[(?:before|after|on)::[^\]]*\]/gu, "");
   if (link && link.title.trim()) out = insertBefore(out, FIELD_EMOJI, `[${link.kind}:: ${link.title.trim()}]`);
   return tidy(out);
 }
@@ -222,7 +224,7 @@ function insertBefore(line: string, emojis: string[], token: string): string {
 }
 
 // Everything in a task line that is not its wording: kept in order when the wording changes.
-const KEEP_RE = /\[est::[^\]]*\]|\[(?:before|after)::[^\]]*\]|[🔺⏫🔼🔽⏬]\uFE0F?|(?:📅|⏳|🛫|➕|✅|❌)\uFE0F? *\d{4}-\d{2}-\d{2}|🔁\uFE0F? *[^📅⏳🛫➕✅❌🔺⏫🔼🔽⏬🆔⛔🏁#^]+|(?:🆔|⛔|🏁)\uFE0F? *\S+|(?:^|\s)#[\p{L}\p{N}_/-]+/gu;
+const KEEP_RE = /\[est::[^\]]*\]|\[(?:before|after|on)::[^\]]*\]|[🔺⏫🔼🔽⏬]\uFE0F?|(?:📅|⏳|🛫|➕|✅|❌)\uFE0F? *\d{4}-\d{2}-\d{2}|🔁\uFE0F? *[^📅⏳🛫➕✅❌🔺⏫🔼🔽⏬🆔⛔🏁#^]+|(?:🆔|⛔|🏁)\uFE0F? *\S+|(?:^|\s)#[\p{L}\p{N}_/-]+/gu;
 
 /** Replace a task's wording, keeping its status, fields, tags and block id. */
 export function setText(line: string, text: string): string {
