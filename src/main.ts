@@ -62,6 +62,8 @@ export default class NowAndNextPlugin extends Plugin {
     this.settings = Object.assign({}, DEFAULT_SETTINGS, data);
     this.settings.supports = Object.assign({}, DEFAULT_SETTINGS.supports, data.supports ?? {});
     this.settings.order = Object.assign({}, data.order ?? {});
+    // The energy filter is for right now: it starts at "Any" each time so it can't hide tasks unnoticed.
+    this.settings.energyFilter = "all";
   }
 
   /** Is this support switched on in settings? */

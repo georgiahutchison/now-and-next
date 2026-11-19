@@ -74,6 +74,12 @@ export class PlannerView extends ItemView {
     const today = localToday();
 
     const top = root.createDiv({ cls: "nn-top" });
+    if (this.filter !== "all") {
+      const f = top.createDiv({ cls: "nn-filter-note" });
+      f.createSpan({ text: `Showing ${({ low: "low", mid: "medium", high: "high" } as const)[this.filter]}-energy tasks only. ` });
+      const b = f.createEl("button", { text: "Show all" });
+      b.addEventListener("click", async () => { this.plugin.settings.energyFilter = "all"; await this.plugin.saveSettings(); });
+    }
     if (this.plugin.on("carryOver")) carryOverTray(this.plugin, top, overdue(tasks, today, this.filter));
     const w = waiting(tasks);
     if (w.length) {

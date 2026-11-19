@@ -42,6 +42,13 @@ export class TodayView extends ItemView {
 
     if (this.plugin.on("capture")) captureBox(this.plugin, root, { lines: 2 });
 
+    if (f !== "all") {
+      const n = root.createDiv({ cls: "nn-filter-note" });
+      n.createSpan({ text: `Showing ${({ low: "low", mid: "medium", high: "high" } as const)[f]}-energy tasks only. ` });
+      const b = n.createEl("button", { text: "Show all" });
+      b.addEventListener("click", async () => { this.plugin.settings.energyFilter = "all"; await this.plugin.saveSettings(); });
+    }
+
     const late = overdue(tasks, today, f);
     if (late.length && this.plugin.on("carryOver")) {
       const c = root.createDiv({ cls: "nn-side-note" });
