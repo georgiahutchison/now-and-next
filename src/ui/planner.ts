@@ -105,24 +105,10 @@ export class PlannerView extends ItemView {
     const s = this.plugin.settings;
     const h = root.createDiv({ cls: "nn-header" });
 
-    // Row 1 never changes between views: the switcher, and Key / Reload as icons.
-    const row1 = h.createDiv({ cls: "nn-header-row" });
-    const zoom = row1.createDiv({ cls: "nn-seg" });
-    zoom.createSpan({ cls: "nn-seg-label", text: "View" });
-    for (const [z, label] of VIEWS) {
-      if (z === "focus" && !this.plugin.on("focus")) continue;
-      const b = zoom.createEl("button", { text: label });
-      if (z === this.zoom) b.addClass("is-active");
-      b.addEventListener("click", () => this.setView(z));
-    }
-    const tools = row1.createDiv({ cls: "nn-tools" });
-    iconBtn(tools, "info", "Key", () => this.plugin.openKey());
-    iconBtn(tools, "refresh-cw", "Reload", () => void this.plugin.reloadApp());
-
-    // Row 2 keeps its height in every view; the date part is blank where a view has no date.
-    const row2 = h.createDiv({ cls: "nn-header-row" });
+    // Left: the date and its arrows (blank where a view has no date).
+    const left = h.createDiv({ cls: "nn-header-left" });
     const dated = this.zoom === "day" || this.zoom === "week" || this.zoom === "month";
-    const nav = row2.createDiv({ cls: "nn-nav" });
+    const nav = left.createDiv({ cls: "nn-nav" });
     if (dated) {
       const step = this.zoom === "day" ? 1 : this.zoom === "week" ? 7 : 0;
       const move = (dir: number) => {
@@ -136,7 +122,23 @@ export class PlannerView extends ItemView {
     }
     nav.createDiv({ cls: "nn-title", text: this.title() });
 
+    // Right: View over Energy, stacked; Key and Reload beside View.
+    const right = h.createDiv({ cls: "nn-header-right" });
+    const row1 = right.createDiv({ cls: "nn-header-row" });
+    const zoom = row1.createDiv({ cls: "nn-seg" });
+    zoom.createSpan({ cls: "nn-seg-label", text: "View" });
+    for (const [z, label] of VIEWS) {
+      if (z === "focus" && !this.plugin.on("focus")) continue;
+      const b = zoom.createEl("button", { text: label });
+      if (z === this.zoom) b.addClass("is-active");
+      b.addEventListener("click", () => this.setView(z));
+    }
+    const tools = row1.createDiv({ cls: "nn-tools" });
+    iconBtn(tools, "info", "Key", () => this.plugin.openKey());
+    iconBtn(tools, "refresh-cw", "Reload", () => void this.plugin.reloadApp());
+
     if (this.plugin.on("energy")) {
+      const row2 = right.createDiv({ cls: "nn-header-row" });
       const energy = row2.createDiv({ cls: "nn-seg nn-energy-filter" });
       energy.createSpan({ cls: "nn-seg-label", text: "Energy" });
       for (const [k, label] of [["all", "Any"], ["low", "Low"], ["mid", "Med"], ["high", "High"]] as const) {
@@ -144,6 +146,7 @@ export class PlannerView extends ItemView {
         if (s.energyFilter === k) b.addClass("is-active");
         b.addEventListener("click", async () => { s.energyFilter = k; await this.plugin.saveSettings(); });
       }
+      row2.createDiv({ cls: "nn-tools-spacer" });
     }
   }
 
