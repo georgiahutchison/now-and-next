@@ -299,3 +299,18 @@
 
 /* no focus ring on cards while pressing or dragging */
 .nn-root .nn-task:focus, .nn-root .nn-task:focus-visible { outline: none; }
+
+/* ---- sidebar: even rhythm ---- */
+.nn-root.nn-side { padding: 40px var(--size-4-5) var(--size-4-4); gap: 24px; }
+.nn-root.nn-side .nn-side-head { gap: 0; }
+.nn-root.nn-side .nn-side-h { margin: 0 0 12px; }
+.nn-root.nn-side .nn-day-list { gap: 8px; }
+.nn-root.nn-side .nn-side-section { display: flex; flex-direction: column; }
+
+/* ---- capture card: checkbox, caret and text share one line ---- */
+.nn-root .nn-capture-row { --nn-line: 1.5em; font-size: var(--font-ui-medium); align-items: flex-start; padding: 10px 12px; }
+.nn-root .nn-capture-row .nn-capture-check { font-size: inherit; margin: 0; margin-top: calc((var(--nn-line) - var(--checkbox-size, 15px)) / 2); }
+.nn-root .nn-capture-row textarea.nn-capture-multi {
+  font-size: inherit; line-height: var(--nn-line); margin: 0; padding: 0; text-indent: 0;
+  border: none; background: transparent; box-shadow: none; resize: none; height: auto; min-height: var(--nn-line);
+}
