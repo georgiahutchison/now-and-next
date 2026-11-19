@@ -45,7 +45,8 @@
 .nn-day-head { display: flex; flex-direction: column; gap: 2px; }
 .nn-day-name { font-size: var(--font-ui-small); font-weight: var(--font-semibold); color: var(--text-muted); cursor: var(--cursor); }
 .nn-day.is-today .nn-day-name { color: var(--text-accent); }
-.nn-day-num { font-size: var(--font-ui-medium); color: var(--text-normal); }
+.nn-day-num { font-size: inherit; color: inherit; }
+.nn-day.is-today .nn-day-num { color: var(--text-normal); }
 .nn-day-meta { display: flex; flex-wrap: wrap; gap: var(--size-4-2); align-items: center; font-size: var(--font-ui-smaller); color: var(--text-faint); }
 .nn-est.is-over { color: var(--text-warning); }
 .nn-over-btn { font-size: var(--font-ui-smaller); height: auto; padding: 1px var(--size-4-2); color: var(--text-warning); }
