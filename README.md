@@ -11,7 +11,6 @@ Your tasks stay where they are: ordinary Tasks lines in your notes. Now & Next i
 - **Later.** A panel at the base, closed by default, for tasks tagged `#later` or deferred to a later month (a future `🛫` start date). They stay out of the area tabs until then.
 - **Plan by dragging.** Drag a task onto a day to schedule it (it gets a `⏳` scheduled date). Drag it onto a tab to take it off its day again.
 - **Areas.** Each subfolder of your areas folder gets a tab, along with any task tagged with that folder's name (for example `#health`). Add a folder and a new tab appears.
-- **Priorities.** Undated tasks marked 🔺 or ⏫ wait in their own tab. Set priority from any task's menu.
 - **Today in the sidebar.** A compact Today view sits in the left sidebar next to Files, Search and Bookmarks. The ribbon icon opens the full planner.
 - **Details.** Plain bullets indented under a task show in small text under it. Indented checkbox tasks are shown as tasks in their own right.
 

@@ -56,10 +56,6 @@ export function matrixTasks(tasks: VTask[], f: EnergyFilter): VTask[] {
   return tasks.filter((t) => isOpen(t) && !planDate(t) && !isLater(t) && energyOk(t, f));
 }
 
-export function priorities(tasks: VTask[], f: EnergyFilter): VTask[] {
-  return tasks.filter((t) => undatedOpen(t) && (t.priority === "highest" || t.priority === "high") && energyOk(t, f)).sort(byPriority);
-}
-
 export function inProject(tasks: VTask[], project: string, f: EnergyFilter): VTask[] {
   return tasks.filter((t) => undatedOpen(t) && t.project === project && energyOk(t, f)).sort(byPriority);
 }

@@ -2,7 +2,7 @@ import { ItemView, Scope, WorkspaceLeaf, setIcon } from "obsidian";
 import { addDays, localToday, mondayOf, formatMinutes, tagFor } from "../tasks";
 import { VTask } from "../store";
 import {
-  openOn, doneOn, overdue, waiting, priorities, inProject, inbox, estimateTotal, hm, EnergyFilter, sortTasks, SORT_LABELS, SortMode,
+  openOn, doneOn, overdue, waiting, inProject, inbox, estimateTotal, hm, EnergyFilter, sortTasks, SORT_LABELS, SortMode,
   later, isImportant, isUrgent, matrixTasks,
 } from "../queries";
 import { renderList, dropZone, captureBox, carryOverTray } from "./render";
@@ -246,7 +246,7 @@ export class PlannerView extends ItemView {
     } while (cur.slice(0, 7) === month);
   }
 
-  // ---------- bottom tabs: priorities, inbox, projects ----------
+  // ---------- bottom tabs: diary and areas ----------
 
   private projectTag(): string | undefined {
     // No tag needed when the area is the daily notes folder itself: new tasks land there anyway.
@@ -263,17 +263,16 @@ export class PlannerView extends ItemView {
     const panel = root.createDiv({ cls: "nn-panel" });
     const bar = panel.createDiv({ cls: "nn-tabs" });
     const lists: Record<string, VTask[]> = {
-      priorities: priorities(tasks, this.filter),
       diary: inbox(tasks, (t) => store.isInDailyFolder(t), this.filter),
     };
     for (const p of projects) lists[p] = inProject(tasks, p, this.filter);
     // When the daily notes folder is itself an area, its area tab replaces the separate Diary tab.
     const dailyIsArea = store.dailyArea() !== null;
     if (dailyIsArea && this.tab === "diary") this.tab = store.dailyArea()!;
-    // Diary comes first, then Priorities, then the other areas.
+    // Diary comes first, then the other areas.
     const dailyTab: [string, string] = dailyIsArea ? [store.dailyArea()!, cap(store.dailyArea()!)] : ["diary", "Diary"];
     const others = projects.filter((p) => p !== store.dailyArea()).map((p) => [p, cap(p)] as [string, string]);
-    const names: [string, string][] = [dailyTab, ["priorities", "Priorities"], ...others];
+    const names: [string, string][] = [dailyTab, ...others];
     if (!names.some(([k]) => k === this.tab)) this.tab = dailyTab[0];
     bar.createSpan({ cls: "nn-tabs-label", text: "Areas" });
     for (const [key, label] of names) {
@@ -288,10 +287,6 @@ export class PlannerView extends ItemView {
         if (projects.includes(key) && key !== store.dailyArea() && t.project !== key) {
           const fresh = this.plugin.store.get(t.key);
           if (fresh) await this.plugin.actions.moveToArea(fresh, key);
-        }
-        if (key === "priorities" && t.priority !== "highest" && t.priority !== "high") {
-          const fresh = this.plugin.store.get(t.key);
-          if (fresh) await this.plugin.actions.priority(fresh, "high");
         }
       });
     }
@@ -308,13 +303,12 @@ export class PlannerView extends ItemView {
       this.plugin.settings.sortBy = sel.value as SortMode;
       await this.plugin.saveSettings();
     });
-    hint.setText(this.tab === "priorities" ? "Undated tasks marked 🔺 or ⏫. Drag one onto a day to plan it."
-      : this.tab === "diary" ? "Undated tasks from your daily notes that have no area yet. Drag one onto a day or an area."
+    hint.setText(this.tab === "diary" ? "Undated tasks from your daily notes that have no area yet. Drag one onto a day or an area."
       : `Undated tasks in ${this.plugin.settings.projectsFolder}/${this.tab} or tagged #${tagFor(this.tab)}.`);
     const list = panel.createDiv({ cls: "nn-panel-list" });
     renderList(this.plugin, list, sortTasks(lists[this.tab], this.plugin.settings.sortBy), "Nothing here.", { hideProject: this.tab });
     // The one capture box in the planner sits at the base of the tab list.
-    if (this.tab !== "priorities") {
+    {
       const isDiary = this.tab === "diary" || this.tab === this.plugin.store.dailyArea();
       captureBox(this.plugin, panel, isDiary
         ? { lines: 2 }
