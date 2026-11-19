@@ -1,14 +1,14 @@
 import { ItemView, Scope, WorkspaceLeaf, setIcon } from "obsidian";
-import { addDays, localToday, mondayOf, formatMinutes, tagFor, ENERGY_EMOJI, PRIORITY_RANK } from "../tasks";
+import { addDays, daysBetween, localToday, mondayOf, formatMinutes, tagFor, ENERGY_EMOJI, PRIORITY_RANK } from "../tasks";
 import { habits, monthSpan } from "../habits";
-import { Goal, goals, numbers, byArea, isMilestone, isOpenStatus, daysLeftLabel, GoalNumbers } from "../goals";
+import { Goal, goals, numbers, byArea, isMilestone, isOpenStatus, daysLeftLabel, GoalNumbers, span, dayRange } from "../goals";
 import { VTask, planDate } from "../store";
 import { applyOrder, placeBefore, moveExtrasOn } from "../order";
 import {
   openOn, doneOn, overdue, waiting, inProject, inbox, estimateTotal, hm, EnergyFilter, sortTasks, SORT_LABELS, SortMode,
   later, routines, isImportant, isUrgent, matrixTasks,
 } from "../queries";
-import { renderList, renderTask, dropZone, captureBox, carryOverTray, checkInCard, phasePrompt, shortDate, AREA_DRAG_TYPE, ENERGY_DRAG_TYPE } from "./render";
+import { renderList, renderTask, dropZone, captureBox, carryOverTray, checkInCard, phasePrompt, shortDate, DRAG_TYPE, AREA_DRAG_TYPE, ENERGY_DRAG_TYPE } from "./render";
 import type NowAndNextPlugin from "../main";
 import type { Zoom } from "../settings";
 
@@ -29,6 +29,10 @@ export class PlannerView extends ItemView {
   private triageArea = "";
   /** The span Plan returns to after Triage or Focus. */
   private planSpan: Zoom = "week";
+  /** First day shown in the Gantt (a Monday); arrows move it a week. */
+  private ganttFrom = mondayOf(localToday());
+  /** Milestones whose task rows are unfolded in the Gantt. */
+  private ganttOpen = new Set<string>();
 
   constructor(leaf: WorkspaceLeaf, private plugin: NowAndNextPlugin) {
     super(leaf);
@@ -537,6 +541,7 @@ export class PlannerView extends ItemView {
     }
     const open = all.filter((g) => !this.nums(g).finished);
     const finished = all.filter((g) => this.nums(g).finished);
+    if (open.length) this.renderGantt(body, open);
     const grid = body.createDiv({ cls: "nn-goal-grid" });
     for (const g of open) this.goalCard(grid, g);
     if (finished.length) {
@@ -561,6 +566,104 @@ export class PlannerView extends ItemView {
       if (det.open && !inner.childElementCount) renderList(this.plugin, inner, sortTasks(loose, this.plugin.settings.sortBy), "Nothing here.", { showDate: true });
     });
     dropZone(det, this.plugin, (t) => this.plugin.actions.fromMilestone(t));
+  }
+
+  /**
+   * Timeline: one row per milestone, its bar from the earliest task day to its 📅 date (◆), filled by done of total,
+   * with a dot on each task's day (filled once done). Click a name to unfold a row per task.
+   */
+  private renderGantt(body: HTMLElement, list: Goal<VTask>[]) {
+    const today = localToday();
+    const spans = new Map(list.map((g) => [g, span(g, today, (t) => planDate(t))]));
+    const from = this.ganttFrom;
+    // At least four weeks; on to the latest end, to whole weeks, at most 26 weeks.
+    const latest = [...spans.values()].reduce((m, x) => (x.end > m ? x.end : m), addDays(from, 27));
+    const weeks = Math.min(26, Math.ceil((daysBetween(from, latest) + 1) / 7));
+    const days = dayRange(from, addDays(from, weeks * 7 - 1));
+    const last = days[days.length - 1];
+    const col = (d: string) => 2 + daysBetween(from, d);
+    const cols = `minmax(9em, 14em) repeat(${days.length}, 20px)`;
+
+    const wrap = body.createDiv({ cls: "nn-gantt-wrap" });
+    const nav = wrap.createDiv({ cls: "nn-nav nn-gantt-nav" });
+    iconBtn(nav, "chevron-left", "Earlier", () => { this.ganttFrom = addDays(this.ganttFrom, -7); this.render(); });
+    nav.createEl("button", { text: "Today", cls: "nn-today-btn" }).addEventListener("click", () => { this.ganttFrom = mondayOf(today); this.render(); });
+    iconBtn(nav, "chevron-right", "Later", () => { this.ganttFrom = addDays(this.ganttFrom, 7); this.render(); });
+    nav.createSpan({ cls: "nn-panel-hint", text: "Bars run from the first task's day to the milestone's date. A dot is a task: filled once done. Click a name for its tasks." });
+
+    const g = wrap.createDiv({ cls: "nn-gantt" });
+    const row = (cls: string) => { const r = g.createDiv({ cls: `nn-gantt-row ${cls}` }); r.style.gridTemplateColumns = cols; return r; };
+    const place = (r: HTMLElement, cls: string, a: string, b = a, text = "") => {
+      const el = r.createDiv({ cls, text });
+      el.style.gridColumn = `${col(a)} / ${col(b) + 1}`;
+      el.style.gridRow = "1";
+      return el;
+    };
+    const backdrop = (r: HTMLElement) => {
+      days.forEach((d, i) => { if (i > 0 && i % 7 === 0) place(r, "nn-gantt-week", d); });
+      if (today >= from && today <= last) place(r, "nn-gantt-today", today);
+    };
+    const inView = (d: string) => d >= from && d <= last;
+
+    // Header: the date of each Monday, and the day numbers.
+    const head = row("nn-gantt-head");
+    head.createDiv({ cls: "nn-gantt-label" }).style.gridRow = "1";
+    for (let i = 0; i < days.length; i += 7) {
+      place(head, "nn-gantt-weeklabel", days[i], days[Math.min(i + 6, days.length - 1)],
+        new Date(days[i] + "T00:00:00").toLocaleDateString(undefined, { day: "numeric", month: "short" }));
+    }
+
+    for (const goal of list) {
+      const sp = spans.get(goal)!;
+      const n = this.nums(goal);
+      const key = goal.task.key;
+      const r = row("nn-gantt-goal");
+      r.setAttr("aria-label", goal.task.text);
+      const label = r.createDiv({ cls: "nn-gantt-label" });
+      label.style.gridRow = "1";
+      const open = this.ganttOpen.has(key);
+      const name = label.createSpan({ cls: "nn-goal-name", text: `${open ? "▾" : "▸"} ◆ ${goal.name}` });
+      name.addEventListener("click", () => { if (open) this.ganttOpen.delete(key); else this.ganttOpen.add(key); this.render(); });
+      label.createSpan({ cls: "nn-goal-when", text: ` ${n.done} of ${n.total}${sp.undated.length ? ` · ${sp.undated.length} not on a day` : ""}` });
+      backdrop(r);
+      // The bar, clipped to the days shown.
+      const a = sp.start < from ? from : sp.start;
+      const b = sp.end > last ? last : sp.end;
+      if (a <= last && b >= from) {
+        const bar = place(r, "nn-gantt-bar", a, b);
+        if (sp.openEnd) bar.addClass("is-open-end");
+        if (sp.start < from) bar.addClass("is-cut-start");
+        bar.createDiv({ cls: "nn-gantt-fill" }).style.width = n.total ? `${Math.round((n.done / n.total) * 100)}%` : "0%";
+      }
+      if (goal.due && inView(goal.due)) place(r, "nn-gantt-diamond", goal.due, goal.due, "◆").setAttr("aria-label", `${goal.name}: ${shortDate(goal.due)}`);
+      const perDay = new Map<string, { done: number; open: number }>();
+      for (const d of sp.dots) {
+        const c = perDay.get(d.day) ?? { done: 0, open: 0 };
+        if (d.done) c.done++; else c.open++;
+        perDay.set(d.day, c);
+      }
+      for (const [day, c] of perDay) {
+        if (!inView(day)) continue;
+        const dot = place(r, `nn-gantt-dot${c.open ? "" : " is-done"}`, day);
+        dot.setAttr("aria-label", `${shortDate(day)}: ${c.done ? `${c.done} done` : ""}${c.done && c.open ? ", " : ""}${c.open ? `${c.open} open` : ""}`);
+      }
+      dropZone(r, this.plugin, (t) => this.plugin.actions.toMilestone(t, goal));
+
+      if (!open) continue;
+      const members = [...sp.dots.map((d) => ({ t: d.task, day: d.day as string | undefined, done: d.done })), ...sp.undated.map((t) => ({ t, day: undefined, done: false }))];
+      for (const m of members) {
+        const tr = row("nn-gantt-task");
+        const tl = tr.createDiv({ cls: "nn-gantt-label" });
+        tl.style.gridRow = "1";
+        const link = tl.createSpan({ cls: "nn-gantt-task-name", text: m.t.text });
+        link.addEventListener("click", () => void this.plugin.actions.open(m.t));
+        if (!m.day) tl.createSpan({ cls: "nn-goal-when", text: " · no day" });
+        tr.draggable = true;
+        tr.addEventListener("dragstart", (e) => { e.dataTransfer?.setData(DRAG_TYPE, m.t.key); if (e.dataTransfer) e.dataTransfer.effectAllowed = "move"; });
+        backdrop(tr);
+        if (m.day && inView(m.day)) place(tr, `nn-gantt-dot${m.done ? " is-done" : ""}`, m.day).setAttr("aria-label", shortDate(m.day));
+      }
+    }
   }
 
   private goalCard(parent: HTMLElement, g: Goal<VTask>) {

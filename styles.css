@@ -496,3 +496,26 @@
 .nn-goal-area { display: grid; grid-template-columns: minmax(0, 1fr) 80px 4.5em; align-items: center; gap: var(--size-4-2); font-size: var(--font-ui-smaller); color: var(--text-muted); }
 .nn-goal-area-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .nn-goal-area-n { text-align: right; color: var(--text-faint); }
+
+/* Gantt in the Goals view */
+.nn-gantt-wrap { display: flex; flex-direction: column; gap: var(--size-4-2); }
+.nn-gantt-nav { flex-wrap: wrap; }
+.nn-gantt { overflow-x: auto; padding-bottom: var(--size-4-2); }
+.nn-gantt-row { display: grid; align-items: center; min-height: 26px; width: max-content; min-width: 100%; }
+.nn-gantt-row.nn-gantt-goal { border-top: 1px solid var(--background-modifier-border); min-height: 30px; }
+.nn-gantt-label { grid-column: 1; position: sticky; left: 0; z-index: 3; background: var(--background-primary); padding-right: var(--size-4-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: var(--font-ui-small); }
+.nn-gantt-goal .nn-goal-name { cursor: var(--cursor); }
+.nn-gantt-task .nn-gantt-label { padding-left: 1.6em; color: var(--text-muted); }
+.nn-gantt-task-name { cursor: var(--cursor); }
+.nn-gantt-task-name:hover { color: var(--text-normal); }
+.nn-gantt-weeklabel { font-size: var(--font-ui-smaller); color: var(--text-faint); white-space: nowrap; padding-left: 3px; }
+.nn-gantt-week { align-self: stretch; border-left: 1px solid var(--background-modifier-border); z-index: 0; }
+.nn-gantt-today { align-self: stretch; justify-self: center; width: 2px; background: var(--text-accent); opacity: 0.5; z-index: 1; }
+.nn-gantt-bar { height: 10px; border-radius: 5px; background: var(--background-modifier-border); overflow: hidden; z-index: 1; margin: 0 2px; }
+.nn-gantt-bar.is-open-end { border-top-right-radius: 0; border-bottom-right-radius: 0; mask-image: linear-gradient(to right, #000 85%, transparent); -webkit-mask-image: linear-gradient(to right, #000 85%, transparent); }
+.nn-gantt-bar.is-cut-start { border-top-left-radius: 0; border-bottom-left-radius: 0; margin-left: 0; }
+.nn-gantt-fill { height: 100%; background: var(--text-faint); }
+.nn-gantt-diamond { justify-self: center; z-index: 2; color: var(--text-accent); font-size: 14px; line-height: 1; }
+.nn-gantt-dot { justify-self: center; z-index: 2; width: 8px; height: 8px; border-radius: 50%; border: 1.5px solid var(--text-muted); background: var(--background-primary); }
+.nn-gantt-dot.is-done { background: var(--text-muted); }
+.nn-gantt-row.is-drop-target { outline: 2px dashed var(--interactive-accent); outline-offset: -2px; }

@@ -146,3 +146,34 @@ test("makeId and daysLeftLabel", () => {
   assert.equal(daysLeftLabel(1), "1 day left");
   assert.equal(daysLeftLabel(-3), "3 days past");
 });
+
+test("span: bar from the earliest task day to the 📅 date; done tasks on their ✅ day; undated counted", async () => {
+  const { span } = await import("../src/goals.ts");
+  const [draft] = goals(sample());
+  const s = span(draft, "2026-11-19", (t) => t.day);
+  assert.equal(s.start, "2026-11-19");             // Results 1 and 2, done 19 Nov
+  assert.equal(s.end, "2026-12-03");
+  assert.equal(s.openEnd, false);
+  assert.deepEqual(s.dots.map((d) => [d.day, d.done]), [["2026-11-19", true], ["2026-11-20", false]]);
+  assert.deepEqual(s.undated.map((t) => t.text).sort(), ["Abstract", "Results: Iteration 2"]);
+});
+
+test("span: a goal without a date runs to its last task; no tasks: today only", async () => {
+  const { span } = await import("../src/goals.ts");
+  const tasks = [
+    mk("- [ ] Rug [from:: creative] 🆔 rug #milestone"),
+    mk("- [ ] Weave ⏳ 2026-11-25", { project: "creative" }),
+    mk("- [x] Cut ✅ 2026-11-10", { project: "creative" }),
+  ];
+  const s = span(goals(tasks)[0], "2026-11-19", (t) => t.day);
+  assert.deepEqual([s.start, s.end, s.openEnd], ["2026-11-10", "2026-11-25", true]);
+  const e = span(goals([mk("- [ ] Someday 🆔 x #milestone")])[0], "2026-11-19", () => undefined);
+  assert.deepEqual([e.start, e.end], ["2026-11-19", "2026-11-19"]);
+  const past = span(goals([mk("- [ ] Missed 📅 2026-11-01 🆔 m #milestone")])[0], "2026-11-19", () => undefined);
+  assert.deepEqual([past.start, past.end], ["2026-11-01", "2026-11-01"]);
+});
+
+test("dayRange: inclusive, across a month end", async () => {
+  const { dayRange } = await import("../src/goals.ts");
+  assert.deepEqual(dayRange("2026-11-29", "2026-12-01"), ["2026-11-29", "2026-11-30", "2026-12-01"]);
+});

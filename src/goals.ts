@@ -168,3 +168,49 @@ export function daysLeftLabel(n: number): string {
   if (n > 0) return `${n} ${n === 1 ? "day" : "days"} left`;
   return `${-n} ${n === -1 ? "day" : "days"} past`;
 }
+
+// ---------- Gantt ----------
+
+export interface GanttDot<T> { day: string; done: boolean; task: T }
+export interface GanttSpan<T> {
+  /** First day of the bar: the earliest day a task toward it sits on or was done (today if none). */
+  start: string;
+  /** Last day: the 📅 date, else (for a goal) the last task's day. */
+  end: string;
+  /** A goal without a date: the bar has no fixed end. */
+  openEnd: boolean;
+  dots: GanttDot<T>[];
+  /** Open tasks with no day. */
+  undated: T[];
+}
+
+/** Where a milestone's bar runs and the day of each of its tasks. A done task sits on its ✅ day. */
+export function span<T extends GoalTask & { done?: string }>(g: Goal<T>, today: string, dayOf: (t: T) => string | undefined): GanttSpan<T> {
+  const dots: GanttDot<T>[] = [];
+  const undated: T[] = [];
+  for (const t of g.members) {
+    const done = isDoneStatus(t.status);
+    if (!done && !isOpenStatus(t.status)) continue;
+    const day = done ? t.done ?? dayOf(t) : dayOf(t);
+    if (day) dots.push({ day, done, task: t });
+    else if (!done) undated.push(t);
+  }
+  dots.sort((a, b) => a.day.localeCompare(b.day));
+  const days = dots.map((d) => d.day);
+  let start = days[0] ?? (g.due && g.due < today ? g.due : today);
+  if (g.due && g.due < start) start = g.due;
+  const last = days[days.length - 1];
+  let end = g.due ?? (last && last > start ? last : start);
+  if (end < start) end = start;
+  return { start, end, openEnd: !g.due, dots, undated };
+}
+
+/** Days from `from` to `to`, both included. */
+export function dayRange(from: string, to: string): string[] {
+  const out: string[] = [];
+  for (let i = 0, n = daysBetween(from, to); i <= n; i++) {
+    const d = new Date(Date.UTC(+from.slice(0, 4), +from.slice(5, 7) - 1, +from.slice(8, 10) + i));
+    out.push(d.toISOString().slice(0, 10));
+  }
+  return out;
+}
