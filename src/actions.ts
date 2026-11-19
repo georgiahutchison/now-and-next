@@ -24,16 +24,55 @@ export class Actions {
   constructor(private plugin: NowAndNextPlugin) {}
   private get app() { return this.plugin.app; }
 
-  /** Tick or untick through the Tasks plugin, so done dates and repeats work. */
+  /** Tick or untick through the Tasks plugin, so done dates and repeats work. Ticking offers Undo for a few seconds. */
   async toggleDone(t: VTask) {
     const api = tasksApi(this.app);
-    await editTask(this.app, t, (line) => {
-      if (api) return api.executeToggleTaskDoneCommand(line, t.path).split("\n");
-      const done = /\[[xX]\]/.test(line);
-      let out = setStatus(line, done ? " " : "x");
-      out = setDate(out, "done", done ? null : localToday());
+    const original = t.raw;
+    const wasDone = /\[[xX]\]/.test(original);
+    let written: string[] = [];
+    const ok = await editTask(this.app, t, (line) => {
+      let out: string[];
+      if (api) out = api.executeToggleTaskDoneCommand(line, t.path).split("\n");
+      else {
+        const done = /\[[xX]\]/.test(line);
+        out = [setDate(setStatus(line, done ? " " : "x"), "done", done ? null : localToday())];
+      }
+      written = out;
       return out;
     });
+    if (!ok || wasDone || !written.length) return;
+    // Undo puts the original line back in place of what was written (for a repeating task, both lines).
+    this.undoNotice(`Done: ${t.text}`, () => this.replaceLines(t.path, written, [original]));
+  }
+
+  /** Replace a run of lines in a note (found by their text) with others. */
+  private async replaceLines(path: string, find: string[], put: string[]) {
+    const file = this.app.vault.getAbstractFileByPath(path);
+    if (!(file instanceof TFile)) return;
+    let found = false;
+    await this.app.vault.process(file, (data) => {
+      const lines = data.split("\n");
+      const clean = lines.map((l) => l.replace(/\r$/, ""));
+      for (let i = 0; i + find.length <= clean.length; i++) {
+        if (find.every((f, k) => clean[i + k] === f)) {
+          lines.splice(i, find.length, ...put);
+          found = true;
+          return lines.join("\n");
+        }
+      }
+      return data;
+    });
+    if (!found) new Notice("Now & Next: that task changed in its note, so it can't be undone here.");
+  }
+
+  /** One quiet line: what happened (shortened) and an Undo link, for a few seconds. */
+  private undoNotice(label: string, undo: () => unknown) {
+    const frag = document.createDocumentFragment();
+    const row = frag.createDiv({ cls: "nn-notice" });
+    row.createSpan({ cls: "nn-notice-text", text: label.length > 46 ? label.slice(0, 45).trimEnd() + "…" : label });
+    const btn = row.createEl("button", { text: "Undo", cls: "nn-undo-btn" });
+    const notice = new Notice(frag, 6000);
+    btn.addEventListener("click", () => { notice.hide(); void undo(); });
   }
 
   /** Change the wording only; dates, priority and tags stay. */
@@ -165,17 +204,7 @@ export class Actions {
     const original = t.raw;
     const dropped = setDate(setStatus(original, "-"), "cancelled", localToday());
     if (!(await editTask(this.app, t, () => dropped))) return;
-    // One quiet line: the task's wording (shortened) and an Undo link.
-    const frag = document.createDocumentFragment();
-    const row = frag.createDiv({ cls: "nn-notice" });
-    const name = t.text.length > 40 ? t.text.slice(0, 39).trimEnd() + "…" : t.text;
-    row.createSpan({ cls: "nn-notice-text", text: `Dropped: ${name}` });
-    const undo = row.createEl("button", { text: "Undo", cls: "nn-undo-btn" });
-    const notice = new Notice(frag, 6000);
-    undo.addEventListener("click", async () => {
-      notice.hide();
-      await editTask(this.app, { ...t, raw: dropped } as VTask, () => original);
-    });
+    this.undoNotice(`Dropped: ${t.text}`, () => this.replaceLines(t.path, [dropped], [original]));
   }
 
   async deadline(t: VTask, date: string | null) { await editTask(this.app, t, (l) => setDate(l, "due", date)); }

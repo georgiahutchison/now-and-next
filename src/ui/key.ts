@@ -51,6 +51,7 @@ const SECTIONS: [string, [string, string][]][] = [
     ["Double-click task text", "Edit the wording in place (Enter saves, Escape cancels)"],
     ["… or right-click", "Menu: days, deadline, Later, milestone, repeat, priority, energy, estimate, timer, first step, waiting, drop"],
     ["× on hover", "Drop the task (Undo appears for a few seconds)"],
+    ["Tick a task", "Done; Undo appears for a few seconds and puts it back as it was"],
     ["Drag onto a day", "Schedule it there; the thin line shows where it lands in the day's order"],
     ["Drag onto an area tab", "Take it off its day and back to that area"],
     ["Drag onto Later", "Move it to Later"],
