@@ -8,7 +8,7 @@ import {
   openOn, doneOn, overdue, waiting, inProject, inbox, estimateTotal, hm, EnergyFilter, sortTasks, SORT_LABELS, SortMode,
   later, routines, isImportant, isUrgent, matrixTasks,
 } from "../queries";
-import { renderList, renderTask, dropZone, captureBox, carryOverTray, checkInCard, phasePrompt, shortDate, DRAG_TYPE, AREA_DRAG_TYPE, ENERGY_DRAG_TYPE } from "./render";
+import { renderList, renderTask, dropZone, captureBox, carryOverTray, dayLine, shortDate, DRAG_TYPE, AREA_DRAG_TYPE, ENERGY_DRAG_TYPE } from "./render";
 import type NowAndNextPlugin from "../main";
 import type { Zoom } from "../settings";
 
@@ -92,8 +92,7 @@ export class PlannerView extends ItemView {
     const today = localToday();
 
     const top = root.createDiv({ cls: "nn-top" });
-    checkInCard(this.plugin, top);
-    phasePrompt(this.plugin, top);
+    dayLine(this.plugin, top);
     if (this.filter !== "all") {
       const f = top.createDiv({ cls: "nn-filter-note" });
       f.createSpan({ text: `Showing ${({ low: "low", mid: "medium", high: "high" } as const)[this.filter]}-energy tasks only. ` });
@@ -112,8 +111,6 @@ export class PlannerView extends ItemView {
     if (failed.length && isDated(this.zoom)) {
       top.createDiv({ cls: "nn-cal-note", text: `Couldn't reach ${failed.join(", ")}. Showing the last copy fetched.` });
     }
-
-    if (isDated(this.zoom)) this.renderGoalStrip(root);
 
     const body = root.createDiv({ cls: "nn-body" });
     if (this.zoom === "day") this.renderDay(body, this.anchor);
@@ -506,28 +503,6 @@ export class PlannerView extends ItemView {
     }
     if (n.notOnADay) parts.push(`${n.notOnADay} not on a day`);
     return parts.join(" · ");
-  }
-
-  /** One line per open milestone, above the days in Plan. Folds; the fold is remembered. */
-  private renderGoalStrip(root: HTMLElement) {
-    const list = this.goalList().filter((g) => !this.nums(g).finished);
-    if (!list.length) return;
-    const det = root.createEl("details", { cls: "nn-goal-strip" });
-    det.open = this.plugin.settings.goalStripOpen;
-    det.addEventListener("toggle", () => { this.plugin.settings.goalStripOpen = det.open; void this.plugin.saveData(this.plugin.settings); });
-    const sum = det.createEl("summary");
-    sum.createSpan({ text: "Milestones" });
-    sum.createSpan({ cls: "nn-tab-count", text: ` ${list.length}` });
-    for (const g of list) {
-      const n = this.nums(g);
-      const row = det.createDiv({ cls: "nn-goal-row" });
-      row.setAttr("aria-label", g.task.text);
-      row.createSpan({ cls: "nn-goal-name", text: `◆ ${g.name}` });
-      row.createSpan({ cls: "nn-goal-when", text: g.due ? `${shortDate(g.due)} · ${daysLeftLabel(n.daysLeft!)}` : "No date" });
-      this.bar(row, n.done, n.total);
-      row.createSpan({ cls: "nn-goal-nums", text: this.numberText(n) });
-      row.addEventListener("click", () => this.setView("goals"));
-    }
   }
 
   /** The timeline of open milestones, the finished ones, and a place for tasks not toward any. */

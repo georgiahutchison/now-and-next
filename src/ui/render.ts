@@ -281,18 +281,24 @@ const placeName = (p: string) => p.replace(/\.md$/, "").split("/").pop() || p;
  * "How much energy today?" once a day. The answer stays as one quiet line;
  * on a low day it lists the go-to projects and the reading place.
  */
-export function checkInCard(plugin: NowAndNextPlugin, parent: HTMLElement) {
+/** Extras behind the "go-to projects" / "show tasks" link stay unfolded across re-renders until folded again. */
+let dayLineOpen = false;
+
+/**
+ * Today's line: the energy check-in and the cycle phase together. Once energy is set it is one line;
+ * go-to projects, the reading place and phase task suggestions sit behind a link on that line.
+ */
+export function dayLine(plugin: NowAndNextPlugin, parent: HTMLElement) {
   const s = plugin.settings;
-  if (!s.checkIn) return;
   const today = localToday();
-  const answer = s.lastCheckIn?.date === today ? s.lastCheckIn.level : null;
+  const answer = s.checkIn ? (s.lastCheckIn?.date === today ? s.lastCheckIn.level : null) : "skip";
+  const phase = phaseInfo(plugin);
   const save = async (level: "low" | "mid" | "high" | "skip" | null) => {
     s.lastCheckIn = level ? { date: today, level } : null;
     await plugin.saveSettings();
   };
-  const box = parent.createDiv({ cls: "nn-checkin" });
   if (!answer) {
-    box.addClass("is-asking");
+    const box = parent.createDiv({ cls: "nn-checkin is-asking" });
     box.createSpan({ cls: "nn-checkin-q", text: "How much energy today?" });
     const btns = box.createDiv({ cls: "nn-checkin-btns" });
     for (const [level, label] of LEVELS) {
@@ -300,14 +306,35 @@ export function checkInCard(plugin: NowAndNextPlugin, parent: HTMLElement) {
         .addEventListener("click", () => void save(level));
     }
     btns.createEl("button", { cls: "nn-checkin-skip", text: "Skip" }).addEventListener("click", () => void save("skip"));
+    if (phase) box.createSpan({ cls: "nn-checkin-phase", text: phase.text });
     return;
   }
-  if (answer === "skip") { box.remove(); return; }
+  const showGoTo = answer === "low" || phase?.goTo === true;
+  const hasGoTo = showGoTo && (s.goTo.length > 0 || !!s.readingNote);
+  const tasks = phase?.tasks ?? [];
+  if (answer === "skip" && !phase) return;
+  const box = parent.createDiv({ cls: "nn-checkin" });
   const line = box.createDiv({ cls: "nn-checkin-line" });
-  line.createSpan({ text: `Today: ${LEVELS.find(([l]) => l === answer)![1]}` });
-  const change = line.createEl("button", { cls: "nn-checkin-change", text: "change" });
-  change.addEventListener("click", () => void save(null));
-  if (answer === "low") goToList(plugin, box, "Go-to projects for a low day");
+  if (answer !== "skip") {
+    line.createSpan({ text: `Today: ${LEVELS.find(([l]) => l === answer)![1]}` });
+    line.createEl("button", { cls: "nn-checkin-change", text: "change" }).addEventListener("click", () => void save(null));
+  }
+  if (phase) line.createSpan({ cls: "nn-checkin-phase", text: phase.text });
+  if (!hasGoTo && !tasks.length) return;
+  const more = line.createEl("button", { cls: "nn-checkin-change", text: `${hasGoTo ? "go-to projects" : "show tasks"} ${dayLineOpen ? "▾" : "▸"}` });
+  const extra = box.createDiv({ cls: "nn-checkin-extra" });
+  const fill = () => {
+    extra.empty();
+    if (!dayLineOpen) return;
+    if (hasGoTo) goToList(plugin, extra, answer === "low" ? "Go-to projects for a low day" : "Go-to projects");
+    if (tasks.length) taskLinks(plugin, extra, tasks);
+  };
+  more.addEventListener("click", () => {
+    dayLineOpen = !dayLineOpen;
+    more.setText(`${hasGoTo ? "go-to projects" : "show tasks"} ${dayLineOpen ? "▾" : "▸"}`);
+    fill();
+  });
+  fill();
 }
 
 /** The go-to projects and the reading place, under a heading. */
@@ -338,33 +365,24 @@ function taskLinks(plugin: NowAndNextPlugin, box: HTMLElement, list: VTask[]) {
 }
 
 /**
- * One prompt for today's cycle phase: social plans in the follicular and ovulation phases,
+ * Today's cycle phase as one sentence, and what goes with it: social plans in the follicular and ovulation phases,
  * urgent things in the 5 days before luteal, low-spoon go-to projects in luteal. Nothing on period days.
  */
-export function phasePrompt(plugin: NowAndNextPlugin, parent: HTMLElement) {
+function phaseInfo(plugin: NowAndNextPlugin): { text: string; tasks: VTask[]; goTo: boolean } | null {
   const s = plugin.settings;
-  if (!s.cycle || !s.cyclePrompts) return;
+  if (!s.cycle || !s.cyclePrompts) return null;
   const today = localToday();
   const c = plugin.calendars.cycleOn(today);
-  if (!c || c.phase === "period") return;
+  if (!c || c.phase === "period") return null;
   const open = plugin.store.tasks.filter((t) => isOpen(t) && !isLater(t, today));
-  const box = parent.createDiv({ cls: "nn-checkin nn-phase" });
-  if (c.phase === "luteal") {
-    box.createDiv({ cls: "nn-checkin-line", text: "Luteal phase: a good time for low-spoon things." });
-    const low = s.lastCheckIn?.date === today && s.lastCheckIn.level === "low";
-    if (!low) goToList(plugin, box, "Go-to projects");
-    return;
-  }
+  if (c.phase === "luteal") return { text: "Luteal phase: a good time for low-spoon things.", tasks: [], goTo: true };
   const until = lutealStartsIn(c);
   if (until !== null && until <= 5) {
     const urgent = open.filter((t) => isUrgent(t, today) || isImportant(t))
       .sort((a, b) => (a.due ?? "9999").localeCompare(b.due ?? "9999")).slice(0, 3);
-    box.createDiv({ cls: "nn-checkin-line", text: `Luteal phase starts ${shortDate(addDays(today, until))}.` + (urgent.length ? " Worth getting these done first:" : "") });
-    if (urgent.length) taskLinks(plugin, box, urgent);
-    return;
+    return { text: `Luteal phase starts ${shortDate(addDays(today, until))}.` + (urgent.length ? " Worth getting a few things done first." : ""), tasks: urgent, goTo: false };
   }
   const name = c.phase === "ovulation" ? "Ovulation" : "Follicular phase";
   const social = open.filter((t) => t.project === "social" || t.tags.some((x) => x.toLowerCase() === "social")).slice(0, 3);
-  box.createDiv({ cls: "nn-checkin-line", text: `${name}: a good time for social plans.` });
-  if (social.length) taskLinks(plugin, box, social);
+  return { text: `${name}: a good time for social plans.`, tasks: social, goTo: false };
 }

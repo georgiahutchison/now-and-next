@@ -52,8 +52,6 @@ export interface NowAndNextSettings {
   goTo: string[];
   readingNote: string;
   lastCheckIn: { date: string; level: "low" | "mid" | "high" | "skip" } | null;
-  /** The milestone strip above the days in Plan is unfolded. */
-  goalStripOpen: boolean;
 }
 
 export interface CalendarLink { name: string; url: string }
@@ -82,7 +80,6 @@ export const DEFAULT_SETTINGS: NowAndNextSettings = {
   goTo: [],
   readingNote: "",
   lastCheckIn: null,
-  goalStripOpen: true,
 };
 
 export class NowAndNextSettingTab extends PluginSettingTab {
