@@ -1,5 +1,5 @@
 import { ItemView, Scope, WorkspaceLeaf, setIcon } from "obsidian";
-import { addDays, localToday, mondayOf, formatMinutes, tagFor, ENERGY_EMOJI } from "../tasks";
+import { addDays, localToday, mondayOf, formatMinutes, tagFor, ENERGY_EMOJI, PRIORITY_RANK } from "../tasks";
 import { habits, monthSpan } from "../habits";
 import { VTask, planDate } from "../store";
 import { applyOrder, placeBefore, moveExtrasOn } from "../order";
@@ -228,6 +228,8 @@ export class PlannerView extends ItemView {
     // With carry-over off, unfinished tasks from past days sit on today.
     if (day === today && !this.plugin.on("carryOver")) open = [...overdue(tasks, today, this.filter), ...open];
     open = applyOrder(this.plugin, day, open);
+    // Highest priority at the top; your drag order holds within each priority.
+    open = open.map((t, i) => ({ t, i })).sort((a, b) => PRIORITY_RANK[a.t.priority] - PRIORITY_RANK[b.t.priority] || a.i - b.i).map((x) => x.t);
     const done = doneOn(tasks, day);
     const capOn = this.plugin.on("dailyCap");
     const over = capOn && open.length > s.dailyCap;
