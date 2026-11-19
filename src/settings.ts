@@ -3,11 +3,11 @@ import type NowAndNextPlugin from "./main";
 import type { Energy } from "./tasks";
 import type { SortMode } from "./queries";
 
-export type Zoom = "day" | "week" | "month";
+export type Zoom = "focus" | "day" | "week" | "month" | "matrix";
 
 export type SupportKey =
-  | "focus" | "dailyCap" | "carryOver" | "capture" | "doneList" | "energy" | "visibleTime"
-  | "timer" | "estimates" | "firstStep" | "waiting" | "weeklyReview" | "calm" | "talk";
+  | "focus" | "dailyCap" | "carryOver" | "capture" | "doneList" | "energy"
+  | "timer" | "estimates" | "firstStep" | "waiting";
 
 export const SUPPORTS: { key: SupportKey; name: string; desc: string }[] = [
   { key: "focus", name: "Focus mode", desc: "Today only, one task at a time: Now and Next." },
@@ -16,14 +16,10 @@ export const SUPPORTS: { key: SupportKey; name: string; desc: string }[] = [
   { key: "capture", name: "Quick capture", desc: "A capture box at the top that drops a thought into today's note." },
   { key: "doneList", name: "Done list", desc: "Each day shows what you finished." },
   { key: "energy", name: "Energy tags", desc: "Low, medium, high energy on tasks, and a filter for how you feel right now." },
-  { key: "visibleTime", name: "Visible time", desc: "A bar showing how much of your working day is left." },
   { key: "timer", name: "Task timer", desc: "A countdown on a task in the status bar." },
   { key: "estimates", name: "Time estimates", desc: "Estimates on tasks, totalled against your working hours." },
   { key: "firstStep", name: "First tiny step", desc: "A quiet prompt to add a 5-minute first step to tasks that have sat untouched." },
   { key: "waiting", name: "Waiting-on status", desc: "Mark tasks as waiting on someone; they move to their own strip." },
-  { key: "weeklyReview", name: "Weekly review", desc: "A guided end-of-week review." },
-  { key: "calm", name: "Calm view switch", desc: "A button that hides dates, emojis, counts and stats." },
-  { key: "talk", name: "Talk it through", desc: "A button that opens Claudian so you can dictate tasks." },
 ];
 
 export interface NowAndNextSettings {
@@ -36,7 +32,7 @@ export interface NowAndNextSettings {
   stepPromptDays: number;
   showWeekend: boolean;
   defaultZoom: Zoom;
-  calm: boolean;
+  ideasNote: string;
   energyFilter: Energy | "all";
   sortBy: SortMode;
   supports: Record<SupportKey, boolean>;
@@ -52,7 +48,7 @@ export const DEFAULT_SETTINGS: NowAndNextSettings = {
   stepPromptDays: 5,
   showWeekend: false,
   defaultZoom: "week",
-  calm: false,
+  ideasNote: "Now & Next ideas.md",
   energyFilter: "all",
   sortBy: "priority",
   supports: Object.fromEntries(SUPPORTS.map((x) => [x.key, true])) as Record<SupportKey, boolean>,
@@ -94,7 +90,7 @@ export class NowAndNextSettingTab extends PluginSettingTab {
         .onChange(async (v) => { s.timerMinutes = v; await save(); }));
 
     new Setting(containerEl).setName("First-step prompt after (days)")
-      .setDesc("A task with no sub-tasks that has sat this long gets a quiet 'first step?' prompt.")
+      .setDesc("A task with no indented tasks under it that has sat this long gets a 'first step?' prompt.")
       .addSlider((sl) => sl.setLimits(1, 21, 1).setValue(s.stepPromptDays).setDynamicTooltip()
         .onChange(async (v) => { s.stepPromptDays = v; await save(); }));
 
@@ -102,7 +98,7 @@ export class NowAndNextSettingTab extends PluginSettingTab {
       .addToggle((t) => t.setValue(s.showWeekend).onChange(async (v) => { s.showWeekend = v; await save(); }));
 
     new Setting(containerEl).setName("Open at")
-      .addDropdown((d) => d.addOptions({ day: "Day", week: "Week", month: "Month" }).setValue(s.defaultZoom)
+      .addDropdown((d) => d.addOptions({ focus: "Focus", day: "Day", week: "Week", month: "Month", matrix: "Triage" }).setValue(s.defaultZoom)
         .onChange(async (v) => { s.defaultZoom = v as Zoom; await save(); }));
 
     new Setting(containerEl).setName("Supports").setHeading();
@@ -112,10 +108,10 @@ export class NowAndNextSettingTab extends PluginSettingTab {
         .addToggle((t) => t.setValue(s.supports[sp.key]).onChange(async (v) => { s.supports[sp.key] = v; await save(); }));
     }
 
-    new Setting(containerEl).setName("Display").setHeading();
+    new Setting(containerEl).setName("Notes").setHeading();
 
-    new Setting(containerEl).setName("Calm view")
-      .setDesc("Hide dates, emojis, counts and stats; show only task text and checkboxes.")
-      .addToggle((t) => t.setValue(s.calm).onChange(async (v) => { s.calm = v; await save(); }));
+    new Setting(containerEl).setName("Ideas note")
+      .setDesc("Where 'Add a plugin idea' writes. Created if missing.")
+      .addText((t) => t.setValue(s.ideasNote).onChange(async (v) => { s.ideasNote = v.trim(); await save(); }));
   }
 }

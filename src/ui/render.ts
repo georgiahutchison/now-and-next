@@ -1,13 +1,12 @@
 import { setIcon } from "obsidian";
 import { formatMinutes, localToday, PRIORITY_EMOJI, addDays } from "../tasks";
 import { VTask, isDone, isWaiting, planDate } from "../store";
-import { needsFirstStep, hm } from "../queries";
+import { needsFirstStep } from "../queries";
 import type NowAndNextPlugin from "../main";
 
 export const DRAG_TYPE = "text/x-now-and-next";
 
 export function renderTask(plugin: NowAndNextPlugin, parent: HTMLElement, t: VTask, opts: { showDate?: boolean; nested?: boolean; hideProject?: string } = {}) {
-  const calm = plugin.settings.calm;
   const a = plugin.actions;
   const row = parent.createDiv({ cls: opts.nested ? "nn-task is-nested" : "nn-task nn-card" });
   if (isDone(t)) row.addClass("is-done");
@@ -62,7 +61,7 @@ export function renderTask(plugin: NowAndNextPlugin, parent: HTMLElement, t: VTa
     input.addEventListener("blur", () => finish(false));
   });
 
-  if (!calm) {
+  {
     const chips = line.createSpan({ cls: "nn-chips" });
     if (t.priority !== "none") {
       const c = chips.createSpan({ cls: "nn-chip nn-chip-priority", text: PRIORITY_EMOJI[t.priority as Exclude<typeof t.priority, "none">] });
@@ -71,8 +70,8 @@ export function renderTask(plugin: NowAndNextPlugin, parent: HTMLElement, t: VTa
     if (t.energy && plugin.on("energy")) chips.createSpan({ cls: `nn-chip nn-energy nn-energy-${t.energy}`, text: { low: "low", mid: "med", high: "high" }[t.energy] });
     if (t.estimateMin && plugin.on("estimates")) chips.createSpan({ cls: "nn-chip", text: "~" + formatMinutes(t.estimateMin) });
     if (t.recurrence) { const r = chips.createSpan({ cls: "nn-chip" }); setIcon(r, "repeat"); r.setAttr("aria-label", t.recurrence); }
-    if (t.project && t.project !== opts.hideProject) chips.createSpan({ cls: "nn-chip nn-chip-project", text: t.project });
     if (opts.showDate && planDate(t)) chips.createSpan({ cls: "nn-chip", text: shortDate(planDate(t)!) });
+    if (t.start && t.start > localToday()) chips.createSpan({ cls: "nn-chip", text: `from ${shortDate(t.start)}` });
     if (t.due && !isDone(t)) {
       const today = localToday();
       const label = t.due === today ? "due today" : `due ${shortDate(t.due)}`;
@@ -87,6 +86,8 @@ export function renderTask(plugin: NowAndNextPlugin, parent: HTMLElement, t: VTa
   }
 
   const actions = line.createSpan({ cls: "nn-actions" });
+  // The area shows only on hover, beside the buttons, so cards stay quiet.
+  if (t.project && t.project !== opts.hideProject) actions.createSpan({ cls: "nn-hover-area", text: t.project });
   if (!isDone(t) && t.status !== "-") {
     const drop = actions.createSpan({ cls: "nn-more nn-drop clickable-icon" });
     setIcon(drop, "x");
@@ -99,8 +100,8 @@ export function renderTask(plugin: NowAndNextPlugin, parent: HTMLElement, t: VTa
   row.addEventListener("contextmenu", (e) => { e.preventDefault(); a.menu(t, e); });
 
   // Details start at the same left edge as the task text.
-  const body = t.details.length && !calm ? row.createDiv({ cls: "nn-task-body" }) : null;
-  if (body && t.details.length && !calm) {
+  const body = t.details.length ? row.createDiv({ cls: "nn-task-body" }) : null;
+  if (body) {
     const ul = body.createEl("ul", { cls: "nn-details" });
     for (const d of t.details) ul.createEl("li", { text: d });
   }
@@ -131,27 +132,6 @@ export function dropZone(el: HTMLElement, plugin: NowAndNextPlugin, onDrop: (t: 
   });
 }
 
-export function timeLeftBar(plugin: NowAndNextPlugin, parent: HTMLElement) {
-  const s = plugin.settings;
-  const start = hm(s.dayStart), end = hm(s.dayEnd);
-  const now = new Date();
-  const cur = now.getHours() * 60 + now.getMinutes();
-  const wrap = parent.createDiv({ cls: "nn-timebar" });
-  const bar = wrap.createDiv({ cls: "nn-timebar-track" });
-  const fill = bar.createDiv({ cls: "nn-timebar-fill" });
-  let label: string;
-  if (end <= start) { label = "Set your working day in settings"; fill.style.width = "0%"; }
-  else if (cur < start) { label = `Your day starts in ${formatMinutes(start - cur)}`; fill.style.width = "0%"; }
-  else if (cur >= end) { label = "Your working day is over"; fill.style.width = "100%"; }
-  else {
-    const pct = ((cur - start) / (end - start)) * 100;
-    fill.style.width = `${pct.toFixed(1)}%`;
-    label = `${formatMinutes(end - cur)} left in your day`;
-  }
-  wrap.createDiv({ cls: "nn-timebar-label", text: label });
-  return wrap;
-}
-
 export function captureBox(plugin: NowAndNextPlugin, parent: HTMLElement, opts: { placeholder?: string; scheduled?: string; tag?: string; lines?: number } = {}) {
   // The main capture box is a two-line text area; Enter saves, Shift+Enter is ignored (one task per capture).
   const input: HTMLInputElement | HTMLTextAreaElement = opts.lines && opts.lines > 1
@@ -180,7 +160,7 @@ export function carryOverTray(plugin: NowAndNextPlugin, parent: HTMLElement, lis
   for (const t of list) {
     const r = box.createDiv({ cls: "nn-carry-row" });
     r.createSpan({ cls: "nn-carry-text", text: t.text });
-    if (!plugin.settings.calm) r.createSpan({ cls: "nn-chip", text: shortDate(planDate(t)!) });
+    r.createSpan({ cls: "nn-chip", text: shortDate(planDate(t)!) });
     const btns = r.createSpan({ cls: "nn-carry-btns" });
     const b = (label: string, fn: () => unknown) => btns.createEl("button", { text: label }).addEventListener("click", () => void fn());
     b("Today", () => plugin.actions.schedule(t, today));

@@ -24,7 +24,6 @@ export class TodayView extends ItemView {
     const root = this.contentEl;
     root.empty();
     root.addClass("nn-root", "nn-side");
-    root.toggleClass("nn-calm", this.plugin.settings.calm);
     if (!this.plugin.store.isReady()) { root.createDiv({ cls: "nn-empty", text: "Reading your tasks…" }); return; }
 
     const today = localToday();
@@ -41,7 +40,6 @@ export class TodayView extends ItemView {
       el.addEventListener("click", () => void fn());
     };
     if (this.plugin.on("focus")) b("target", "Focus", () => this.plugin.openPlanner({ focus: true }));
-    if (this.plugin.on("talk")) b("mic", "Talk it through", () => this.plugin.talkItThrough());
     b("calendar-range", "Week", () => this.plugin.openPlanner({}));
     b("info", "Key", () => this.plugin.openKey());
     b("refresh-cw", "Reload", () => this.plugin.reloadApp());
@@ -61,7 +59,7 @@ export class TodayView extends ItemView {
     const cap = this.plugin.settings.dailyCap;
     const sec = root.createDiv({ cls: "nn-side-section" });
     const h = sec.createDiv({ cls: "nn-side-h", text: "Today" });
-    if (!this.plugin.settings.calm) h.createSpan({ cls: "nn-day-meta", text: capOn ? ` ${open.length}/${cap}` : ` ${open.length}` });
+    if (capOn && open.length > cap) h.createSpan({ cls: "nn-day-meta", text: ` ${open.length}/${cap}` });
     if (capOn && open.length > cap) sec.createDiv({ cls: "nn-side-note", text: "Over your cap. Open the week to move some on." });
     const list = sec.createDiv({ cls: "nn-day-list" });
     renderList(this.plugin, list, open, "Nothing planned for today.");

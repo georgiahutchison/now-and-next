@@ -5,12 +5,10 @@ import { Actions } from "./actions";
 import { newTaskLine, localToday } from "./tasks";
 import { PlannerView, PLANNER_VIEW } from "./ui/planner";
 import { TodayView, TODAY_VIEW } from "./ui/today";
-import { openWeeklyReview } from "./ui/review";
+import { IdeaModal } from "./ui/ideas";
 import { TextPromptModal } from "./ui/modals";
 import { KeyModal } from "./ui/key";
 import { Timer } from "./timer";
-
-const CLAUDIAN_ID = "realclaudian";
 
 export default class NowAndNextPlugin extends Plugin {
   settings!: NowAndNextSettings;
@@ -34,14 +32,9 @@ export default class NowAndNextPlugin extends Plugin {
     this.addCommand({ id: "show-sidebar", name: "Show today in sidebar", callback: () => this.ensureSidebar(true) });
     this.addCommand({ id: "focus-mode", name: "Focus mode", callback: () => { if (this.on("focus")) void this.openPlanner({ focus: true }); } });
     this.addCommand({ id: "capture", name: "Capture a thought to today's note", callback: () => this.promptCapture() });
-    this.addCommand({ id: "weekly-review", name: "Weekly review", callback: () => { if (this.on("weeklyReview")) this.openReview(); } });
-    this.addCommand({ id: "talk-it-through", name: "Talk it through (open Claudian)", callback: () => { if (this.on("talk")) this.talkItThrough(); } });
+    this.addCommand({ id: "add-plugin-idea", name: "Add a plugin idea", callback: () => new IdeaModal(this).open() });
     this.addCommand({ id: "stop-timer", name: "Stop timer", callback: () => this.timer.stop() });
     this.addCommand({ id: "show-key", name: "Show the emoji key", callback: () => this.openKey() });
-    this.addCommand({
-      id: "toggle-calm", name: "Toggle calm view",
-      callback: async () => { this.settings.calm = !this.settings.calm; await this.saveSettings(); },
-    });
 
     // Keep the areas folder setting pointing at the folder if it is renamed or moved.
     this.registerEvent(this.app.vault.on("rename", async (f, oldPath) => {
@@ -104,7 +97,6 @@ export default class NowAndNextPlugin extends Plugin {
     if (reveal) await workspace.revealLeaf(leaf);
   }
 
-  openReview() { openWeeklyReview(this); }
 
   openKey() { new KeyModal(this.app).open(); }
 
@@ -140,17 +132,4 @@ export default class NowAndNextPlugin extends Plugin {
     }).open();
   }
 
-  // ---------- Claudian ----------
-
-  talkItThrough() {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const plugins = (this.app as any).plugins;
-    if (!plugins?.enabledPlugins?.has(CLAUDIAN_ID)) {
-      new Notice("Claudian isn't switched on in this vault. Turn it on in Settings → Community plugins.");
-      return;
-    }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (this.app as any).commands.executeCommandById(`${CLAUDIAN_ID}:open-view`);
-    new Notice("Claudian is open. Press fn twice to dictate, then say what's on your plate. Claude adds the tasks to today's note.", 8000);
-  }
 }

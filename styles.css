@@ -17,10 +17,6 @@
 .nn-text-btn.is-active { color: var(--text-accent); }
 .nn-btn-icon { display: inline-flex; }
 .nn-btn-icon svg { width: var(--icon-s); height: var(--icon-s); }
-.nn-stats { display: flex; gap: var(--size-4-4); margin-left: auto; }
-.nn-stat-label { font-size: var(--font-ui-smaller); color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; }
-.nn-stat-value { font-size: var(--font-ui-large); font-weight: var(--font-semibold); }
-.nn-stat-sub { font-size: var(--font-ui-smaller); color: var(--text-faint); }
 
 /* capture, carry-over, waiting */
 .nn-top { display: flex; flex-direction: column; gap: var(--size-4-2); }
@@ -38,11 +34,6 @@
 .nn-task.is-dragging { opacity: 0.4; }
 .nn-chip { font-size: var(--font-ui-smaller); color: var(--text-muted); background: var(--background-modifier-hover); border-radius: var(--radius-s); padding: 0 5px; line-height: 1.6; white-space: nowrap; display: inline-flex; align-items: center; }
 .nn-chip svg { width: 11px; height: 11px; }
-.nn-chip-project { color: var(--text-accent); }
-.nn-energy-low { color: var(--color-green); }
-.nn-energy-mid { color: var(--color-yellow); }
-.nn-energy-high { color: var(--color-orange); }
-.nn-step-chip { cursor: var(--cursor); color: var(--text-accent); background: transparent; border: 1px dashed var(--text-accent); }
 
 /* week + day columns */
 .nn-body { min-height: 0; }
@@ -86,10 +77,6 @@
 .nn-panel-hint { font-size: var(--font-ui-smaller); color: var(--text-faint); }
 
 /* time-left bar */
-.nn-timebar { display: flex; flex-direction: column; gap: 2px; }
-.nn-timebar-track { height: 6px; border-radius: 3px; background: var(--background-modifier-border); overflow: hidden; }
-.nn-timebar-fill { height: 100%; background: var(--interactive-accent); }
-.nn-timebar-label { font-size: var(--font-ui-smaller); color: var(--text-muted); }
 
 /* focus mode */
 .nn-focus { max-width: 640px; margin: 0 auto; width: 100%; display: flex; flex-direction: column; gap: var(--size-4-3); padding-top: var(--size-4-4); }
@@ -122,25 +109,20 @@
 .nn-review-text { flex: 1 1 14em; }
 .nn-review-row button { font-size: var(--font-ui-smaller); height: auto; padding: 2px var(--size-4-2); }
 
-/* calm view: text and checkboxes only */
-.nn-calm .nn-chips, .nn-calm .nn-stats, .nn-calm .nn-tab-count, .nn-calm .nn-month-done { display: none; }
 
 /* timer in status bar */
 .nn-timer { font-variant-numeric: tabular-nums; }
 
 @media (max-width: 700px) {
-  .nn-stats { margin-left: 0; }
   .nn-week { grid-template-columns: repeat(var(--nn-cols, 5), minmax(240px, 85vw)); }
 }
 .nn-tabs-label { font-size: var(--font-ui-smaller); color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; align-self: center; margin-right: var(--size-4-1); }
 .nn-side .nn-day-list { gap: var(--size-4-1); }
-.nn-side .nn-timebar { gap: var(--size-4-1); }
 .nn-inline-edit { flex: 1 1 0; min-width: 5em; font-size: inherit; height: auto; padding: 0 var(--size-4-1); }
 .nn-key { border-collapse: collapse; width: 100%; font-size: var(--font-ui-small); }
 .nn-key td { padding: var(--size-4-1) var(--size-4-2); border-bottom: 1px solid var(--background-modifier-border); vertical-align: top; }
 .nn-key-sym { white-space: nowrap; font-family: var(--font-monospace); color: var(--text-normal); }
 .nn-due { color: var(--text-muted); border: 1px solid var(--background-modifier-border); background: transparent; }
-.nn-due.is-now { color: var(--text-accent); border-color: var(--text-accent); }
 .nn-drop:hover { color: var(--text-error); }
 .nn-undo-btn { margin-left: var(--size-4-2); }
 .nn-capture-multi { width: 100%; resize: vertical; line-height: var(--line-height-normal); padding: var(--size-4-2) var(--size-4-3); font-family: inherit; font-size: var(--font-ui-medium); }
@@ -205,3 +187,32 @@
 .nn-root .nn-more, .nn-root .nn-more.clickable-icon { background: none !important; box-shadow: none; padding: 2px 3px; color: var(--text-faint); }
 .nn-root .nn-more:hover { color: var(--text-normal); }
 .nn-root .nn-drop:hover { color: var(--text-normal); }
+
+/* ---- calm defaults ---- */
+.nn-chip { color: var(--text-faint); background: transparent; border: 1px solid var(--background-modifier-border); }
+.nn-step-chip { cursor: var(--cursor); border-style: dashed; }
+.nn-tab-count { color: var(--text-faint); opacity: 1; font-weight: normal; }
+.nn-tab.is-active .nn-tab-count { color: inherit; opacity: 0.7; }
+.nn-hover-area { font-size: var(--font-ui-smaller); color: var(--text-faint); padding: 0 var(--size-4-1); white-space: nowrap; }
+
+/* ---- header: one row, folds onto two when narrow ---- */
+.nn-header { display: flex; flex-wrap: wrap; align-items: center; gap: var(--size-4-2) var(--size-4-3); }
+.nn-nav.is-hidden { display: none; }
+.nn-tools { display: flex; gap: var(--size-4-2); margin-left: auto; }
+
+/* ---- triage ---- */
+.nn-matrix { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--size-4-3); }
+.nn-matrix-box { border: 1px solid var(--background-modifier-border); border-radius: var(--radius-m); padding: var(--size-4-3); display: flex; flex-direction: column; gap: var(--size-4-2); min-height: 180px; }
+.nn-matrix-box.is-drop-target { outline: 2px dashed var(--interactive-accent); outline-offset: -2px; }
+.nn-matrix-head { display: flex; align-items: baseline; gap: var(--size-4-2); }
+.nn-matrix-title { font-weight: var(--font-semibold); }
+.nn-matrix-hint { font-size: var(--font-ui-smaller); color: var(--text-faint); }
+.nn-matrix-list { display: flex; flex-direction: column; gap: var(--size-4-2); max-height: 420px; overflow-y: auto; }
+@media (max-width: 700px) { .nn-matrix { grid-template-columns: 1fr; } }
+
+/* ---- later ---- */
+.nn-later { border-top: 1px solid var(--background-modifier-border); padding-top: var(--size-4-2); }
+.nn-later > summary { cursor: var(--cursor); color: var(--text-muted); font-size: var(--font-ui-small); padding: var(--size-4-1) 0; }
+.nn-later[open] > summary { margin-bottom: var(--size-4-2); }
+.nn-later .nn-panel-hint { margin-bottom: var(--size-4-2); }
+.nn-later.is-drop-target { outline: 2px dashed var(--interactive-accent); outline-offset: 2px; }

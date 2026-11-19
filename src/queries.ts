@@ -1,5 +1,5 @@
-import { addDays, daysBetween, mondayOf, Energy } from "./tasks";
-import { VTask, isOpen, isDone, isWaiting, planDate, byPriority, CANCELLED } from "./store";
+import { addDays, daysBetween, Energy, localToday } from "./tasks";
+import { VTask, isOpen, isDone, isWaiting, planDate, byPriority } from "./store";
 
 export type EnergyFilter = Energy | "all";
 
@@ -32,8 +32,27 @@ export function waiting(tasks: VTask[]): VTask[] {
   return tasks.filter((t) => isWaiting(t)).sort(byPriority);
 }
 
+/** Tagged #later, or deferred with a start date (🛫) still in the future. */
+export function isLater(t: VTask, today = localToday()): boolean {
+  return t.tags.some((x) => x.toLowerCase() === "later") || (!!t.start && t.start > today);
+}
+
 function undatedOpen(t: VTask) {
-  return isOpen(t) && !planDate(t);
+  return isOpen(t) && !planDate(t) && !isLater(t);
+}
+
+export function later(tasks: VTask[], f: EnergyFilter): VTask[] {
+  const today = localToday();
+  return tasks.filter((t) => isOpen(t) && !planDate(t) && isLater(t, today) && energyOk(t, f)).sort(byPriority);
+}
+
+export function isImportant(t: VTask) { return t.priority === "highest" || t.priority === "high"; }
+/** A deadline within the next 7 days, or tagged #urgent. */
+export function isUrgent(t: VTask, today = localToday()) {
+  return (!!t.due && t.due <= addDays(today, 7)) || t.tags.some((x) => x.toLowerCase() === "urgent");
+}
+export function matrixTasks(tasks: VTask[], f: EnergyFilter): VTask[] {
+  return tasks.filter((t) => isOpen(t) && !isLater(t) && energyOk(t, f));
 }
 
 export function priorities(tasks: VTask[], f: EnergyFilter): VTask[] {
@@ -61,35 +80,6 @@ export function needsFirstStep(t: VTask, today: string, days: number): boolean {
   return ageDays >= days;
 }
 
-export interface WeekStats { done: number; planned: number; pct: number }
-
-export function weekStats(tasks: VTask[], monday: string): WeekStats {
-  const end = addDays(monday, 6);
-  const inWeek = (d?: string) => !!d && d >= monday && d <= end;
-  const keys = new Set<string>();
-  let done = 0;
-  for (const t of tasks) {
-    if (t.status === CANCELLED) continue;
-    const doneHere = isDone(t) && inWeek(t.done);
-    if (doneHere || (inWeek(planDate(t)) && (isOpen(t) || isDone(t)))) keys.add(t.key);
-    if (doneHere) done++;
-  }
-  const planned = keys.size;
-  return { done, planned, pct: planned ? Math.round((done / planned) * 100) : 0 };
-}
-
-export function stats(tasks: VTask[], today: string) {
-  const mon = mondayOf(today);
-  const thisWeek = weekStats(tasks, mon);
-  const last4 = [1, 2, 3, 4].map((i) => weekStats(tasks, addDays(mon, -7 * i)));
-  const withPlans = last4.filter((w) => w.planned > 0);
-  const avg = withPlans.length ? Math.round(withPlans.reduce((s, w) => s + w.pct, 0) / withPlans.length) : 0;
-  let streak = thisWeek.done > 0 ? 1 : 0;
-  for (let i = 1; i < 104; i++) {
-    if (weekStats(tasks, addDays(mon, -7 * i)).done > 0) streak++; else break;
-  }
-  return { thisWeek, avg, streak };
-}
 
 /** Minutes between two "HH:MM" strings. */
 export function hm(s: string): number {

@@ -4,6 +4,7 @@ import {
   Priority, Energy, parseDuration, PRIORITY_EMOJI,
 } from "./tasks";
 import { VTask, editTask, insertAfter, isWaiting, planDate } from "./store";
+import { isLater } from "./queries";
 import type NowAndNextPlugin from "./main";
 import { DatePromptModal, TextPromptModal } from "./ui/modals";
 
@@ -51,7 +52,34 @@ export class Actions {
 
   async schedule(t: VTask, date: string | null) {
     // Moving a task moves its scheduled date; a due-only task gains a scheduled date.
-    await editTask(this.app, t, (l) => setDate(l, "scheduled", date));
+    // Planning a task onto a day also brings it back from Later.
+    await editTask(this.app, t, (l) => {
+      let out = setDate(l, "scheduled", date);
+      if (date) out = setDate(removeTags(out, ["later"]), "start", null);
+      return out;
+    });
+  }
+
+  /** Into the Later panel: tagged #later and taken off its day. */
+  async toLater(t: VTask) {
+    await editTask(this.app, t, (l) => addTag(setDate(l, "scheduled", null), "later"));
+  }
+
+  /** Out of Later: no #later tag and no future start date. */
+  async fromLater(t: VTask) {
+    await editTask(this.app, t, (l) => setDate(removeTags(l, ["later"]), "start", null));
+  }
+
+  /** Hide until the 1st of next month (🛫 start date), off its day. */
+  async deferToNextMonth(t: VTask) {
+    const now = new Date();
+    const first = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    const d = `${first.getFullYear()}-${String(first.getMonth() + 1).padStart(2, "0")}-01`;
+    await editTask(this.app, t, (l) => setDate(setDate(l, "scheduled", null), "start", d));
+  }
+
+  async urgent(t: VTask, on: boolean) {
+    await editTask(this.app, t, (l) => (on ? addTag(l, "urgent") : removeTags(l, ["urgent"])));
   }
 
   async shift(t: VTask, days: number) {
@@ -150,6 +178,9 @@ export class Actions {
     m.addItem((i) => i.setTitle(t.due ? "Change deadline…" : "Deadline…").setIcon("calendar-clock").onClick(() => this.promptDeadline(t)));
     if (t.due) m.addItem((i) => i.setTitle("Remove deadline").setIcon("calendar-x").onClick(() => this.deadline(t, null)));
     if (t.scheduled) m.addItem((i) => i.setTitle("Unplan (back to its list)").setIcon("undo-2").onClick(() => this.schedule(t, null)));
+    const inLater = isLater(t);
+    m.addItem((i) => i.setTitle(inLater ? "Back from Later" : "Move to Later").setIcon("archive").onClick(() => (inLater ? this.fromLater(t) : this.toLater(t))));
+    m.addItem((i) => i.setTitle("Defer to next month").setIcon("calendar-arrow-up").onClick(() => this.deferToNextMonth(t)));
     m.addSeparator();
     const pr: [Priority, string][] = [["highest", "Highest"], ["high", "High"], ["medium", "Medium"], ["none", "Normal"], ["low", "Low"]];
     for (const [p, label] of pr) {
