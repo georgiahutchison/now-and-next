@@ -35,3 +35,18 @@ export function lastDays(today: string, n: number): string[] {
   }
   return out;
 }
+
+const iso = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+
+/** The days shown for a month: from the Monday on or before the 1st to the Sunday on or after the last day. */
+export function monthSpan(anyDay: string): string[] {
+  const first = new Date(anyDay.slice(0, 8) + "01T00:00:00");
+  const start = new Date(first);
+  start.setDate(first.getDate() - ((first.getDay() + 6) % 7));
+  const last = new Date(first.getFullYear(), first.getMonth() + 1, 0);
+  const end = new Date(last);
+  end.setDate(last.getDate() + ((7 - last.getDay()) % 7));
+  const out: string[] = [];
+  for (const d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) out.push(iso(d));
+  return out;
+}

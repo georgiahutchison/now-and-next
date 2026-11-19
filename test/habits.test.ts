@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { habits, lastDays } from "../src/habits.ts";
+import { habits, lastDays, monthSpan } from "../src/habits.ts";
 
 test("habits: groups copies of a repeating task and collects its done days", () => {
   const rows = habits([
@@ -19,4 +19,14 @@ test("habits: groups copies of a repeating task and collects its done days", () 
 
 test("lastDays: n days ending today, across a month end", () => {
   assert.deepEqual(lastDays("2026-12-02", 4), ["2026-11-29", "2026-11-30", "2026-12-01", "2026-12-02"]);
+});
+
+test("monthSpan: Monday before the 1st to Sunday after the last day", () => {
+  const nov = monthSpan("2026-11-19");
+  assert.equal(nov[0], "2026-10-26");
+  assert.equal(nov[nov.length - 1], "2026-12-06");
+  assert.equal(nov.length % 7, 0);
+  const feb = monthSpan("2027-02-10"); // 1 Feb 2027 is a Monday, 28 Feb a Sunday
+  assert.equal(feb[0], "2027-02-01");
+  assert.equal(feb[feb.length - 1], "2027-02-28");
 });

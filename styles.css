@@ -461,3 +461,8 @@
 .nn-event-chip { font-style: normal; }
 .nn-root table.nn-habit-table { width: auto; max-width: 100%; }
 .nn-habit-table td.nn-habit-name { font-weight: normal; }
+.nn-habit-nav { margin-bottom: var(--size-4-1); }
+.nn-habit-month { font-weight: var(--font-semibold); min-width: 9em; text-align: center; }
+.nn-habit-day { width: 1.7em; }
+.nn-habit-day.is-other, .nn-habit-cell.is-other { opacity: 0.4; }
+.nn-habit-day.is-week-start, .nn-habit-cell.is-week-start { border-left: 1px solid var(--background-modifier-border); }
