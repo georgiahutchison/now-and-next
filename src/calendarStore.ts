@@ -1,6 +1,6 @@
 import { Events, normalizePath, requestUrl } from "obsidian";
 import type NowAndNextPlugin from "./main";
-import { CalEvent, expandEvents } from "./calendar";
+import { CalEvent, CycleDay, cycleDay, expandEvents, nextDay } from "./calendar";
 
 interface Cached { ics: string; fetchedAt: number }
 
@@ -60,6 +60,27 @@ export class CalendarStore extends Events {
   private changed() {
     this.months.clear();
     this.trigger("changed");
+  }
+
+  /** Is this event a cycle day-1 marker (its title is the marker, for example 🩸)? */
+  isCycleMarker(e: CalEvent): boolean {
+    const s = this.plugin.settings;
+    return s.cycle && !!s.cycleMarker.trim() && e.title.trim() === s.cycleMarker.trim();
+  }
+
+  private isDayOne(day: string): boolean {
+    return this.eventsOn(day).some((e) => this.isCycleMarker(e));
+  }
+
+  /** Cycle day and phase from the marker events, or null when off or no day 1 in the last 45 days. */
+  cycleOn(day: string): CycleDay | null {
+    if (!this.plugin.settings.cycle) return null;
+    let start: string | null = null;
+    for (let i = 0, d = day; i <= 45; i++, d = nextDay(d, -1)) if (this.isDayOne(d)) { start = d; break; }
+    if (!start) return null;
+    let next: string | null = null;
+    for (let i = 1, d = nextDay(day); i <= 60; i++, d = nextDay(d)) if (this.isDayOne(d)) { next = d; break; }
+    return cycleDay(day, start, next);
   }
 
   /** Events on one local day, all calendars together, all-day first, then by time. */

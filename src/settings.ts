@@ -40,6 +40,14 @@ export interface NowAndNextSettings {
   supports: Record<SupportKey, boolean>;
   /** Calendar links (ICS), shown read-only in Plan (all spans). */
   calendars: CalendarLink[];
+  /** Cycle day and phase from calendar events titled with the marker (day 1). */
+  cycle: boolean;
+  cycleMarker: string;
+  /** Daily "How much energy today?" question; go-to projects and a reading place for low days. */
+  checkIn: boolean;
+  goTo: string[];
+  readingNote: string;
+  lastCheckIn: { date: string; level: "low" | "mid" | "high" | "skip" } | null;
 }
 
 export interface CalendarLink { name: string; url: string }
@@ -60,6 +68,12 @@ export const DEFAULT_SETTINGS: NowAndNextSettings = {
   order: {},
   supports: Object.fromEntries(SUPPORTS.map((x) => [x.key, true])) as Record<SupportKey, boolean>,
   calendars: [],
+  cycle: true,
+  cycleMarker: "🩸",
+  checkIn: true,
+  goTo: [],
+  readingNote: "",
+  lastCheckIn: null,
 };
 
 export class NowAndNextSettingTab extends PluginSettingTab {
@@ -136,6 +150,26 @@ export class NowAndNextSettingTab extends PluginSettingTab {
     new Setting(containerEl).addButton((b) => b.setButtonText("Add calendar").onClick(async () => {
       s.calendars.push({ name: "", url: "" }); await save(); this.display();
     }));
+
+    new Setting(containerEl).setName("Cycle").setHeading();
+    new Setting(containerEl).setName("Show cycle day")
+      .setDesc("Shows the cycle day and phase under each date in Plan. Day 1 is any calendar event whose title is the marker below.")
+      .addToggle((t) => t.setValue(s.cycle).onChange(async (v) => { s.cycle = v; await save(); }));
+    new Setting(containerEl).setName("Day 1 marker")
+      .addText((t) => t.setValue(s.cycleMarker).onChange(async (v) => { s.cycleMarker = v.trim(); await save(); }));
+
+    new Setting(containerEl).setName("Daily check-in").setHeading();
+    new Setting(containerEl).setName("Ask how much energy I have")
+      .setDesc("Once a day, a question at the top of the sidebar and planner. On a low day it lists your go-to projects and a reading place.")
+      .addToggle((t) => t.setValue(s.checkIn).onChange(async (v) => { s.checkIn = v; await save(); }));
+    new Setting(containerEl).setName("Go-to projects for low days")
+      .setDesc("One per line: a note or folder path, or a note name. A note that doesn't exist yet is created when you open it.")
+      .addTextArea((t) => t.setValue(s.goTo.join("\n")).onChange(async (v) => {
+        s.goTo = v.split("\n").map((x) => x.trim()).filter(Boolean); await save();
+      }));
+    new Setting(containerEl).setName("Reading")
+      .setDesc("A note or folder for reading on low days.")
+      .addText((t) => t.setValue(s.readingNote).onChange(async (v) => { s.readingNote = v.trim(); await save(); }));
 
     new Setting(containerEl).setName("Notes").setHeading();
 

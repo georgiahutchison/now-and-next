@@ -69,6 +69,14 @@ The links are private: anyone with one can read that calendar. They are kept in 
 
 Parsing uses [ical.js](https://github.com/kewisch/ical.js) (MPL 2.0), bundled into `main.js`.
 
+## Daily check-in
+
+Once a day the sidebar and planner ask "How much energy today?" (🥄, 🥄🥄, 🥄🥄🥄 or Skip). The answer stays as one quiet line you can change. On a 🥄 day the check-in lists your go-to projects (one or two things you like to tap away at) and a reading place. Set both in **Settings → Now & Next → Daily check-in**: each is a note or folder path, or a note name (a new note is created when you open it).
+
+## Cycle
+
+If one of your calendars marks day 1 of your period with an event titled 🩸 (the marker can be changed in settings), each date in Plan shows its cycle day and phase, such as "Cycle day 3 · period". Phases are counted from the last day 1 and the next one in the calendar: period on days 1 to 5, ovulation about 14 days before the next day 1 (one day either side), follicular before it, luteal after. With no next day 1 in the calendar, a 28-day cycle is assumed. Month view shows 🩸 on day 1. The 🩸 events themselves are not listed with the other events.
+
 ## Requirements
 
 - Obsidian 1.7.2 or later.

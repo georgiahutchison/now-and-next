@@ -6,7 +6,7 @@ import {
   openOn, doneOn, overdue, waiting, inProject, inbox, estimateTotal, hm, EnergyFilter, sortTasks, SORT_LABELS, SortMode,
   later, routines, isImportant, isUrgent, matrixTasks,
 } from "../queries";
-import { renderList, renderTask, dropZone, captureBox, carryOverTray, AREA_DRAG_TYPE, ENERGY_DRAG_TYPE } from "./render";
+import { renderList, renderTask, dropZone, captureBox, carryOverTray, checkInCard, AREA_DRAG_TYPE, ENERGY_DRAG_TYPE } from "./render";
 import type NowAndNextPlugin from "../main";
 import type { Zoom } from "../settings";
 
@@ -84,6 +84,7 @@ export class PlannerView extends ItemView {
     const today = localToday();
 
     const top = root.createDiv({ cls: "nn-top" });
+    checkInCard(this.plugin, top);
     if (this.filter !== "all") {
       const f = top.createDiv({ cls: "nn-filter-note" });
       f.createSpan({ text: `Showing ${({ low: "low", mid: "medium", high: "high" } as const)[this.filter]}-energy tasks only. ` });
@@ -214,6 +215,9 @@ export class PlannerView extends ItemView {
     name.createSpan({ text: d.toLocaleDateString(undefined, { weekday: "short" }) + " " });
     name.createSpan({ cls: "nn-day-num", text: String(d.getDate()) });
     if (!wide) name.addEventListener("click", () => { this.anchor = day; this.zoom = "day"; this.render(); });
+    const isStrip = !wide && pastAsStrip && day < today;
+    const cyc = isStrip ? null : this.plugin.calendars.cycleOn(day);
+    if (cyc) head.createDiv({ cls: `nn-cycle nn-cycle-${cyc.phase}`, text: `Cycle day ${cyc.day} · ${cyc.phase}` });
 
     let open = openOn(tasks, day, this.filter);
     // With carry-over off, unfinished tasks from past days sit on today.
@@ -245,7 +249,7 @@ export class PlannerView extends ItemView {
       if (done.length && this.plugin.on("doneList")) col.createDiv({ cls: "nn-strip-note", text: `${done.length} done` });
       return;
     }
-    const events = this.plugin.calendars.eventsOn(day);
+    const events = this.plugin.calendars.eventsOn(day).filter((e) => !this.plugin.calendars.isCycleMarker(e));
     if (events.length) {
       const ev = col.createDiv({ cls: "nn-events" });
       for (const e of events) {
@@ -315,7 +319,11 @@ export class PlannerView extends ItemView {
         if (!day.startsWith(month)) cell.addClass("is-other");
         if (day === today) cell.addClass("is-today");
         cell.createDiv({ cls: "nn-month-num", text: String(Number(day.slice(8))) });
-        const nEvents = this.plugin.calendars.eventsOn(day).length;
+        const dayEvents = this.plugin.calendars.eventsOn(day);
+        const nEvents = dayEvents.filter((e) => !this.plugin.calendars.isCycleMarker(e)).length;
+        if (this.plugin.settings.cycle && dayEvents.some((e) => this.plugin.calendars.isCycleMarker(e))) {
+          cell.querySelector(".nn-month-num")?.appendText(` ${this.plugin.settings.cycleMarker}`);
+        }
         if (nEvents) cell.createDiv({ cls: "nn-month-events", text: `${nEvents} ${nEvents === 1 ? "event" : "events"}` });
         const open = openOn(tasks, day, this.filter);
         for (const t of open.slice(0, 3)) {

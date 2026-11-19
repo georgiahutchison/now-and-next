@@ -92,3 +92,26 @@ export function expandEvents(ics: string, calendar: string, from: string, to: st
 
   return out.sort((a, b) => a.day.localeCompare(b.day) || a.sort - b.sort || a.title.localeCompare(b.title));
 }
+
+// ---------- cycle ----------
+
+export type CyclePhase = "period" | "follicular" | "ovulation" | "luteal";
+export interface CycleDay { day: number; phase: CyclePhase; length: number }
+
+const dayDiff = (a: string, b: string) =>
+  Math.round((new Date(b + "T00:00:00").getTime() - new Date(a + "T00:00:00").getTime()) / 86_400_000);
+
+/**
+ * Cycle day and phase for `day`, counted from the last day 1 (`start`) and the next one if known.
+ * Period: days 1 to 5. Ovulation: about 14 days before the next day 1 (one day either side).
+ * Follicular before that, luteal after. With no next day 1, or an unlikely gap, a 28-day cycle is assumed.
+ */
+export function cycleDay(day: string, start: string, next: string | null): CycleDay | null {
+  const n = dayDiff(start, day) + 1;
+  if (n < 1 || n > 45) return null;
+  let length = next ? dayDiff(start, next) : 28;
+  if (length < 15 || length > 60) length = 28;
+  const ovulation = length - 14;
+  const phase: CyclePhase = n <= 5 ? "period" : Math.abs(n - ovulation) <= 1 ? "ovulation" : n < ovulation ? "follicular" : "luteal";
+  return { day: n, phase, length };
+}

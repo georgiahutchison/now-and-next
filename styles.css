@@ -408,3 +408,18 @@
 
 /* add-task box: centre the checkbox on the lower-case letters of the first line, not the line box (1px lower) */
 .nn-root .nn-capture-row input.nn-capture-check { margin-top: calc((var(--nn-line) - var(--checkbox-size, 15px)) / 2 + 1px); }
+
+/* ---- cycle day under the date ---- */
+.nn-cycle { font-size: var(--font-ui-smaller); color: var(--text-faint); font-weight: normal; }
+
+/* ---- daily check-in ---- */
+.nn-checkin { display: flex; flex-direction: column; gap: var(--size-4-2); margin-bottom: var(--size-4-3); font-size: var(--font-ui-small); color: var(--text-muted); }
+.nn-checkin.is-asking { flex-direction: row; flex-wrap: wrap; align-items: center; gap: var(--size-4-2) var(--size-4-3); padding: var(--size-4-2) var(--size-4-3); border: 1px solid var(--background-modifier-border); border-radius: var(--radius-m); }
+.nn-checkin-q { color: var(--text-normal); }
+.nn-checkin-btns { display: flex; flex-wrap: wrap; gap: var(--size-4-1); }
+.nn-checkin button { font-size: var(--font-ui-small); height: auto; padding: 2px var(--size-4-3); }
+.nn-checkin-line { display: flex; align-items: center; gap: var(--size-4-2); }
+.nn-checkin .nn-checkin-change { background: transparent; box-shadow: none; padding: 0; color: var(--text-faint); text-decoration: underline; }
+.nn-checkin-sub { color: var(--text-muted); }
+.nn-checkin-list { display: flex; flex-wrap: wrap; gap: var(--size-4-1); }
+.nn-checkin-read { display: flex; flex-wrap: wrap; align-items: center; gap: var(--size-4-1); }

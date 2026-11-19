@@ -2,7 +2,7 @@
 process.env.TZ = "Australia/Sydney";
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { expandEvents, nextDay } from "../src/calendar.ts";
+import { expandEvents, nextDay, cycleDay } from "../src/calendar.ts";
 
 const SYDNEY = `BEGIN:VTIMEZONE
 TZID:Australia/Sydney
@@ -129,4 +129,27 @@ test("same day: all-day first, then by time", () => {
     vevent("UID:s3", "DTSTART:20261119T220000Z", "SUMMARY:Morning"),
   );
   assert.deepEqual(brief(ics, "2026-11-20", "2026-11-20"), ["2026-11-20 all day Whole day", "2026-11-20 09:00 Morning", "2026-11-20 14:00 Afternoon"]);
+});
+
+test("cycle day and phase from day 1 and the next day 1", () => {
+  // 28-day cycle starting 28 Oct; next day 1 on 25 Nov; ovulation about day 14.
+  const at = (d: string) => cycleDay(d, "2026-10-28", "2026-11-25");
+  assert.deepEqual(at("2026-10-28"), { day: 1, phase: "period", length: 28 });
+  assert.equal(at("2026-11-01")!.phase, "period");      // day 5
+  assert.equal(at("2026-11-02")!.phase, "follicular");  // day 6
+  assert.equal(at("2026-11-09")!.phase, "ovulation");   // day 13
+  assert.equal(at("2026-11-10")!.phase, "ovulation");   // day 14
+  assert.equal(at("2026-11-11")!.phase, "ovulation");   // day 15
+  assert.equal(at("2026-11-12")!.phase, "luteal");      // day 16
+  assert.equal(at("2026-11-24")!.day, 28);
+});
+
+test("cycle: a longer cycle moves ovulation later; no next day 1 assumes 28 days; far from day 1 is null", () => {
+  // 34-day cycle (1 Jan to 4 Feb): ovulation about day 20 (19 to 21 Jan).
+  assert.equal(cycleDay("2026-01-14", "2026-01-01", "2026-02-04")!.phase, "follicular"); // day 14
+  assert.equal(cycleDay("2026-01-20", "2026-01-01", "2026-02-04")!.phase, "ovulation");  // day 20
+  assert.equal(cycleDay("2026-01-25", "2026-01-01", "2026-02-04")!.phase, "luteal");     // day 25
+  assert.equal(cycleDay("2026-01-10", "2026-01-01", null)!.length, 28);
+  assert.equal(cycleDay("2026-03-01", "2026-01-01", null), null);  // more than 45 days on
+  assert.equal(cycleDay("2025-12-31", "2026-01-01", null), null);  // before day 1
 });

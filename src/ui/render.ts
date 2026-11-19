@@ -1,4 +1,4 @@
-import { setIcon } from "obsidian";
+import { TFile, TFolder, normalizePath, setIcon } from "obsidian";
 import { formatMinutes, localToday, PRIORITY_EMOJI, ENERGY_EMOJI, addDays, type Energy } from "../tasks";
 import { VTask, isDone, isWaiting, planDate } from "../store";
 import { needsFirstStep } from "../queries";
@@ -253,4 +253,69 @@ export function carryOverTray(plugin: NowAndNextPlugin, parent: HTMLElement, lis
 export function shortDate(d: string): string {
   const dt = new Date(d + "T00:00:00");
   return dt.toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short" });
+}
+
+// ---------- daily check-in ----------
+
+const LEVELS: ["low" | "mid" | "high", string][] = [["low", "🥄"], ["mid", "🥄🥄"], ["high", "🥄🥄🥄"]];
+
+/** Open a go-to project: a folder is shown in the file explorer, a note opens, a new name becomes a new note. */
+function openPlace(plugin: NowAndNextPlugin, place: string) {
+  const app = plugin.app;
+  const f = app.vault.getAbstractFileByPath(normalizePath(place)) ?? app.vault.getAbstractFileByPath(normalizePath(place + ".md"));
+  if (f instanceof TFolder) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const fe = (app as any).internalPlugins?.getPluginById?.("file-explorer")?.instance;
+    fe?.revealInFolder?.(f);
+    return;
+  }
+  if (f instanceof TFile) { void app.workspace.getLeaf(false).openFile(f); return; }
+  void app.workspace.openLinkText(place, "", false);
+}
+
+const placeName = (p: string) => p.replace(/\.md$/, "").split("/").pop() || p;
+
+/**
+ * "How much energy today?" once a day. The answer stays as one quiet line;
+ * on a low day it lists the go-to projects and the reading place.
+ */
+export function checkInCard(plugin: NowAndNextPlugin, parent: HTMLElement) {
+  const s = plugin.settings;
+  if (!s.checkIn) return;
+  const today = localToday();
+  const answer = s.lastCheckIn?.date === today ? s.lastCheckIn.level : null;
+  const save = async (level: "low" | "mid" | "high" | "skip" | null) => {
+    s.lastCheckIn = level ? { date: today, level } : null;
+    await plugin.saveSettings();
+  };
+  const box = parent.createDiv({ cls: "nn-checkin" });
+  if (!answer) {
+    box.addClass("is-asking");
+    box.createSpan({ cls: "nn-checkin-q", text: "How much energy today?" });
+    const btns = box.createDiv({ cls: "nn-checkin-btns" });
+    for (const [level, label] of LEVELS) {
+      btns.createEl("button", { text: label, attr: { "aria-label": `${{ low: "Low", mid: "Medium", high: "High" }[level]} energy` } })
+        .addEventListener("click", () => void save(level));
+    }
+    btns.createEl("button", { cls: "nn-checkin-skip", text: "Skip" }).addEventListener("click", () => void save("skip"));
+    return;
+  }
+  if (answer === "skip") { box.remove(); return; }
+  const line = box.createDiv({ cls: "nn-checkin-line" });
+  line.createSpan({ text: `Today: ${LEVELS.find(([l]) => l === answer)![1]}` });
+  const change = line.createEl("button", { cls: "nn-checkin-change", text: "change" });
+  change.addEventListener("click", () => void save(null));
+  if (answer !== "low" || (!s.goTo.length && !s.readingNote)) return;
+  if (s.goTo.length) {
+    box.createDiv({ cls: "nn-checkin-sub", text: "Go-to projects for a low day" });
+    const list = box.createDiv({ cls: "nn-checkin-list" });
+    for (const g of s.goTo) {
+      list.createEl("button", { cls: "nn-checkin-place", text: placeName(g) }).addEventListener("click", () => openPlace(plugin, g));
+    }
+  }
+  if (s.readingNote) {
+    const r = box.createDiv({ cls: "nn-checkin-read" });
+    r.createSpan({ text: "Or switch to reading: " });
+    r.createEl("button", { cls: "nn-checkin-place", text: placeName(s.readingNote) }).addEventListener("click", () => openPlace(plugin, s.readingNote));
+  }
 }
