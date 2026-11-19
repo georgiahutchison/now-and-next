@@ -216,3 +216,11 @@
 .nn-later[open] > summary { margin-bottom: var(--size-4-2); }
 .nn-later .nn-panel-hint { margin-bottom: var(--size-4-2); }
 .nn-later.is-drop-target { outline: 2px dashed var(--interactive-accent); outline-offset: 2px; }
+
+/* breathing room: triage hint, Later, sections */
+.nn-root { gap: var(--size-4-5); }
+.nn-matrix + .nn-panel-hint { margin-top: var(--size-4-3); }
+.nn-matrix-list { padding: 2px 2px var(--size-4-2); }
+.nn-later { margin-top: var(--size-4-3); padding-top: var(--size-4-4); }
+.nn-later > summary { padding: var(--size-4-2) 0; }
+.nn-panel { padding-top: var(--size-4-4); gap: var(--size-4-3); }
