@@ -501,7 +501,7 @@
 .nn-gantt-wrap { display: flex; flex-direction: column; gap: var(--size-4-2); }
 .nn-gantt-nav { flex-wrap: wrap; }
 .nn-gantt { overflow-x: auto; padding-bottom: var(--size-4-2); }
-.nn-gantt-row { display: grid; align-items: center; min-height: 26px; width: max-content; min-width: 100%; }
+.nn-gantt-row { display: grid; align-items: center; min-height: 26px; width: 100%; min-width: max-content; }
 .nn-gantt-row.nn-gantt-goal { border-top: 1px solid var(--background-modifier-border); min-height: 30px; }
 .nn-gantt-label { grid-column: 1; position: sticky; left: 0; z-index: 3; background: var(--background-primary); padding-right: var(--size-4-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: var(--font-ui-small); }
 .nn-gantt-goal .nn-goal-name { cursor: var(--cursor); }

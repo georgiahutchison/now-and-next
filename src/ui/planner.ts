@@ -582,7 +582,7 @@ export class PlannerView extends ItemView {
     const days = dayRange(from, addDays(from, weeks * 7 - 1));
     const last = days[days.length - 1];
     const col = (d: string) => 2 + daysBetween(from, d);
-    const cols = `minmax(9em, 14em) repeat(${days.length}, 20px)`;
+    const cols = `minmax(12em, 18em) repeat(${days.length}, minmax(18px, 1fr))`;
 
     const wrap = body.createDiv({ cls: "nn-gantt-wrap" });
     const nav = wrap.createDiv({ cls: "nn-nav nn-gantt-nav" });
@@ -624,7 +624,7 @@ export class PlannerView extends ItemView {
       const open = this.ganttOpen.has(key);
       const name = label.createSpan({ cls: "nn-goal-name", text: `${open ? "▾" : "▸"} ◆ ${goal.name}` });
       name.addEventListener("click", () => { if (open) this.ganttOpen.delete(key); else this.ganttOpen.add(key); this.render(); });
-      label.createSpan({ cls: "nn-goal-when", text: ` ${n.done} of ${n.total}${sp.undated.length ? ` · ${sp.undated.length} not on a day` : ""}` });
+      label.createSpan({ cls: "nn-goal-when", text: ` ${n.done} of ${n.total}${sp.undated.length ? ` · ${sp.undated.length} no day` : ""}` });
       backdrop(r);
       // The bar, clipped to the days shown.
       const a = sp.start < from ? from : sp.start;
