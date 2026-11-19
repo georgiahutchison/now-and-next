@@ -90,13 +90,11 @@ export function renderTask(plugin: NowAndNextPlugin, parent: HTMLElement, t: VTa
   if (!isDone(t) && t.status !== "-") {
     const drop = actions.createSpan({ cls: "nn-more nn-drop clickable-icon" });
     setIcon(drop, "x");
-    drop.setAttr("aria-label", "Drop this task (you can undo)");
     drop.addEventListener("click", (e) => { e.stopPropagation(); void a.drop(t); });
   }
 
   const more = actions.createSpan({ cls: "nn-more clickable-icon" });
   setIcon(more, "more-horizontal");
-  more.setAttr("aria-label", "Task options");
   more.addEventListener("click", (e) => { e.stopPropagation(); a.menu(t, e); });
   row.addEventListener("contextmenu", (e) => { e.preventDefault(); a.menu(t, e); });
 

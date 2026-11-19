@@ -199,3 +199,9 @@
 .nn-root .nn-seg { height: var(--nn-pill-h); padding: 2px; gap: 2px; border-radius: 999px; }
 .nn-root .nn-seg button { height: calc(var(--nn-pill-h) - 4px); min-height: 0; padding: 0 var(--size-4-3); }
 .nn-root .nn-btn-icon svg { width: 14px; height: 14px; }
+
+/* hover actions: two plain icons, no box */
+.nn-root .nn-actions { background: none; box-shadow: none; padding: 0; gap: 0; }
+.nn-root .nn-more, .nn-root .nn-more.clickable-icon { background: none !important; box-shadow: none; padding: 2px 3px; color: var(--text-faint); }
+.nn-root .nn-more:hover { color: var(--text-normal); }
+.nn-root .nn-drop:hover { color: var(--text-normal); }
