@@ -57,13 +57,11 @@ export function renderTask(plugin: NowAndNextPlugin, parent: HTMLElement, t: VTa
   cb.addEventListener("click", (e) => { e.stopPropagation(); void a.toggleDone(t); });
 
   const text = line.createSpan({ cls: "nn-task-text" });
-  // Faint "Project / Area – " before the wording; the area is left out inside its own tab.
-  // The daily notes' own area (Diary) is where things are captured, so it isn't worth a label.
-  const area = t.project && t.project !== opts.hideProject && t.project !== plugin.store.dailyArea()
+  // A faint "Area – " before the wording (Settings: Show area on cards). Left out inside the area's own tab,
+  // and for the daily notes' own area (Diary), where things are captured.
+  const area = plugin.settings.showAreaOnCards && t.project && t.project !== opts.hideProject && t.project !== plugin.store.dailyArea()
     ? t.project.charAt(0).toUpperCase() + t.project.slice(1) : null;
-  // In narrow places (the sidebar) one label is enough: the project, else the area.
-  const prefix = opts.shortLabel ? (t.projectNote ?? area ?? "") : [t.projectNote, area].filter(Boolean).join(" / ");
-  if (prefix) text.createSpan({ cls: "nn-prefix", text: `${prefix} – ` });
+  if (area) text.createSpan({ cls: "nn-prefix", text: `${area} – ` });
   text.appendText(t.text || "(empty task)");
   // A single click opens the note; a double-click edits the wording here instead.
   let clickTimer: number | null = null;
@@ -105,7 +103,7 @@ export function renderTask(plugin: NowAndNextPlugin, parent: HTMLElement, t: VTa
       c.setAttr("aria-label", `Priority: ${t.priority}`);
     }
     if (t.eventLink) chips.createSpan({ cls: "nn-chip nn-event-chip", text: `${t.eventLink.kind} ${t.eventLink.title}` });
-    if (t.energy && plugin.on("energy")) {
+    if (t.energy && plugin.on("energy") && plugin.settings.showSpoonsOnCards) {
       const c = chips.createSpan({ cls: `nn-chip nn-energy nn-energy-${t.energy}`, text: ENERGY_EMOJI[t.energy] });
       c.setAttr("aria-label", `${{ low: "Low", mid: "Medium", high: "High" }[t.energy]} energy`);
     }

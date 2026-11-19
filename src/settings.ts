@@ -52,6 +52,10 @@ export interface NowAndNextSettings {
   goTo: string[];
   readingNote: string;
   lastCheckIn: { date: string; level: "low" | "mid" | "high" | "skip" } | null;
+  /** "Area – " before each task on its card. */
+  showAreaOnCards: boolean;
+  /** The task's spoons (energy) on its card. */
+  showSpoonsOnCards: boolean;
 }
 
 export interface CalendarLink { name: string; url: string }
@@ -80,6 +84,8 @@ export const DEFAULT_SETTINGS: NowAndNextSettings = {
   goTo: [],
   readingNote: "",
   lastCheckIn: null,
+  showAreaOnCards: true,
+  showSpoonsOnCards: true,
 };
 
 export class NowAndNextSettingTab extends PluginSettingTab {
@@ -96,6 +102,10 @@ export class NowAndNextSettingTab extends PluginSettingTab {
     new Setting(containerEl).setName("Areas folder")
       .setDesc("Each subfolder is an area and gets a tab. Follows the folder if you rename or move it. A tag with the same name (for example #health) also counts.")
       .addText((t) => t.setValue(s.projectsFolder).onChange(async (v) => { s.projectsFolder = v.trim(); await save(); }));
+
+    new Setting(containerEl).setName("Show area on cards")
+      .setDesc("A faint area name before each task, for example \"Health – Book dentist\". Not shown inside the area's own tab.")
+      .addToggle((t) => t.setValue(s.showAreaOnCards).onChange(async (v) => { s.showAreaOnCards = v; await save(); }));
 
     new Setting(containerEl).setName("Only these folders")
       .setDesc("One per line. When filled in, the planner reads tasks only from these folders or notes. Leave empty for the whole vault.")

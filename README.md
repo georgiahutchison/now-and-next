@@ -16,7 +16,7 @@ Your tasks stay where they are: ordinary Tasks lines in your notes. Now & Next i
 - **Today in the sidebar.** A compact Today view sits in the left sidebar next to Files, Search and Bookmarks. The ribbon icon opens the full planner.
 - **Calendar events.** Events from Google Calendar, Outlook or any other calendar with an ICS link show faintly at the top of each day in Plan, and as a count in Month. They are read-only: no checkbox, no dragging. See Calendars below.
 - **Task menu.** The `…` button or a right-click on a task opens a menu: move it between days, set a deadline, move it to Later, set it to repeat (daily, weekdays, weekly, fortnightly, monthly, yearly or your own rule), and set priority, energy and an estimate.
-- **Project and area on each task.** Cards read `Project / Area – task`, faintly. The project is the first `[[link]]` in the task, or else the note the task is in (daily notes don't count). The area is left out inside its own tab. Plain bullets under a task stay in the note and are not shown on cards.
+- **Area on each task.** Cards read `Area – task`, faintly; switch it off in Settings (Show area on cards). The area is left out inside its own tab. The eye beside Energy shows or hides the spoons on cards. Plain bullets under a task stay in the note and are not shown on cards.
 
 Ticking a task goes through the Tasks plugin, so done dates and repeating tasks behave exactly as they do in Tasks itself.
 

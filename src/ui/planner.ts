@@ -459,6 +459,13 @@ export class PlannerView extends ItemView {
     const s = this.plugin.settings;
     const seg = bar.createDiv({ cls: "nn-seg nn-energy-filter nn-spoons" });
     seg.createSpan({ cls: "nn-seg-label", text: "Energy" });
+    // Show or hide the spoons on task cards; the filter and the drag targets work either way.
+    const shown = s.showSpoonsOnCards;
+    const eye = iconBtn(seg, shown ? "eye" : "eye-off", shown ? "Hide spoons on cards" : "Show spoons on cards", async () => {
+      s.showSpoonsOnCards = !s.showSpoonsOnCards;
+      await this.plugin.saveSettings();
+    });
+    eye.addClass("nn-spoon-eye");
     const opts: [EnergyFilter, string, string][] = [
       ["all", "Any", "Any energy"], ["low", ENERGY_EMOJI.low, "Low energy"], ["mid", ENERGY_EMOJI.mid, "Medium energy"], ["high", ENERGY_EMOJI.high, "High energy"],
     ];
