@@ -37,6 +37,10 @@ Each support can be switched on or off in **Settings → Now & Next → Supports
 | First tiny step | A task with no sub-tasks that has sat for a while gets a "first step?" prompt. Your answer is added as an indented task under it. |
 | Waiting-on status | Mark a task as waiting on someone (`[w]`). It leaves the day's list for a separate "Waiting on others" strip. |
 
+## Now and Next note
+
+Set **Settings → Now & Next → Now and Next note** to a note path (for example `Now and Next.md`) and the plugin keeps that note holding today's Now and Next from Focus, with the date. A phone shortcut or widget can read it. Leave the setting empty to switch it off.
+
 ## Task format
 
 Now & Next reads and writes the Tasks plugin's emoji format. Everything it adds is plain text you can also type by hand.

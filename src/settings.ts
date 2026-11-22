@@ -35,6 +35,8 @@ export interface NowAndNextSettings {
   showWeekend: boolean;
   defaultZoom: Zoom;
   ideasNote: string;
+  /** A note kept up to date with today's Now and Next from Focus ("" = off). */
+  nowNextNote: string;
   energyFilter: Energy | "all";
   sortBy: SortMode;
   /** Manual order of tasks per day (YYYY-MM-DD -> note|wording ids). */
@@ -72,6 +74,7 @@ export const DEFAULT_SETTINGS: NowAndNextSettings = {
   showWeekend: false,
   defaultZoom: "week",
   ideasNote: "Now & Next ideas.md",
+  nowNextNote: "",
   energyFilter: "all",
   sortBy: "priority",
   order: {},
@@ -201,5 +204,9 @@ export class NowAndNextSettingTab extends PluginSettingTab {
     new Setting(containerEl).setName("Ideas note")
       .setDesc("Where 'Add a plugin idea' writes. Created if missing.")
       .addText((t) => t.setValue(s.ideasNote).onChange(async (v) => { s.ideasNote = v.trim(); await save(); }));
+
+    new Setting(containerEl).setName("Now and Next note")
+      .setDesc("A note that always holds today's Now and Next from Focus, for a phone shortcut or widget to read. Leave empty to switch it off.")
+      .addText((t) => t.setPlaceholder("Now and Next.md").setValue(s.nowNextNote).onChange(async (v) => { s.nowNextNote = v.trim(); await save(); }));
   }
 }

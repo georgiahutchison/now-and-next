@@ -1,4 +1,4 @@
-import { Notice, Plugin, TFolder, WorkspaceLeaf } from "obsidian";
+import { Notice, Plugin, TFile, TFolder, WorkspaceLeaf, debounce, normalizePath } from "obsidian";
 import { DEFAULT_SETTINGS, NowAndNextSettings, NowAndNextSettingTab, SupportKey } from "./settings";
 import { TaskStore, appendToFile, dailyNotePath, setEventResolver } from "./store";
 import { Actions } from "./actions";
@@ -11,6 +11,8 @@ import { KeyModal } from "./ui/key";
 import { Timer } from "./timer";
 import { CalendarStore } from "./calendarStore";
 import { linkedDay } from "./calendar";
+import { focusQueue } from "./queries";
+import { nowNextText } from "./nowNote";
 
 export default class NowAndNextPlugin extends Plugin {
   settings!: NowAndNextSettings;
@@ -56,6 +58,10 @@ export default class NowAndNextPlugin extends Plugin {
 
     this.app.workspace.onLayoutReady(async () => {
       await this.store.init();
+      this.registerEvent(this.store.on("changed", () => this.writeNowNextSoon()));
+      // A new day brings a new Now, even when nothing else changes.
+      this.registerInterval(window.setInterval(() => this.writeNowNextSoon(), 5 * 60_000));
+      this.writeNowNextSoon();
       await this.ensureSidebar(false);
       void this.calendars.init();
     });
@@ -140,6 +146,32 @@ export default class NowAndNextPlugin extends Plugin {
       delete (window as any).__nowAndNextReloading;
     }
     new Notice("Now & Next refreshed", 1500);
+  }
+
+  // ---------- Now and Next note ----------
+
+  writeNowNextSoon = debounce(() => void this.writeNowNext(), 500, true);
+
+  /** Keep the Now and Next note in step with Focus. Writes only when the text changes. */
+  async writeNowNext() {
+    const setting = this.settings.nowNextNote.trim();
+    if (!setting || !this.on("focus")) return;
+    const path = normalizePath(setting.endsWith(".md") ? setting : `${setting}.md`);
+    const planner = this.app.workspace.getLeavesOfType(PLANNER_VIEW)[0]?.view;
+    const skipped = planner instanceof PlannerView ? planner.skipped : [];
+    const filter = this.on("energy") ? this.settings.energyFilter : "all";
+    const today = localToday();
+    const [now, next] = focusQueue(this.store.tasks, today, filter, skipped);
+    const text = nowNextText(today, now?.text, next?.text);
+    const { vault } = this.app;
+    const file = vault.getAbstractFileByPath(path);
+    if (file instanceof TFile) {
+      if ((await vault.read(file)) !== text) await vault.modify(file, text);
+      return;
+    }
+    const dir = path.split("/").slice(0, -1).join("/");
+    if (dir && !vault.getAbstractFileByPath(dir)) await vault.createFolder(dir);
+    await vault.create(path, text);
   }
 
   // ---------- daily note + capture ----------

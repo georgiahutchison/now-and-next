@@ -17,6 +17,24 @@ export function openOn(tasks: VTask[], day: string, f: EnergyFilter): VTask[] {
   return tasks.filter((t) => isOpen(t) && planDate(t) === day && standsAlone(t) && energyOk(t, f)).sort(byPriority);
 }
 
+/** Today's Focus queue: each sub-task just before its parent, tasks set aside with "Not now" last. */
+export function focusQueue(tasks: VTask[], today: string, f: EnergyFilter, skipped: string[] = []): VTask[] {
+  const all = stepsFirst(openOn(tasks, today, f));
+  return [...all.filter((t) => !skipped.includes(t.key)), ...all.filter((t) => skipped.includes(t.key))];
+}
+
+/** Put each sub-task straight before its parent when both are in the list; everything else keeps its order. */
+function stepsFirst(list: VTask[]): VTask[] {
+  const out = [...list];
+  for (const t of list) {
+    if (!t.parent) continue;
+    const pi = out.indexOf(t.parent);
+    const ci = out.indexOf(t);
+    if (pi >= 0 && ci > pi) { out.splice(ci, 1); out.splice(pi, 0, t); }
+  }
+  return out;
+}
+
 export function doneOn(tasks: VTask[], day: string): VTask[] {
   return tasks.filter((t) => isDone(t) && t.done === day);
 }

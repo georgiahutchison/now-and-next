@@ -5,7 +5,7 @@ import { Goal, goals, numbers, isMilestone, isOpenStatus, daysLeftLabel, GoalNum
 import { VTask, planDate } from "../store";
 import { applyOrder, placeBefore, moveExtrasOn } from "../order";
 import {
-  openOn, doneOn, overdue, waiting, inProject, inbox, estimateTotal, hm, EnergyFilter, sortTasks, SORT_LABELS, SortMode,
+  openOn, focusQueue, doneOn, overdue, waiting, inProject, inbox, estimateTotal, hm, EnergyFilter, sortTasks, SORT_LABELS, SortMode,
   later, routines, isImportant, isUrgent, matrixTasks,
 } from "../queries";
 import { renderList, renderTask, dropZone, captureBox, carryOverTray, dayLine, shortDate, DRAG_TYPE, AREA_DRAG_TYPE, ENERGY_DRAG_TYPE } from "./render";
@@ -23,7 +23,8 @@ export class PlannerView extends ItemView {
   zoom: Zoom;
   anchor = localToday();
   tab = "";
-  private skipped: string[] = [];
+  /** Tasks set aside with "Not now" in Focus; they go to the end of the queue. */
+  skipped: string[] = [];
   private beforeFocus: Zoom = "week";
   /** Area shown in Triage ("" = all). */
   private triageArea = "";
@@ -76,6 +77,7 @@ export class PlannerView extends ItemView {
     this.zoom = z;
     this.skipped = [];
     this.render();
+    this.plugin.writeNowNextSoon();
   }
 
   setFocus(on: boolean) {
@@ -804,8 +806,7 @@ export class PlannerView extends ItemView {
   private renderFocus(root: HTMLElement) {
     const today = localToday();
     // A first step comes just before the task it belongs to, so it is the one shown as Now.
-    const all = stepsFirst(openOn(this.plugin.store.tasks, today, this.filter));
-    const queue = [...all.filter((t) => !this.skipped.includes(t.key)), ...all.filter((t) => this.skipped.includes(t.key))];
+    const queue = focusQueue(this.plugin.store.tasks, today, this.filter, this.skipped);
     const wrap = root.createDiv({ cls: "nn-focus" });
 
     if (!queue.length) {
@@ -827,7 +828,7 @@ export class PlannerView extends ItemView {
     b("Done", () => this.plugin.actions.toggleDone(now), true);
     if (this.plugin.on("timer")) b(`Timer ${this.plugin.settings.timerMinutes} min`, () => this.plugin.timer.start(now.text));
     if (this.plugin.on("firstStep")) b("First step…", () => this.plugin.actions.promptFirstStep(now));
-    b("Not now", () => { this.skipped.push(now.key); this.render(); });
+    b("Not now", () => { this.skipped.push(now.key); this.render(); this.plugin.writeNowNextSoon(); });
     if (next) {
       wrap.createDiv({ cls: "nn-focus-label", text: "Next" });
       wrap.createDiv({ cls: "nn-focus-next", text: next.text });
@@ -856,16 +857,4 @@ function textBtn(parent: HTMLElement, icon: string, label: string, fn: () => unk
 function cap(s: string) { return areaLabel(s); }
 function toStr(d: Date) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-}
-
-/** Put each sub-task straight before its parent when both are in the list; everything else keeps its order. */
-function stepsFirst(list: VTask[]): VTask[] {
-  const out = [...list];
-  for (const t of list) {
-    if (!t.parent) continue;
-    const pi = out.indexOf(t.parent);
-    const ci = out.indexOf(t);
-    if (pi >= 0 && ci > pi) { out.splice(ci, 1); out.splice(pi, 0, t); }
-  }
-  return out;
 }
