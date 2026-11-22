@@ -897,10 +897,14 @@ export class PlannerView extends ItemView {
     if (this.plugin.on("firstStep")) b("First step…", () => this.plugin.actions.promptFirstStep(now));
     b("Not now", () => { this.skipped.push(now.key); this.render(); this.plugin.writeNowNextSoon(); });
     if (next) {
+      // Up to three tasks after Now; the first is next, the others fainter.
       wrap.createDiv({ cls: "nn-focus-label", text: "Next" });
-      wrap.createDiv({ cls: "nn-focus-next", text: next.text });
+      queue.slice(1, 4).forEach((t, i) => {
+        const el = wrap.createDiv({ cls: `nn-focus-next${i ? " is-later" : ""}`, text: t.text });
+        el.addEventListener("click", () => void this.plugin.actions.open(t));
+      });
     }
-    if (queue.length > 2) wrap.createDiv({ cls: "nn-focus-sub", text: `and ${queue.length - 2} more after that` });
+    if (queue.length > 4) wrap.createDiv({ cls: "nn-focus-sub", text: `and ${queue.length - 4} more after that` });
   }
 }
 

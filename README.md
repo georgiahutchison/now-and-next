@@ -26,7 +26,7 @@ Each support can be switched on or off in **Settings → Now & Next → Supports
 
 | Support | What it does |
 |---|---|
-| Focus mode | The Focus view shows today only: one task as **Now**, the following one as **Next**. Done, Not now, a timer and a first-step prompt sit under the current task. |
+| Focus mode | The Focus view shows today only: one task as **Now**, then the next three under **Next** (the first one larger). Done, Not now, a timer and a first-step prompt sit under the current task. |
 | Daily cap | Set how many tasks you want on one day. A day over the cap says so quietly and offers to move the extras on to the next day. |
 | Carry-over tray | Unfinished tasks from past days wait in a "Carry over?" tray: move each to today, tomorrow or another day, put it back in its list, or let it go. With this off, they show on today instead. |
 | Quick capture | A capture box that drops a thought into today's daily note as a task, so ideas get parked without a context switch. |
