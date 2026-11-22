@@ -2,7 +2,7 @@ import { lutealStartsIn } from "../calendar";
 import { TFile, TFolder, normalizePath, setIcon } from "obsidian";
 import { areaLabel, formatMinutes, localToday, PRIORITY_EMOJI, ENERGY_EMOJI, addDays, type Energy } from "../tasks";
 import { VTask, isDone, isOpen, isWaiting, planDate } from "../store";
-import { needsFirstStep, isLater, isUrgent, isImportant } from "../queries";
+import { needsFirstStep, isLater, isUrgent, isImportant, blockersOf } from "../queries";
 import type NowAndNextPlugin from "../main";
 
 export const DRAG_TYPE = "text/x-now-and-next";
@@ -141,6 +141,15 @@ export function renderTask(plugin: NowAndNextPlugin, parent: HTMLElement, t: VTa
 
   // Detail bullets stay in the note; cards don't show them.
 
+  // Waiting on another task that is still open: faint, with the names of what it waits on.
+  if (!isDone(t)) {
+    const blockers = blockersOf(t, plugin.store.tasks);
+    if (blockers.length) {
+      row.addClass("is-blocked");
+      const names = blockers.map((b) => (b.text.length > 40 ? b.text.slice(0, 39).trimEnd() + "…" : b.text)).join(", ");
+      row.createDiv({ cls: "nn-waits-on", text: `Waits on: ${names}` });
+    }
+  }
   return row;
 }
 
@@ -196,7 +205,8 @@ export function dropZone(el: HTMLElement, plugin: NowAndNextPlugin, onDrop: (t: 
   });
 }
 
-export function captureBox(plugin: NowAndNextPlugin, parent: HTMLElement, opts: { placeholder?: string; scheduled?: string; tag?: string; lines?: number; fixed?: boolean } = {}) {
+/** `forId`: the new task counts toward that milestone; a function is called at save time (it may give the milestone a 🆔 first). */
+export function captureBox(plugin: NowAndNextPlugin, parent: HTMLElement, opts: { placeholder?: string; scheduled?: string; tag?: string; forId?: string | (() => Promise<string | undefined>); lines?: number; fixed?: boolean } = {}) {
   // The main capture box is a two-line text area; Enter saves, Shift+Enter is ignored (one task per capture).
   let host = parent;
   if (opts.lines && opts.lines > 1) {
@@ -223,7 +233,8 @@ export function captureBox(plugin: NowAndNextPlugin, parent: HTMLElement, opts: 
     const v = input.value.replace(/\s+/g, " ").trim();
     if (!v) return;
     input.value = "";
-    await plugin.capture(v, { scheduled: opts.scheduled, tag: opts.tag });
+    const forId = typeof opts.forId === "function" ? await opts.forId() : opts.forId;
+    await plugin.capture(v, { scheduled: opts.scheduled, tag: opts.tag, forId });
   });
   return input;
 }

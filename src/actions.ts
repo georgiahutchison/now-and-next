@@ -178,6 +178,13 @@ export class Actions {
   goals(): Goal<VTask>[] { return goals(this.plugin.store.tasks); }
 
   /** Count the task toward a milestone ([for:: id]). A milestone without a 🆔 gets one first. Its day is unchanged. */
+  /** The milestone's 🆔, giving it one from its wording first if it has none. */
+  async ensureId(g: Goal<VTask>): Promise<string | undefined> {
+    if (g.id) return g.id;
+    const id = makeId(g.task.text, this.plugin.store.tasks.map((x) => x.id ?? "").filter(Boolean));
+    return (await editTask(this.app, g.task, (l) => setId(l, id))) ? id : undefined;
+  }
+
   async toMilestone(t: VTask, g: Goal<VTask>) {
     if (isMilestone(t)) return;
     let id = g.id;

@@ -1,7 +1,7 @@
 import { Notice } from "obsidian";
 import { addDays, weekday } from "./tasks";
 import { VTask } from "./store";
-import { openOn, isImportant } from "./queries";
+import { openOn, isImportant, isBlocked } from "./queries";
 import { shortDate } from "./ui/render";
 import type NowAndNextPlugin from "./main";
 
@@ -59,7 +59,7 @@ export async function moveExtrasOn(plugin: NowAndNextPlugin, day: string, ordere
     let d = addDays(day, 1);
     for (let guard = 0; guard < 60; guard++, d = addDays(d, 1)) {
       if (!s.showWeekend && weekday(d) >= 5) continue;
-      const load = openOn(plugin.store.tasks, d, "all").length + (added.get(d) ?? 0);
+      const load = openOn(plugin.store.tasks, d, "all").filter((x) => !isBlocked(x, plugin.store.tasks)).length + (added.get(d) ?? 0);
       if (load < s.dailyCap) break;
     }
     added.set(d, (added.get(d) ?? 0) + 1);

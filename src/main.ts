@@ -183,7 +183,7 @@ export default class NowAndNextPlugin extends Plugin {
     return { folder: (o.folder ?? "").replace(/\/$/, ""), format: o.format || "YYYY-MM-DD", template: o.template ?? "" };
   }
 
-  async capture(text: string, opts: { scheduled?: string; tag?: string } = {}) {
+  async capture(text: string, opts: { scheduled?: string; tag?: string; forId?: string } = {}) {
     const o = this.dailyNoteOptions();
     const path = dailyNotePath(o.folder, o.format, localToday());
     await appendToFile(this.app, path, newTaskLine(text, opts), o.template || undefined);

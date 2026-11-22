@@ -24,6 +24,8 @@ export interface GoalTask {
   project: string | null;
   due?: string;
   id?: string;
+  /** ⛔: the 🆔s this task (or milestone) waits on. */
+  waitsOn?: string[];
   forId?: string;
   from?: { tags: string[]; places: string[] };
   estimateMin?: number;
@@ -57,9 +59,9 @@ export interface GoalNumbers {
   finished: boolean;
 }
 
-const OPEN = new Set([" ", "/", "w"]);
 const DONE = new Set(["x", "X"]);
-export const isOpenStatus = (s: string) => OPEN.has(s);
+/** Open: anything not done or cancelled (custom statuses such as "?" included). */
+export const isOpenStatus = (s: string) => !DONE.has(s) && s !== "-";
 export const isDoneStatus = (s: string) => DONE.has(s);
 
 export function isMilestone(t: { tags: string[] }): boolean {
@@ -213,4 +215,50 @@ export function dayRange(from: string, to: string): string[] {
     out.push(d.toISOString().slice(0, 10));
   }
   return out;
+}
+
+// ---------- order between milestones (⛔) ----------
+
+function plusDays(d: string, n: number): string {
+  const t = new Date(Date.UTC(+d.slice(0, 4), +d.slice(5, 7) - 1, +d.slice(8, 10) + n));
+  return t.toISOString().slice(0, 10);
+}
+
+/** The milestones in `list` that `g` waits on: ⛔ names their 🆔. */
+export function waitsOnGoals<T extends GoalTask>(g: Goal<T>, list: Goal<T>[]): Goal<T>[] {
+  const ids = (g.task.waitsOn ?? []).map((x) => x.toLowerCase());
+  return list.filter((o) => o !== g && o.id && ids.includes(o.id.toLowerCase()));
+}
+
+/** Each milestone after the ones it waits on; otherwise the order given. A loop (a waits on b, b on a) keeps the given order. */
+export function dependencyOrder<T extends GoalTask>(list: Goal<T>[]): Goal<T>[] {
+  const out: Goal<T>[] = [];
+  const placed = new Set<Goal<T>>();
+  const visiting = new Set<Goal<T>>();
+  const visit = (g: Goal<T>) => {
+    if (placed.has(g) || visiting.has(g)) return;
+    visiting.add(g);
+    for (const b of waitsOnGoals(g, list)) visit(b);
+    visiting.delete(g);
+    placed.add(g);
+    out.push(g);
+  };
+  for (const g of list) visit(g);
+  return out;
+}
+
+/**
+ * A goal with no date that waits on other milestones starts the day after the last of them ends,
+ * so the order shows on the timeline even without dates. Dated milestones keep their own span.
+ */
+export function chainSpans<T extends GoalTask>(list: Goal<T>[], spans: Map<Goal<T>, { start: string; end: string; openEnd: boolean }>) {
+  for (const g of dependencyOrder(list)) {
+    const sp = spans.get(g);
+    if (!sp || !sp.openEnd) continue;
+    const ends = waitsOnGoals(g, list).map((b) => spans.get(b)?.end).filter((x): x is string => !!x);
+    if (!ends.length) continue;
+    const after = plusDays(ends.sort()[ends.length - 1], 1);
+    if (sp.start < after) sp.start = after;
+    if (sp.end < sp.start) sp.end = sp.start;
+  }
 }

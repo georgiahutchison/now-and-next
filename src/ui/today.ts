@@ -2,7 +2,7 @@ import { Scope, ItemView, WorkspaceLeaf, setIcon } from "obsidian";
 import { localToday } from "../tasks";
 import { planDate } from "../store";
 import { applyOrder, placeBefore, moveExtrasOn } from "../order";
-import { openOn, doneOn, overdue, waiting } from "../queries";
+import { openOn, doneOn, overdue, waiting, isBlocked } from "../queries";
 import { renderList, captureBox, dropZone, dayLine } from "./render";
 import type NowAndNextPlugin from "../main";
 
@@ -68,14 +68,15 @@ export class TodayView extends ItemView {
     open = applyOrder(this.plugin, today, open);
     const capOn = this.plugin.on("dailyCap");
     const cap = this.plugin.settings.dailyCap;
+    const ready = open.filter((t) => !isBlocked(t, tasks));
     const sec = root.createDiv({ cls: "nn-side-section" });
     const h = sec.createDiv({ cls: "nn-side-h", text: "Today" });
-    if (capOn && open.length > cap) h.createSpan({ cls: "nn-day-meta", text: ` ${open.length}/${cap}` });
-    if (capOn && open.length > cap) {
+    if (capOn && ready.length > cap) h.createSpan({ cls: "nn-day-meta", text: ` ${ready.length}/${cap}` });
+    if (capOn && ready.length > cap) {
       const note = sec.createDiv({ cls: "nn-side-note" });
       note.setText("Over your cap. ");
       const b = note.createEl("button", { cls: "nn-over-btn", text: "Move extras on" });
-      b.addEventListener("click", () => void moveExtrasOn(this.plugin, today, open));
+      b.addEventListener("click", () => void moveExtrasOn(this.plugin, today, ready));
     }
     const list = sec.createDiv({ cls: "nn-day-list" });
     renderList(this.plugin, list, open, "Nothing planned for today.", {

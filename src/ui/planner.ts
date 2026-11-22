@@ -1,12 +1,14 @@
 import { ItemView, Scope, WorkspaceLeaf, setIcon } from "obsidian";
 import { addDays, areaLabel, daysBetween, localToday, mondayOf, formatMinutes, tagFor, ENERGY_EMOJI, PRIORITY_RANK } from "../tasks";
 import { habits, monthSpan } from "../habits";
-import { Goal, goals, numbers, isMilestone, isOpenStatus, daysLeftLabel, GoalNumbers, span, dayRange } from "../goals";
-import { VTask, planDate } from "../store";
+import { Goal, goals, numbers, isMilestone, isOpenStatus, daysLeftLabel, GoalNumbers, span, dayRange, dependencyOrder, chainSpans, waitsOnGoals } from "../goals";
+import { VTask, planDate, isOpen } from "../store";
 import { applyOrder, placeBefore, moveExtrasOn } from "../order";
 import {
   openOn, focusQueue, doneOn, overdue, waiting, inProject, inbox, estimateTotal, hm, EnergyFilter, sortTasks, SORT_LABELS, SortMode,
   later, routines, isImportant, isUrgent, matrixTasks,
+  isBlocked,
+  isLater, isRoutine, energyOk,
 } from "../queries";
 import { renderList, renderTask, dropZone, captureBox, carryOverTray, dayLine, shortDate, DRAG_TYPE, AREA_DRAG_TYPE, ENERGY_DRAG_TYPE } from "./render";
 import type NowAndNextPlugin from "../main";
@@ -23,6 +25,8 @@ export class PlannerView extends ItemView {
   zoom: Zoom;
   anchor = localToday();
   tab = "";
+  /** The milestone tab chosen in the row under Plan (a milestone task key, or "none"). */
+  private msTab = "";
   /** Tasks set aside with "Not now" in Focus; they go to the end of the queue. */
   skipped: string[] = [];
   private beforeFocus: Zoom = "week";
@@ -239,10 +243,7 @@ export class PlannerView extends ItemView {
     const isStrip = !wide && pastAsStrip && day < today;
     const cyc = isStrip ? null : this.plugin.calendars.cycleOn(day);
     if (cyc) head.createDiv({ cls: `nn-cycle nn-cycle-${cyc.phase}`, text: `Cycle day ${cyc.day} · ${cyc.phase}` });
-    for (const g of this.dueOn(day)) {
-      const mk = head.createDiv({ cls: "nn-milestone-mark", text: `◆ ${g.name}`, attr: { "aria-label": g.task.text } });
-      mk.addEventListener("click", (e) => { e.stopPropagation(); this.setView("goals"); });
-    }
+    this.milestoneMarks(head, day);
 
     let open = openOn(tasks, day, this.filter);
     // With carry-over off, unfinished tasks from past days sit on today.
@@ -251,16 +252,18 @@ export class PlannerView extends ItemView {
     // Highest priority at the top; your drag order holds within each priority.
     open = open.map((t, i) => ({ t, i })).sort((a, b) => PRIORITY_RANK[a.t.priority] - PRIORITY_RANK[b.t.priority] || a.i - b.i).map((x) => x.t);
     const done = doneOn(tasks, day);
+    // Tasks still waiting on another open task don't count toward the cap or the estimate.
+    const ready = open.filter((t) => !isBlocked(t, tasks));
     const capOn = this.plugin.on("dailyCap");
-    const over = capOn && open.length > s.dailyCap;
-    const est = this.plugin.on("estimates") ? estimateTotal(open) : 0;
+    const over = capOn && ready.length > s.dailyCap;
+    const est = this.plugin.on("estimates") ? estimateTotal(ready) : 0;
     if (over || est) {
       const meta = head.createDiv({ cls: "nn-day-meta" });
       if (over) {
         col.addClass("is-over");
-        meta.createSpan({ text: `${open.length} of ${s.dailyCap} ·` });
+        meta.createSpan({ text: `${ready.length} of ${s.dailyCap} ·` });
         const btn = meta.createEl("button", { cls: "nn-over-btn", text: "Move extras on" });
-        btn.addEventListener("click", () => void moveExtrasOn(this.plugin, day, open));
+        btn.addEventListener("click", () => void moveExtrasOn(this.plugin, day, ready));
       }
       if (est) {
         const avail = Math.max(0, hm(s.dayEnd) - hm(s.dayStart));
@@ -351,7 +354,7 @@ export class PlannerView extends ItemView {
         if (this.plugin.settings.cycle && dayEvents.some((e) => this.plugin.calendars.isCycleMarker(e))) {
           cell.querySelector(".nn-month-num")?.appendText(` ${this.plugin.settings.cycleMarker}`);
         }
-        for (const g of this.dueOn(day)) cell.createDiv({ cls: "nn-milestone-mark", text: `◆ ${g.name}`, attr: { "aria-label": g.task.text } });
+        this.milestoneMarks(cell, day);
         if (nEvents) cell.createDiv({ cls: "nn-month-events", text: `${nEvents} ${nEvents === 1 ? "event" : "events"}` });
         const open = openOn(tasks, day, this.filter);
         for (const t of open.slice(0, 3)) {
@@ -361,7 +364,7 @@ export class PlannerView extends ItemView {
           r.addEventListener("click", (e) => { e.stopPropagation(); void this.plugin.actions.open(t); });
         }
         if (open.length > 3) cell.createDiv({ cls: "nn-month-more", text: `+${open.length - 3} more` });
-        if (this.plugin.on("dailyCap") && open.length > this.plugin.settings.dailyCap) cell.addClass("is-over");
+        if (this.plugin.on("dailyCap") && open.filter((t) => !isBlocked(t, tasks)).length > this.plugin.settings.dailyCap) cell.addClass("is-over");
         cell.addEventListener("click", () => { this.anchor = day; this.zoom = "day"; this.render(); });
         dropZone(cell, this.plugin, (t) => this.plugin.actions.schedule(t, day));
         cur = addDays(cur, 1);
@@ -378,6 +381,7 @@ export class PlannerView extends ItemView {
   }
 
   private renderTabs(root: HTMLElement) {
+    if (this.plugin.settings.bottomRow === "milestones") { this.renderMilestoneTabs(root); return; }
     const store = this.plugin.store;
     const tasks = store.tasks;
     const projects = store.projects();
@@ -493,14 +497,63 @@ export class PlannerView extends ItemView {
     }
   }
 
+  /**
+   * The row under Plan as milestones: one tab per open milestone, then "No milestone".
+   * A tab lists its open tasks with no day yet; its add-task box adds tasks toward it; dropping a task on a tab moves it there.
+   */
+  private renderMilestoneTabs(root: HTMLElement) {
+    const tasks = this.plugin.store.tasks;
+    const list = dependencyOrder(this.goalList().filter((g) => isOpenStatus(g.task.status)));
+    const pool = tasks.filter((t) => isOpen(t) && !planDate(t) && !isLater(t) && !isRoutine(t) && !isMilestone(t) && energyOk(t, this.filter));
+    const attached = new Set(list.flatMap((g) => g.members.map((t) => t.key)));
+    const keyOf = (g: Goal<VTask> | null) => (g ? g.task.key : "none");
+    if (this.msTab !== "none" && !list.some((g) => g.task.key === this.msTab)) this.msTab = list[0] ? keyOf(list[0]) : "none";
+    const panel = root.createDiv({ cls: "nn-panel" });
+    const bar = panel.createDiv({ cls: "nn-tabs" });
+    bar.createSpan({ cls: "nn-tabs-label", text: "Milestones" });
+    const tab = (g: Goal<VTask> | null, label: string, items: VTask[]) => {
+      const b = bar.createEl("button", { cls: "nn-tab" });
+      b.createSpan({ text: label });
+      if (items.length) b.createSpan({ cls: "nn-tab-count", text: String(items.length) });
+      if (keyOf(g) === this.msTab) b.addClass("is-active");
+      b.addEventListener("click", () => { this.msTab = keyOf(g); this.render(); });
+      dropZone(b, this.plugin, (t) => (g ? this.plugin.actions.toMilestone(t, g) : this.plugin.actions.fromMilestone(t)));
+      return items;
+    };
+    const lists = new Map<string, VTask[]>();
+    for (const g of list) lists.set(keyOf(g), tab(g, `◆ ${g.name}`, pool.filter((t) => g.members.includes(t))));
+    lists.set("none", tab(null, "No milestone", pool.filter((t) => !attached.has(t.key))));
+    this.spoons(bar);
+    const current = list.find((g) => keyOf(g) === this.msTab) ?? null;
+    panel.createDiv({ cls: "nn-panel-hint", text: current
+      ? `Tasks toward ◆ ${current.name} with no day yet. Drag one onto a day, or onto another milestone.`
+      : "Open tasks with no day that count toward no milestone. Drag one onto a milestone tab to count it there." });
+    captureBox(this.plugin, panel, current
+      ? { lines: 2, placeholder: `Add task toward ◆ ${current.name} (saved in today's daily note)`, forId: () => this.plugin.actions.ensureId(current) }
+      : { lines: 2 });
+    const box = panel.createDiv({ cls: "nn-panel-list" });
+    renderList(this.plugin, box, sortTasks(lists.get(this.msTab) ?? [], this.plugin.settings.sortBy), "Nothing here.");
+  }
+
   // ---------- goals and milestones ----------
 
   private goalList(): Goal<VTask>[] { return goals(this.plugin.store.tasks); }
   private nums(g: Goal<VTask>): GoalNumbers { return numbers(g, localToday(), (t) => !!planDate(t)); }
 
-  /** Open milestones whose 📅 date is this day. */
-  private dueOn(day: string): Goal<VTask>[] {
-    return this.goalList().filter((g) => g.due === day && isOpenStatus(g.task.status));
+  /**
+   * The ◆ lines for a day: an open dated milestone on its 📅 day, and on its ⏳ day too when that is earlier ("target").
+   * Click opens the milestone in its note; right-click gives the task menu (to tick it, for example).
+   */
+  private milestoneMarks(parent: HTMLElement, day: string) {
+    for (const g of this.goalList()) {
+      if (!g.due || !isOpenStatus(g.task.status)) continue;
+      const target = g.task.scheduled && g.task.scheduled !== g.due ? g.task.scheduled : undefined;
+      const label = g.due === day ? `◆ ${g.name}` : target === day ? `◆ ${g.name} · target` : null;
+      if (!label) continue;
+      const mk = parent.createDiv({ cls: "nn-milestone-mark", text: label, attr: { "aria-label": g.task.text } });
+      mk.addEventListener("click", (e) => { e.stopPropagation(); void this.plugin.actions.open(g.task); });
+      mk.addEventListener("contextmenu", (e) => { e.preventDefault(); e.stopPropagation(); this.plugin.actions.menu(g.task, e); });
+    }
   }
 
   /** A thin bar: done of total. */
@@ -570,7 +623,9 @@ export class PlannerView extends ItemView {
    */
   private renderGantt(body: HTMLElement, list: Goal<VTask>[]) {
     const today = localToday();
+    list = dependencyOrder(list);
     const spans = new Map(list.map((g) => [g, span(g, today, (t) => planDate(t))]));
+    chainSpans(list, spans);
     const from = this.ganttFrom;
     // At least four weeks; on to the latest end, to whole weeks, at most 26 weeks.
     const latest = [...spans.values()].reduce((m, x) => (x.end > m ? x.end : m), addDays(from, 27));
@@ -621,7 +676,17 @@ export class PlannerView extends ItemView {
       const name = label.createSpan({ cls: "nn-goal-name", text: `${open ? "▾" : "▸"} ◆ ${goal.name}` });
       name.addEventListener("click", () => { if (open) this.ganttOpen.delete(key); else this.ganttOpen.add(key); this.render(); });
       label.createSpan({ cls: "nn-goal-when", text: ` ${n.done} of ${n.total}${sp.undated.length ? ` · ${sp.undated.length} no day` : ""}` });
+      const before = waitsOnGoals(goal, list);
+      if (before.length) label.createDiv({ cls: "nn-goal-after", text: `after ◆ ${before.map((b) => b.name).join(", ◆ ")}` });
       backdrop(r);
+      // A thin line from the end of each milestone this one waits on to the start of its own bar.
+      for (const b of before) {
+        const be = spans.get(b)?.end;
+        if (!be || be >= sp.start) continue;
+        const la = be < from ? from : be;
+        const lb = sp.start > last ? last : sp.start;
+        if (la <= lb && lb >= from) place(r, "nn-gantt-link", la, lb);
+      }
       // The bar, clipped to the days shown.
       const a = sp.start < from ? from : sp.start;
       const b = sp.end > last ? last : sp.end;

@@ -1,5 +1,21 @@
 import { addDays, daysBetween, Energy, localToday } from "./tasks";
 import { VTask, isOpen, isDone, isWaiting, planDate, byPriority } from "./store";
+import { idIndex, openBlockers } from "./depends";
+import { isMilestone } from "./goals";
+
+// The 🆔 index is rebuilt whenever the store builds a new task list.
+const indexCache = new WeakMap<VTask[], Map<string, VTask[]>>();
+/** The still-open tasks that `t` waits on (⛔), found among `tasks`. */
+export function blockersOf(t: VTask, tasks: VTask[]): VTask[] {
+  if (!t.waitsOn?.length) return [];
+  let ix = indexCache.get(tasks);
+  if (!ix) { ix = idIndex(tasks); indexCache.set(tasks, ix); }
+  return openBlockers(t, ix);
+}
+/** Waiting on another task that is still open. */
+export function isBlocked(t: VTask, tasks: VTask[]): boolean { return blockersOf(t, tasks).length > 0; }
+/** A #milestone with a 📅 date: shown as ◆ on its day, not as a task card. */
+export function isDatedMilestone(t: VTask): boolean { return !!t.due && isMilestone(t); }
 
 export type EnergyFilter = Energy | "all";
 
@@ -14,12 +30,13 @@ function standsAlone(_t: VTask) {
 }
 
 export function openOn(tasks: VTask[], day: string, f: EnergyFilter): VTask[] {
-  return tasks.filter((t) => isOpen(t) && planDate(t) === day && standsAlone(t) && energyOk(t, f)).sort(byPriority);
+  return tasks.filter((t) => isOpen(t) && planDate(t) === day && !isDatedMilestone(t) && standsAlone(t) && energyOk(t, f)).sort(byPriority);
 }
 
 /** Today's Focus queue: each sub-task just before its parent, tasks set aside with "Not now" last. */
 export function focusQueue(tasks: VTask[], today: string, f: EnergyFilter, skipped: string[] = []): VTask[] {
-  const all = stepsFirst(openOn(tasks, today, f));
+  // A task waiting on another open task is left out until that one is done.
+  const all = stepsFirst(openOn(tasks, today, f).filter((t) => !isBlocked(t, tasks)));
   return [...all.filter((t) => !skipped.includes(t.key)), ...all.filter((t) => skipped.includes(t.key))];
 }
 
@@ -42,7 +59,7 @@ export function doneOn(tasks: VTask[], day: string): VTask[] {
 export function overdue(tasks: VTask[], today: string, f: EnergyFilter): VTask[] {
   return tasks.filter((t) => {
     const d = planDate(t);
-    return isOpen(t) && d !== undefined && d < today && standsAlone(t) && energyOk(t, f);
+    return isOpen(t) && d !== undefined && d < today && !isDatedMilestone(t) && standsAlone(t) && energyOk(t, f);
   }).sort((a, b) => (planDate(a)! < planDate(b)! ? -1 : 1));
 }
 

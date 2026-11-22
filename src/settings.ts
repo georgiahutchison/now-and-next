@@ -26,6 +26,8 @@ export interface NowAndNextSettings {
   projectsFolder: string;
   excludeFolders: string[];
   /** When set, only tasks in these folders (or notes) are read. Empty: the whole vault. */
+  /** The row under Plan: area tabs, or one tab per open milestone. */
+  bottomRow: "areas" | "milestones";
   onlyFolders: string[];
   dailyCap: number;
   dayStart: string;
@@ -66,6 +68,7 @@ export const DEFAULT_SETTINGS: NowAndNextSettings = {
   projectsFolder: "domains",
   excludeFolders: ["systems/templates"],
   onlyFolders: [],
+  bottomRow: "areas",
   dailyCap: 5,
   dayStart: "09:00",
   dayEnd: "17:00",
@@ -109,6 +112,11 @@ export class NowAndNextSettingTab extends PluginSettingTab {
     new Setting(containerEl).setName("Show area on cards")
       .setDesc("A faint area name before each task, for example \"Health – Book dentist\". Not shown inside the area's own tab.")
       .addToggle((t) => t.setValue(s.showAreaOnCards).onChange(async (v) => { s.showAreaOnCards = v; await save(); }));
+
+    new Setting(containerEl).setName("Row under Plan")
+      .setDesc("Area tabs, or one tab per open milestone. A milestone tab lists its tasks that have no day yet, and its add-task box adds new tasks toward it.")
+      .addDropdown((d) => d.addOptions({ areas: "Areas", milestones: "Milestones" }).setValue(s.bottomRow)
+        .onChange(async (v) => { s.bottomRow = v as "areas" | "milestones"; await save(); }));
 
     new Setting(containerEl).setName("Only these folders")
       .setDesc("One per line. When filled in, the planner reads tasks only from these folders or notes. Leave empty for the whole vault.")

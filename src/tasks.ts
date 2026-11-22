@@ -42,6 +42,8 @@ const FOR_RE = /\[for::\s*([^\]]*?)\s*\]/u;
 /** [from:: #tag Area] on a milestone: the tags and areas whose tasks count toward it. */
 const FROM_RE = /\[from::\s*([^\]]*?)\s*\]/u;
 const ID_RE = /🆔\uFE0F? *([A-Za-z0-9_-]+)/u;
+/** Tasks' ⛔ field: the 🆔s this task waits on (a comma list). */
+const WAITS_RE = /⛔\uFE0F? *([A-Za-z0-9_,-]+)/u;
 
 export interface ParsedTask {
   indent: string;
@@ -66,6 +68,8 @@ export interface ParsedTask {
   link?: string;
   /** Tasks' 🆔 field: a milestone's short name. */
   id?: string;
+  /** ⛔: the 🆔s of the tasks this one waits on. */
+  waitsOn?: string[];
   /** [for:: id]: the milestone this task counts toward. */
   forId?: string;
   /** [from:: …] on a milestone: tags (without '#') and areas or folders whose tasks count toward it. */
@@ -105,6 +109,8 @@ export function parseTaskLine(line: string): ParsedTask | null {
 
   const idm = ID_RE.exec(body);
   if (idm) t.id = idm[1];
+  const wm = WAITS_RE.exec(body);
+  if (wm) { const ids = wm[1].split(",").map((x) => x.trim()).filter(Boolean); if (ids.length) t.waitsOn = ids; }
   const fm = FOR_RE.exec(body);
   if (fm && fm[1]) t.forId = fm[1];
   const frm = FROM_RE.exec(body);
@@ -309,9 +315,10 @@ export function addTag(line: string, tag: string): string {
   return tidy(appendToken(line, `#${clean}`));
 }
 
-export function newTaskLine(text: string, opts: { scheduled?: string; tag?: string; indent?: string } = {}): string {
+export function newTaskLine(text: string, opts: { scheduled?: string; tag?: string; indent?: string; forId?: string } = {}): string {
   let line = `${opts.indent ?? ""}- [ ] ${text.trim()}`;
   if (opts.tag) line = addTag(line, opts.tag);
+  if (opts.forId) line = setFor(line, opts.forId);
   if (opts.scheduled) line = setDate(line, "scheduled", opts.scheduled);
   return line;
 }

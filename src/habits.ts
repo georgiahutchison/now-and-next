@@ -4,7 +4,7 @@
 export interface HabitTask { text: string; recurrence?: string; status: string; done?: string; start?: string }
 export interface Habit<T extends HabitTask = HabitTask> { name: string; rule: string; days: Set<string>; open: T | null }
 
-const OPEN = new Set([" ", "/"]);
+const FINISHED = new Set(["x", "X", "-", "w"]);
 
 /**
  * One row per repeating task that is still running (it has an open copy not deferred past today).
@@ -19,7 +19,7 @@ export function habits<T extends HabitTask>(tasks: T[], today: string): Habit<T>
     let h = rows.get(key);
     if (!h) { h = { name, rule: t.recurrence.trim(), days: new Set(), open: null }; rows.set(key, h); }
     if (t.status.toLowerCase() === "x" && t.done) h.days.add(t.done);
-    if (OPEN.has(t.status) && !(t.start && t.start > today)) h.open = t;
+    if (!FINISHED.has(t.status) && !(t.start && t.start > today)) h.open = t;
   }
   return [...rows.values()].filter((h) => h.open).sort((a, b) => a.name.localeCompare(b.name));
 }

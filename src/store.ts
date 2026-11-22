@@ -15,12 +15,13 @@ export interface VTask extends FileTask {
   parent: VTask | null;
 }
 
-export const OPEN = new Set([" ", "/"]);
+
 export const DONE = new Set(["x", "X"]);
 export const WAITING = "w";
 export const CANCELLED = "-";
 
-export function isOpen(t: VTask) { return OPEN.has(t.status); }
+/** Open: anything not done, cancelled or waiting on someone, so custom statuses such as "?" still show. */
+export function isOpen(t: VTask) { return !DONE.has(t.status) && t.status !== CANCELLED && t.status !== WAITING; }
 export function isDone(t: VTask) { return DONE.has(t.status); }
 export function isWaiting(t: VTask) { return t.status === WAITING; }
 /** The day a task sits on: scheduled, else due. */
