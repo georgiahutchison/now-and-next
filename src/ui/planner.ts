@@ -7,7 +7,7 @@ import { applyOrder, placeBefore, moveExtrasOn } from "../order";
 import {
   openOn, focusQueue, doneOn, overdue, waiting, inProject, inbox, estimateTotal, hm, EnergyFilter, sortTasks, SORT_LABELS, SortMode,
   later, routines, isImportant, isUrgent, matrixTasks,
-  isBlocked,
+  isReady, undated,
   isLater, isRoutine, energyOk,
 } from "../queries";
 import { renderList, renderTask, dropZone, captureBox, carryOverTray, dayLine, shortDate, DRAG_TYPE, AREA_DRAG_TYPE, ENERGY_DRAG_TYPE } from "./render";
@@ -91,7 +91,29 @@ export class PlannerView extends ItemView {
 
   private get filter(): EnergyFilter { return this.plugin.on("energy") ? this.plugin.settings.energyFilter : "all"; }
 
+  /** Keys of the tasks in the chosen area or milestone (null: All). Worked out once per render. */
+  private inView: Set<string> | null | undefined;
+  /** Is the task in the area or milestone chosen in the row under Plan? All shows everything. */
+  private inScope(t: VTask): boolean {
+    if (this.inView === undefined) {
+      const tasks = this.plugin.store.tasks;
+      if (this.plugin.settings.bottomRow === "milestones") {
+        if (!this.msTab) this.inView = null;
+        else {
+          const list = this.goalList();
+          const g = list.find((x) => x.task.key === this.msTab);
+          const keys = g ? g.members.map((x) => x.key) : tasks.filter((x) => !list.some((y) => y.members.includes(x))).map((x) => x.key);
+          this.inView = new Set(keys);
+        }
+      } else {
+        this.inView = this.tab ? new Set(tasks.filter((x) => x.project === this.tab).map((x) => x.key)) : null;
+      }
+    }
+    return this.inView === null || this.inView.has(t.key);
+  }
+
   render() {
+    this.inView = undefined;
     const root = this.contentEl;
     root.empty();
     root.addClass("nn-root");
@@ -125,14 +147,6 @@ export class PlannerView extends ItemView {
     else if (this.zoom === "week") this.renderWeek(body);
     else if (this.zoom === "month") this.renderMonth(body);
     else this.renderMatrix(body);
-
-    // Waiting on others sits under the main panel, folded.
-    const w = waiting(tasks);
-    if (w.length) {
-      const d = root.createEl("details", { cls: "nn-waiting nn-waiting-below" });
-      d.createEl("summary", { text: `Waiting on others (${w.length})` });
-      renderList(this.plugin, d, w, "", { showDate: true });
-    }
 
     // Triage already holds every open task, so the area tabs would only repeat it.
     if (this.zoom !== "matrix") this.renderTabs(root);
@@ -181,7 +195,7 @@ export class PlannerView extends ItemView {
       ["focus", "Focus", this.zoom === "focus"],
       ["matrix", "Triage", this.zoom === "matrix"],
       [this.planSpan, "Plan", isDated(this.zoom)],
-      ["goals", "Goals", this.zoom === "goals"],
+      ["goals", "Milestones", this.zoom === "goals"],
       ["habits", "Habits", this.zoom === "habits"],
     ];
     for (const [z, label, active] of views) {
@@ -219,7 +233,7 @@ export class PlannerView extends ItemView {
     if (this.zoom === "focus") return "Today";
     if (this.zoom === "matrix") return "Triage";
     if (this.zoom === "habits") return "Habits";
-    if (this.zoom === "goals") return "Goals";
+    if (this.zoom === "goals") return "Milestones";
     const mon = mondayOf(this.anchor);
     const last = addDays(mon, this.plugin.settings.showWeekend ? 6 : 4);
     const f = (d: string) => new Date(d + "T00:00:00").toLocaleDateString(undefined, { day: "numeric", month: "short" });
@@ -247,15 +261,15 @@ export class PlannerView extends ItemView {
     if (cyc) head.createDiv({ cls: `nn-cycle nn-cycle-${cyc.phase}`, text: `Cycle day ${cyc.day} · ${cyc.phase}` });
     this.milestoneMarks(head, day);
 
-    let open = openOn(tasks, day, this.filter);
+    let open = openOn(tasks, day, this.filter).filter((t) => this.inScope(t));
     // With carry-over off, unfinished tasks from past days sit on today.
     if (day === today && !this.plugin.on("carryOver")) open = [...overdue(tasks, today, this.filter), ...open];
     open = applyOrder(this.plugin, day, open);
     // Highest priority at the top; your drag order holds within each priority.
     open = open.map((t, i) => ({ t, i })).sort((a, b) => PRIORITY_RANK[a.t.priority] - PRIORITY_RANK[b.t.priority] || a.i - b.i).map((x) => x.t);
-    const done = doneOn(tasks, day);
+    const done = doneOn(tasks, day).filter((t) => this.inScope(t));
     // Tasks still waiting on another open task don't count toward the cap or the estimate.
-    const ready = open.filter((t) => !isBlocked(t, tasks));
+    const ready = open.filter((t) => isReady(t, tasks));
     const capOn = this.plugin.on("dailyCap");
     const over = capOn && ready.length > s.dailyCap;
     const est = this.plugin.on("estimates") ? estimateTotal(ready) : 0;
@@ -358,7 +372,7 @@ export class PlannerView extends ItemView {
         }
         this.milestoneMarks(cell, day);
         if (nEvents) cell.createDiv({ cls: "nn-month-events", text: `${nEvents} ${nEvents === 1 ? "event" : "events"}` });
-        const open = openOn(tasks, day, this.filter);
+        const open = openOn(tasks, day, this.filter).filter((t) => this.inScope(t));
         for (const t of open.slice(0, 3)) {
           const r = cell.createDiv({ cls: "nn-month-task", text: t.text });
           r.draggable = true;
@@ -366,7 +380,7 @@ export class PlannerView extends ItemView {
           r.addEventListener("click", (e) => { e.stopPropagation(); void this.plugin.actions.open(t); });
         }
         if (open.length > 3) cell.createDiv({ cls: "nn-month-more", text: `+${open.length - 3} more` });
-        if (this.plugin.on("dailyCap") && open.filter((t) => !isBlocked(t, tasks)).length > this.plugin.settings.dailyCap) cell.addClass("is-over");
+        if (this.plugin.on("dailyCap") && open.filter((t) => isReady(t, tasks)).length > this.plugin.settings.dailyCap) cell.addClass("is-over");
         cell.addEventListener("click", () => { this.anchor = day; this.zoom = "day"; this.render(); });
         dropZone(cell, this.plugin, (t) => this.plugin.actions.schedule(t, day));
         cur = addDays(cur, 1);
@@ -387,25 +401,16 @@ export class PlannerView extends ItemView {
     const store = this.plugin.store;
     const tasks = store.tasks;
     const projects = store.projects();
-
-
     const panel = root.createDiv({ cls: "nn-panel" });
     const bar = panel.createDiv({ cls: "nn-tabs" });
-    const lists: Record<string, VTask[]> = {
-      diary: inbox(tasks, (t) => store.isInDailyFolder(t), this.filter),
-    };
+    // All first; each area then filters the days above and the list below.
+    const lists: Record<string, VTask[]> = { "": undated(tasks, this.filter) };
     for (const p of projects) lists[p] = inProject(tasks, p, this.filter);
-    // When the daily notes folder is itself an area, its area tab replaces the separate Diary tab.
-    const dailyIsArea = store.dailyArea() !== null;
-    if (dailyIsArea && this.tab === "diary") this.tab = store.dailyArea()!;
-    // Diary comes first, then the other areas.
-    const dailyTab: [string, string] = dailyIsArea ? [store.dailyArea()!, cap(store.dailyArea()!)] : ["diary", "Diary"];
-    const others = projects.filter((p) => p !== store.dailyArea()).map((p) => [p, cap(p)] as [string, string]);
-    const names: [string, string][] = [dailyTab, ...others];
-    if (!names.some(([k]) => k === this.tab)) this.tab = dailyTab[0];
+    if (this.tab && !projects.includes(this.tab)) this.tab = "";
+    const names: [string, string][] = [["", "All"], ...projects.map((p) => [p, cap(p)] as [string, string])];
     bar.createSpan({ cls: "nn-tabs-label", text: "Areas" });
     for (const [key, label] of names) {
-      this.areaTab(bar, key, label, lists[key].length, key === this.tab, () => { this.tab = key; this.render(); });
+      this.areaTab(bar, key, label, key ? lists[key].length : 0, key === this.tab, () => { this.tab = key; this.render(); });
     }
     this.spoons(bar);
     const hintRow = panel.createDiv({ cls: "nn-panel-row" });
@@ -421,19 +426,15 @@ export class PlannerView extends ItemView {
       this.plugin.settings.sortBy = sel.value as SortMode;
       await this.plugin.saveSettings();
     });
-    hint.setText(this.tab === "diary" ? "Undated tasks from your daily notes that have no area yet. Drag one onto a day or an area."
-      : `Undated tasks in ${this.plugin.settings.projectsFolder}/${this.tab} or tagged #${tagFor(this.tab)}.`);
-    // The one capture box in the planner sits above the tab's list.
-    {
-      const isDiary = this.tab === "diary" || this.tab === this.plugin.store.dailyArea();
-      // Same box in every tab; an area tab tags the new task with its area.
-      captureBox(this.plugin, panel, isDiary
-        ? { lines: 2 }
-        : { lines: 2, placeholder: `Add task to ${cap(this.tab)} (saved in today's daily note)`, tag: this.projectTag() });
-    }
+    hint.setText(this.tab ? `Tasks in ${cap(this.tab)} with no day yet. The days above show ${cap(this.tab)} only.` : "Every open task with no day yet. Drag one onto a day, or choose an area to see only that area.");
+    // The one capture box in the planner sits above the tab's list; an area tab tags the new task with its area.
+    captureBox(this.plugin, panel, this.tab
+      ? { lines: 2, placeholder: `Add task to ${cap(this.tab)} (saved in today's daily note)`, tag: this.projectTag() }
+      : { lines: 2 });
     const list = panel.createDiv({ cls: "nn-panel-list" });
-    renderList(this.plugin, list, sortTasks(lists[this.tab], this.plugin.settings.sortBy), "Nothing here.", { hideProject: this.tab });
+    renderList(this.plugin, list, sortTasks(lists[this.tab], this.plugin.settings.sortBy), "Nothing here.", { hideProject: this.tab || undefined });
   }
+
 
   // ---------- triage (importance x urgency) ----------
 
@@ -509,7 +510,7 @@ export class PlannerView extends ItemView {
     const pool = tasks.filter((t) => isOpen(t) && !planDate(t) && !isLater(t) && !isRoutine(t) && !isMilestone(t) && energyOk(t, this.filter));
     const attached = new Set(list.flatMap((g) => g.members.map((t) => t.key)));
     const keyOf = (g: Goal<VTask> | null) => (g ? g.task.key : "none");
-    if (this.msTab !== "none" && !list.some((g) => g.task.key === this.msTab)) this.msTab = list[0] ? keyOf(list[0]) : "none";
+    if (this.msTab && this.msTab !== "none" && !list.some((g) => g.task.key === this.msTab)) this.msTab = "";
     const panel = root.createDiv({ cls: "nn-panel" });
     const bar = panel.createDiv({ cls: "nn-tabs" });
     bar.createSpan({ cls: "nn-tabs-label", text: "Milestones" });
@@ -523,13 +524,21 @@ export class PlannerView extends ItemView {
       return items;
     };
     const lists = new Map<string, VTask[]>();
+    {
+      const b = bar.createEl("button", { cls: "nn-tab", text: "All" });
+      if (!this.msTab) b.addClass("is-active");
+      b.addEventListener("click", () => { this.msTab = ""; this.render(); });
+      lists.set("", pool);
+    }
     for (const g of list) lists.set(keyOf(g), tab(g, `◆ ${g.name}`, pool.filter((t) => g.members.includes(t))));
     lists.set("none", tab(null, "No milestone", pool.filter((t) => !attached.has(t.key))));
     this.spoons(bar);
     const current = list.find((g) => keyOf(g) === this.msTab) ?? null;
     panel.createDiv({ cls: "nn-panel-hint", text: current
-      ? `Tasks toward ◆ ${current.name} with no day yet. Drag one onto a day, or onto another milestone.`
-      : "Open tasks with no day that count toward no milestone. Drag one onto a milestone tab to count it there." });
+      ? `Tasks toward ◆ ${current.name} with no day yet. The days above show this milestone only.`
+      : this.msTab === "none"
+        ? "Open tasks with no day that count toward no milestone. Drag one onto a milestone to count it there."
+        : "Every open task with no day yet. Choose a milestone to see only its tasks, here and in the days above." });
     captureBox(this.plugin, panel, current
       ? { lines: 2, placeholder: `Add task toward ◆ ${current.name} (saved in today's daily note)`, forId: () => this.plugin.actions.ensureId(current) }
       : { lines: 2 });

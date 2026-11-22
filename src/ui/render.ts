@@ -2,7 +2,7 @@ import { lutealStartsIn } from "../calendar";
 import { TFile, TFolder, normalizePath, setIcon } from "obsidian";
 import { areaLabel, formatMinutes, localToday, PRIORITY_EMOJI, ENERGY_EMOJI, addDays, type Energy } from "../tasks";
 import { VTask, isDone, isOpen, isWaiting, planDate } from "../store";
-import { needsFirstStep, isLater, isUrgent, isImportant, blockersOf } from "../queries";
+import { needsFirstStep, isLater, isUrgent, isImportant, blockersOf, dependentsOf } from "../queries";
 import type NowAndNextPlugin from "../main";
 
 export const DRAG_TYPE = "text/x-now-and-next";
@@ -141,14 +141,20 @@ export function renderTask(plugin: NowAndNextPlugin, parent: HTMLElement, t: VTa
 
   // Detail bullets stay in the note; cards don't show them.
 
-  // Waiting on another task that is still open: faint, with the names of what it waits on.
+  // Which way it goes: what this task waits on (faint until those are done), and what waits on it.
   if (!isDone(t)) {
+    const short = (x: VTask) => (x.text.length > 40 ? x.text.slice(0, 39).trimEnd() + "…" : x.text);
     const blockers = blockersOf(t, plugin.store.tasks);
+    if (isWaiting(t)) {
+      row.addClass("is-blocked");
+      row.createDiv({ cls: "nn-waits-on", text: "Waiting on someone" });
+    }
     if (blockers.length) {
       row.addClass("is-blocked");
-      const names = blockers.map((b) => (b.text.length > 40 ? b.text.slice(0, 39).trimEnd() + "…" : b.text)).join(", ");
-      row.createDiv({ cls: "nn-waits-on", text: `Waits on: ${names}` });
+      row.createDiv({ cls: "nn-waits-on", text: `Waits on: ${blockers.map(short).join(", ")}` });
     }
+    const needed = dependentsOf(t, plugin.store.tasks);
+    if (needed.length) row.createDiv({ cls: "nn-waits-on", text: `Needed for: ${needed.map(short).join(", ")}` });
   }
   return row;
 }

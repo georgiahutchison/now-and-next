@@ -19,7 +19,7 @@ export const SUPPORTS: { key: SupportKey; name: string; desc: string }[] = [
   { key: "timer", name: "Task timer", desc: "A countdown on a task in the status bar." },
   { key: "estimates", name: "Time estimates", desc: "Estimates on tasks, totalled against your working hours." },
   { key: "firstStep", name: "First tiny step", desc: "A quiet prompt to add a 5-minute first step to tasks that have sat untouched." },
-  { key: "waiting", name: "Waiting-on status", desc: "Mark tasks as waiting on someone; they move to their own strip." },
+  { key: "waiting", name: "Waiting-on status", desc: "Mark tasks as waiting on someone; they stay in place, faint, and leave Focus and the daily cap." },
 ];
 
 export interface NowAndNextSettings {
@@ -153,7 +153,7 @@ export class NowAndNextSettingTab extends PluginSettingTab {
       .addToggle((t) => t.setValue(s.showWeekend).onChange(async (v) => { s.showWeekend = v; await save(); }));
 
     new Setting(containerEl).setName("Open at")
-      .addDropdown((d) => d.addOptions({ focus: "Focus", matrix: "Triage", day: "Plan: 1 day", three: "Plan: 3 days", week: "Plan: 7 days", month: "Plan: Month", goals: "Goals", habits: "Habits" }).setValue(s.defaultZoom)
+      .addDropdown((d) => d.addOptions({ focus: "Focus", matrix: "Triage", day: "Plan: 1 day", three: "Plan: 3 days", week: "Plan: 7 days", month: "Plan: Month", goals: "Milestones", habits: "Habits" }).setValue(s.defaultZoom)
         .onChange(async (v) => { s.defaultZoom = v as Zoom; await save(); }));
 
     new Setting(containerEl).setName("Supports").setHeading();

@@ -14,6 +14,29 @@ export function blockersOf(t: VTask, tasks: VTask[]): VTask[] {
 }
 /** Waiting on another task that is still open. */
 export function isBlocked(t: VTask, tasks: VTask[]): boolean { return blockersOf(t, tasks).length > 0; }
+/** Open tasks that wait on `t` (their ⛔ names its 🆔). */
+const revCache = new WeakMap<VTask[], Map<string, VTask[]>>();
+export function dependentsOf(t: VTask, tasks: VTask[]): VTask[] {
+  if (!t.id) return [];
+  let rev = revCache.get(tasks);
+  if (!rev) {
+    rev = new Map();
+    for (const x of tasks) {
+      if (!x.waitsOn || isDone(x) || x.status === "-") continue;
+      for (const id of x.waitsOn) {
+        const k = id.toLowerCase();
+        const l = rev.get(k);
+        if (l) l.push(x); else rev.set(k, [x]);
+      }
+    }
+    revCache.set(tasks, rev);
+  }
+  return (rev.get(t.id.toLowerCase()) ?? []).filter((x) => x !== t);
+}
+/** In the planner's lists: open, or marked waiting on someone ([w]). */
+export function isActive(t: VTask): boolean { return isOpen(t) || isWaiting(t); }
+/** Ready to work on: not waiting on someone and not waiting on an open task. */
+export function isReady(t: VTask, tasks: VTask[]): boolean { return !isWaiting(t) && !isBlocked(t, tasks); }
 /** A #milestone with a 📅 date: shown as ◆ on its day, not as a task card. */
 export function isDatedMilestone(t: VTask): boolean { return !!t.due && isMilestone(t); }
 
@@ -30,13 +53,13 @@ function standsAlone(_t: VTask) {
 }
 
 export function openOn(tasks: VTask[], day: string, f: EnergyFilter): VTask[] {
-  return tasks.filter((t) => isOpen(t) && planDate(t) === day && !isDatedMilestone(t) && standsAlone(t) && energyOk(t, f)).sort(byPriority);
+  return tasks.filter((t) => isActive(t) && planDate(t) === day && !isDatedMilestone(t) && standsAlone(t) && energyOk(t, f)).sort(byPriority);
 }
 
 /** Today's Focus queue: each sub-task just before its parent, tasks set aside with "Not now" last. */
 export function focusQueue(tasks: VTask[], today: string, f: EnergyFilter, skipped: string[] = []): VTask[] {
-  // A task waiting on another open task is left out until that one is done.
-  const all = stepsFirst(openOn(tasks, today, f).filter((t) => !isBlocked(t, tasks)));
+  // A task waiting on someone, or on another open task, is left out until it is ready.
+  const all = stepsFirst(openOn(tasks, today, f).filter((t) => isReady(t, tasks)));
   return [...all.filter((t) => !skipped.includes(t.key)), ...all.filter((t) => skipped.includes(t.key))];
 }
 
@@ -59,7 +82,7 @@ export function doneOn(tasks: VTask[], day: string): VTask[] {
 export function overdue(tasks: VTask[], today: string, f: EnergyFilter): VTask[] {
   return tasks.filter((t) => {
     const d = planDate(t);
-    return isOpen(t) && d !== undefined && d < today && !isDatedMilestone(t) && standsAlone(t) && energyOk(t, f);
+    return isActive(t) && d !== undefined && d < today && !isDatedMilestone(t) && standsAlone(t) && energyOk(t, f);
   }).sort((a, b) => (planDate(a)! < planDate(b)! ? -1 : 1));
 }
 
@@ -76,7 +99,12 @@ export function isLater(t: VTask, today = localToday()): boolean {
 export function isRoutine(t: VTask) { return !!t.recurrence; }
 
 function undatedOpen(t: VTask) {
-  return isOpen(t) && !planDate(t) && !isLater(t) && !isRoutine(t);
+  return isActive(t) && !planDate(t) && !isLater(t) && !isRoutine(t) && !isMilestone(t);
+}
+
+/** Every open task with no day yet (not Later, not a routine, not a milestone): the "All" list under Plan. */
+export function undated(tasks: VTask[], f: EnergyFilter): VTask[] {
+  return tasks.filter((t) => undatedOpen(t) && energyOk(t, f)).sort(byPriority);
 }
 
 /** Undated repeating tasks; deferred ones wait in Later. */
@@ -96,7 +124,7 @@ export function isUrgent(t: VTask, today = localToday()) {
 }
 /** Triage holds undated open tasks: the ones still to be sorted before they get a day. */
 export function matrixTasks(tasks: VTask[], f: EnergyFilter): VTask[] {
-  return tasks.filter((t) => isOpen(t) && !planDate(t) && !isLater(t) && !isRoutine(t) && energyOk(t, f));
+  return tasks.filter((t) => isActive(t) && !planDate(t) && !isLater(t) && !isRoutine(t) && energyOk(t, f));
 }
 
 export function inProject(tasks: VTask[], project: string, f: EnergyFilter): VTask[] {

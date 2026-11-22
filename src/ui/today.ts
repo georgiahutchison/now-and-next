@@ -2,7 +2,7 @@ import { Scope, ItemView, WorkspaceLeaf, setIcon } from "obsidian";
 import { localToday } from "../tasks";
 import { planDate } from "../store";
 import { applyOrder, placeBefore, moveExtrasOn } from "../order";
-import { openOn, doneOn, overdue, waiting, isBlocked } from "../queries";
+import { openOn, doneOn, overdue, waiting, isReady } from "../queries";
 import { renderList, captureBox, dropZone, dayLine } from "./render";
 import type NowAndNextPlugin from "../main";
 
@@ -68,7 +68,7 @@ export class TodayView extends ItemView {
     open = applyOrder(this.plugin, today, open);
     const capOn = this.plugin.on("dailyCap");
     const cap = this.plugin.settings.dailyCap;
-    const ready = open.filter((t) => !isBlocked(t, tasks));
+    const ready = open.filter((t) => isReady(t, tasks));
     const sec = root.createDiv({ cls: "nn-side-section" });
     const h = sec.createDiv({ cls: "nn-side-h", text: "Today" });
     if (capOn && ready.length > cap) h.createSpan({ cls: "nn-day-meta", text: ` ${ready.length}/${cap}` });
@@ -91,12 +91,6 @@ export class TodayView extends ItemView {
       await placeBefore(this.plugin, today, open, t, null, today);
     });
 
-    const w = waiting(tasks);
-    if (w.length) {
-      const d = root.createEl("details", { cls: "nn-waiting" });
-      d.createEl("summary", { text: `Waiting on others (${w.length})` });
-      renderList(this.plugin, d, w, "", { shortLabel: true });
-    }
 
     const done = doneOn(tasks, today);
     if (done.length && this.plugin.on("doneList")) {
