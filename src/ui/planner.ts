@@ -113,12 +113,6 @@ export class PlannerView extends ItemView {
       b.addEventListener("click", async () => { this.plugin.settings.energyFilter = "all"; await this.plugin.saveSettings(); });
     }
     if (this.plugin.on("carryOver")) carryOverTray(this.plugin, top, overdue(tasks, today, this.filter));
-    const w = waiting(tasks);
-    if (w.length) {
-      const d = top.createEl("details", { cls: "nn-waiting" });
-      d.createEl("summary", { text: `Waiting on others (${w.length})` });
-      renderList(this.plugin, d, w, "", { showDate: true });
-    }
 
     const failed = this.plugin.calendars.failed;
     if (failed.length && isDated(this.zoom)) {
@@ -131,6 +125,14 @@ export class PlannerView extends ItemView {
     else if (this.zoom === "week") this.renderWeek(body);
     else if (this.zoom === "month") this.renderMonth(body);
     else this.renderMatrix(body);
+
+    // Waiting on others sits under the main panel, folded.
+    const w = waiting(tasks);
+    if (w.length) {
+      const d = root.createEl("details", { cls: "nn-waiting nn-waiting-below" });
+      d.createEl("summary", { text: `Waiting on others (${w.length})` });
+      renderList(this.plugin, d, w, "", { showDate: true });
+    }
 
     // Triage already holds every open task, so the area tabs would only repeat it.
     if (this.zoom !== "matrix") this.renderTabs(root);

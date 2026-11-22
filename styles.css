@@ -514,3 +514,4 @@
 .nn-waits-on { font-size: var(--font-ui-smaller); color: var(--text-faint); margin: 2px 0 0 calc(var(--checkbox-size, 15px) + var(--size-4-2)); }
 .nn-goal-after { font-size: var(--font-ui-smaller); color: var(--text-faint); }
 .nn-gantt-link { align-self: center; height: 0; border-top: 1px dashed var(--text-faint); z-index: 0; }
+.nn-waiting-below { margin-top: var(--size-4-3); }
